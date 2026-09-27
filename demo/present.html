@@ -58,45 +58,45 @@
 <body>
 
 <section class="slide on">
-  <h1>Law firms can't let AI learn from past cases.</h1>
-  <p class="lead">Every file belongs to a client. ABA Formal Opinion 512: a tool that learns from one client can't carry their facts into another client's work without informed consent. So firms use AI that forgets.</p>
+  <h1>Lawyers can't let AI learn from old cases.</h1>
+  <p class="lead">Every file belongs to a client. The rules say one client's private details must never end up in another client's work. So today, lawyers use AI that forgets everything.</p>
 </section>
 
 <section class="slide">
-  <h1>Each client's AI can only see its own file.</h1>
-  <p class="lead">Chen's agent asks for another client's file.</p>
+  <h1>Each client's files stay behind a wall.</h1>
+  <p class="lead">Here, the AI helper for one client tries to see another client's files.</p>
   <div class="rows" id="wall"></div>
-  <button id="runWall">Run the attack live</button>
+  <button id="runWall">Try to break the wall</button>
 </section>
 
 <section class="slide">
-  <h1>Past petitions become training data. The person doesn't.</h1>
+  <h1>Old cases can teach. Who they're about stays hidden.</h1>
   <div class="doc" id="doc">
     <mark>Halcyon Vision Labs, Inc.</mark> petitions on behalf of <mark>Dr. Simone Achterberg</mark>, <mark>A128-773-410</mark>. She is <span class="flag">the only researcher to win the Halvorsen Prize twice</span>. Salary <mark>$215,000</mark>.
   </div>
-  <p class="verdict" id="verdict">Yellow: identifiers rules can find. Underlined: a description that still points to one person, which only a model catches.</p>
-  <button id="runDeid">De-identify</button>
+  <p class="verdict" id="verdict">Yellow: names and numbers a simple search can find. Underlined: a clue that still gives the person away. Only AI spots that.</p>
+  <button id="runDeid">Hide who it is</button>
 </section>
 
 <section class="slide">
-  <h1>Pattern matching isn't enough. Models are.</h1>
+  <h1>A simple search misses the clues. AI catches them.</h1>
   <div class="nums" id="nums"></div>
   <p class="note" id="numnote"></p>
 </section>
 
 <section class="slide">
-  <h1>Built on</h1>
+  <h1>Who helped</h1>
   <div class="rows">
-    <div class="row"><b>GBrain</b><span>The wall. One isolated memory per client, each agent with read-only access to its own.</span></div>
-    <div class="row"><b>River</b><span>Trains models the firm owns: a de-identifier that follows the firm's rules, and a judge that catches what's left.</span></div>
-    <div class="row"><b>Memorable</b><span>Keeps the firm's know-how, only after scrubbing: procedures carry over, client facts don't.</span></div>
-    <div class="row"><b>QM</b><span>A room per matter. An admin approves anything that crosses between rooms.</span></div>
-    <div class="row"><b>Superset</b><span>How we built it: 40+ coding agents in parallel, one worktree each.</span></div>
+    <div class="row"><b>GBrain</b><span>Keeps each client's files in their own locked box.</span></div>
+    <div class="row"><b>River</b><span>Where we trained our own small AI.</span></div>
+    <div class="row"><b>Memorable</b><span>Remembers what worked, never who it was for.</span></div>
+    <div class="row"><b>QM</b><span>Gives every case its own room. A manager approves anything that moves between rooms.</span></div>
+    <div class="row"><b>Superset</b><span>Let us build all this with many AI helpers working at once.</span></div>
   </div>
 </section>
 
 <section class="slide">
-  <h1>Compound the how.<br>Wall the what.</h1>
+  <h1>Learn from every case.<br>Keep every secret.</h1>
   <p class="lead">github.com/d-q222/the-wall</p>
 </section>
 
@@ -141,32 +141,36 @@ const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', 
 
 document.getElementById('runWall').onclick = async () => {
   const box = document.getElementById('wall');
-  box.innerHTML = '<div class="req lit"><span>Sending requests to GBrain...</span></div>';
+  box.innerHTML = '<div class="req lit"><span>Trying...</span></div>';
   try {
     const r = await (await fetch('/demo/api/wall?matter=chen&target=delmarva', { method: 'POST' })).json();
-    const plain = { 'search': 'Search', 'get_page': 'Open' };
-    box.innerHTML = r.checks.map(c => {
-      const own = /own|control/i.test(c.name);
-      return `<div class="req"><span>${esc(c.name)}</span><span class="out ${own ? 'ok' : 'held'}">${esc(c.result)}</span></div>`;
-    }).join('') + `<div class="req"><span><b>Wall held ${r.passed} of ${r.total}</b>${r.replayed ? '<span class="tag">replayed from last live run</span>' : ''}</span><span class="out ok">GBrain</span></div>`;
+    const say = c => /own|control/i.test(c.name) ? ['Looks at its own client\'s files', 'Allowed']
+      : /permission|denied/i.test(c.result) ? ['Opens the other client\'s file directly', 'Blocked']
+      : /all|every/i.test(c.name + c.call) ? ['Asks for every client\'s files', 'Nothing found']
+      : ['Searches for the other client', 'Nothing found'];
+    box.innerHTML = r.checks.map(c => { const [what, out] = say(c);
+      return `<div class="req"><span>${esc(what)}</span><span class="out ${out === 'Allowed' ? 'ok' : 'held'}">${out}</span></div>`;
+    }).join('') + `<div class="req"><span><b>The wall held: ${r.passed} out of ${r.total}</b>${r.replayed ? '<span class="tag">shown from the last live run</span>' : ''}</span><span class="out ok">Checked live</span></div>`;
     [...box.querySelectorAll('.req')].forEach((el, k) => later(() => el.classList.add('lit'), 150 + k * 420));
-  } catch { box.innerHTML = '<div class="req lit"><span>GBrain did not answer. Run walls/attack.py.</span></div>'; }
+  } catch { box.innerHTML = '<div class="req lit"><span>The wall check did not answer. Try again.</span></div>'; }
 };
 
 document.getElementById('runDeid').onclick = async () => {
   const doc = document.getElementById('doc'), v = document.getElementById('verdict');
   const text = doc.innerText;
-  v.textContent = 'De-identifying...';
+  v.textContent = 'Hiding...'; v.classList.add('lit');
   try {
     const r = await (await fetch('/deidentify', { method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ text, practice: 'immigration', matter_id: 'o1-achterberg' }) })).json();
-    doc.innerHTML = esc(r.text).replace(/\[([A-Z_0-9]+)\]/g, '<span class="ph">$1</span>');
+    const label = k => ({ NAME: 'name', ORG: 'company', A_NUMBER: 'ID number', RECEIPT: 'case number', PASSPORT: 'passport number', AMOUNT: 'amount', DATE: 'date', QUASI_IDENTIFIER: 'clue', EMAIL: 'email', PHONE: 'phone' })[k.replace(/_\d+$/, '')] || 'hidden';
+    doc.innerHTML = esc(r.text).replace(/\[([A-Z_0-9]+)\]/g, (m, k) => `<span class="ph">${label(k)}</span>`);
     [...doc.querySelectorAll('.ph')].forEach((el, k) => later(() => el.classList.add('lit'), 120 + k * 300));
     const res = r.residual;
-    v.innerHTML = `${r.removed} identifiers replaced. ` + (res ? (res.verdict === 'leak'
-      ? `The judge still flags: <b>${esc(res.evidence || 'a remaining identifier')}</b>`
-      : `The judge found nothing left that points to one person.`) + ` <span class="tag">judge: ${esc(r.judge || 'n/a')}</span>` : '');
-  } catch { v.textContent = 'The de-identifier did not answer.'; }
+    v.innerHTML = `${r.removed} details hidden. ` + (res ? (res.verdict === 'leak'
+      ? `Our AI still sees a clue: <b>${esc(res.evidence || 'something that gives the person away')}</b>`
+      : `Our AI checked again: nothing left gives the person away.`) : '');
+    v.classList.add('lit');
+  } catch { v.textContent = 'That didn\'t answer. Try again.'; }
 };
 
 (async () => {
@@ -175,14 +179,13 @@ document.getElementById('runDeid').onclick = async () => {
     const f = (det, set) => d[det] && d[det][set];
     const hard = f('regex', 'hard'), bR = f('regex', 'blind'), bP = f('prompt_judge', 'blind'), bRv = f('river_judge', 'blind'), iP = f('prompt_judge', 'independent'), iRv = f('river_judge', 'independent');
     const cells = [];
-    if (hard) cells.push(`<div class="num"><strong>${hard.caught}/${hard.leaks}</strong><div class="bar"><i data-w="${100 * hard.caught / hard.leaks}%"></i></div><span>Paraphrased leaks caught by pattern matching</span></div>`);
-    if (bP) cells.push(`<div class="num"><strong>${bP.caught}/${bP.leaks}</strong><div class="bar"><i data-w="${100 * bP.caught / bP.leaks}%"></i></div><span>Leaks Claude caught on a blind set written by a different model family${bR ? ` (patterns: ${bR.caught}/${bR.leaks})` : ''}</span></div>`);
+    if (hard) cells.push(`<div class="num"><strong>${hard.caught}/${hard.leaks}</strong><div class="bar"><i data-w="${100 * hard.caught / hard.leaks}%"></i></div><span>Clues a simple word search caught</span></div>`);
+    if (bP) cells.push(`<div class="num"><strong>${bP.caught}/${bP.leaks}</strong><div class="bar"><i data-w="${100 * bP.caught / bP.leaks}%"></i></div><span>Clues a big AI (Claude) caught on a brand-new test</span></div>`);
     const riv = bRv || iRv, rivCmp = bRv ? bP : iP;
-    if (riv) cells.push(`<div class="num"><strong>${riv.caught}/${riv.leaks}</strong><div class="bar"><i data-w="${100 * riv.caught / riv.leaks}%"></i></div><span>Our small River-tuned model, which the firm owns${rivCmp ? `, vs Claude's ${rivCmp.caught}/${rivCmp.leaks}` : ''}. False alarms: ${riv.false_alarms}/${riv.clean}${rivCmp ? ` vs ${rivCmp.false_alarms}/${rivCmp.clean}` : ''}.</span></div>`);
+    if (riv) cells.push(`<div class="num"><strong>${riv.caught}/${riv.leaks}</strong><div class="bar"><i data-w="${100 * riv.caught / riv.leaks}%"></i></div><span>Clues our own small AI caught on the same test</span></div>`);
     document.getElementById('nums').innerHTML = cells.join('');
     if (slides[i].contains(document.getElementById('nums'))) enter(slides[i]);
-    const over = (iRv && iP && iRv.false_alarms > iP.false_alarms) ? ` On larger agent-written test sets it over-flags more (${iRv.false_alarms}/${iRv.clean} false alarms vs Claude's ${iP.false_alarms}/${iP.clean}); calibrating that is next.` : '';
-    document.getElementById('numnote').textContent = 'Every number is held out and read live from results.json.' + over + ' Synthetic data only; not a compliance guarantee.';
+    document.getElementById('numnote').textContent = 'The brand-new test was written by a different AI that never saw our data. Our small AI sometimes flags things that are actually fine. Fixing that is next. All examples are made up.';
   } catch {}
 })();
 </script>
