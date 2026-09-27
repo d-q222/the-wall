@@ -250,7 +250,7 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const useSample = params.has('sample');
-        const resultsUrl = useSample ? './sample_results.json' : '../results/results.json';
+        const resultsUrl = params.get('src') || (useSample ? './sample_results.json' : '../results/results.json');
 
         async function loadAndRender() {
             try {
