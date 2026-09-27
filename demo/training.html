@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model</title>
+<link rel="stylesheet" href="/demo/assets/theme.css">
+<script src="/demo/assets/nav.js" defer></script>
+<style>
+  .page-head h1 { font-size: var(--fs-28); }
+
+  /* the one bold element: the loop */
+  .loop { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); margin-bottom: 24px; overflow: hidden; }
+  .loop-step { position: relative; padding: 18px 22px 18px 24px; border-right: 1px solid var(--line); }
+  .loop-step:last-child { border-right: 0; }
+  .loop-step:not(:last-child)::after {
+    content: ""; position: absolute; right: -8px; top: 50%; width: 14px; height: 14px; margin-top: -7px;
+    background: var(--surface); border-top: 1px solid var(--line); border-right: 1px solid var(--line); transform: rotate(45deg); z-index: 1;
+  }
+  .loop-n { font-size: var(--fs-40); font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .loop-label { font-size: var(--fs-15); font-weight: 600; margin-top: 6px; }
+  .loop-sub { font-size: var(--fs-13); color: var(--text-3); margin-top: 2px; }
+  .loop-step.live { background: var(--blue-soft); }
+  .loop-step.live .loop-n { color: var(--blue); }
+  .loop-step.gain .loop-n { color: var(--cleared); }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+  .stack { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+
+  .span-text { font-family: var(--font-doc); background: var(--found); color: var(--ink); padding: 0 3px; border-radius: 2px; }
+  .span-text.wrong { background: var(--cleared-soft); color: var(--cleared); box-shadow: inset 0 -2px 0 var(--cleared); }
+  .passage { font-family: var(--font-doc); font-size: var(--fs-15); color: var(--text-2); max-width: 52ch; margin-top: 4px; }
+  .corrections td:first-child, .corrections td.meta, .corrections td.n { white-space: nowrap; }
+
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0; }
+  .metric { padding: 14px 16px; border-right: 1px solid var(--line); }
+  .metric:last-child { border-right: 0; }
+  .metric .v { font-size: var(--fs-28); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .metric .d { font-size: var(--fs-13); color: var(--text-3); }
+  .metric .delta { font-size: var(--fs-13); font-weight: 600; color: var(--cleared); }
+
+  .progress { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; margin: 10px 0 6px; }
+  .progress > span { display: block; height: 100%; background: var(--blue); width: 0; transition: width .4s; }
+  .confirm { margin-top: 12px; padding: 12px; border: 1px solid var(--line-strong); border-radius: var(--r-chip); background: var(--surface-2); font-size: var(--fs-13); }
+  .confirm p { margin-bottom: 10px; color: var(--text-2); }
+  .confirm .row { display: flex; gap: 8px; }
+  .kv dd { overflow-wrap: anywhere; }
+  .counts { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; font-size: var(--fs-15); }
+  .counts .n { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+
+  form.add { display: grid; gap: 10px; font-size: var(--fs-13); }
+  form.add label { display: grid; gap: 4px; color: var(--text-2); }
+  form.add textarea, form.add input, form.add select { width: 100%; min-width: 0; box-sizing: border-box; font: inherit; font-size: var(--fs-15); padding: 7px 9px; border: 1px solid var(--line-strong); border-radius: var(--r-chip); background: var(--surface); color: var(--text); }
+  form.add textarea { font-family: var(--font-doc); min-height: 84px; resize: vertical; }
+  form.add .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+  .err { color: var(--risk); font-size: var(--fs-13); }
+  @media (max-width: 1360px) { .grid { grid-template-columns: minmax(0, 1fr) 320px; } }
+</style>
+</head>
+<body data-crumb="Model">
+<main class="app-main">
+  <div class="page-head">
+    <div>
+      <h1>Model</h1>
+      <p>The firm's de-identifier is a River model trained on your own petitions. Every correction an attorney makes becomes a training example, and the next retrain learns from it.</p>
+    </div>
+  </div>
+
+  <section class="loop" aria-label="How the model improves">
+    <div class="loop-step" id="step-corr"><div class="loop-n" id="n-corr">0</div><div class="loop-label">Attorney corrections</div><div class="loop-sub" id="s-corr">Missed or wrongly redacted identifiers</div></div>
+    <div class="loop-step" id="step-ex"><div class="loop-n" id="n-ex">0</div><div class="loop-label">Training examples</div><div class="loop-sub" id="s-ex">Firm data plus corrections</div></div>
+    <div class="loop-step" id="step-job"><div class="loop-n" id="n-job">Idle</div><div class="loop-label">River retrain</div><div class="loop-sub" id="s-job">LoRA fine-tune on River</div></div>
+    <div class="loop-step" id="step-score"><div class="loop-n" id="n-score">&ndash;</div><div class="loop-label">Held-out recall</div><div class="loop-sub" id="s-score">Unseen O-1 beneficiaries</div></div>
+  </section>
+
+  <div class="grid">
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-head"><h3>Held-out score</h3><span class="meta" id="score-meta">Eval set o1_deid_heldout</span></div>
+        <div id="metrics"><div class="panel-body"><span class="skeleton" style="width:60%"></span></div></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h3>Corrections pending</h3><span class="badge badge-found" id="pending-badge">0 pending</span></div>
+        <div id="corrections"><div class="panel-body"><span class="skeleton"></span><span class="skeleton" style="width:70%"></span></div></div>
+      </section>
+    </div>
+
+    <aside class="inspector" aria-label="Model details">
+      <div class="inspector-section">
+        <h3>Current checkpoint <span class="badge" id="status-badge">Loading</span></h3>
+        <dl class="kv" id="ckpt"></dl>
+        <div id="job" hidden>
+          <div class="progress"><span id="bar"></span></div>
+          <div class="meta" id="job-meta"></div>
+        </div>
+      </div>
+      <div class="inspector-section">
+        <h3>What it learned from</h3>
+        <div class="counts" id="counts"></div>
+      </div>
+      <div class="inspector-section">
+        <button class="btn btn-primary" id="retrain" type="button" disabled>Retrain with 0 corrections</button>
+        <div class="confirm" id="confirm" hidden>
+          <p id="confirm-text"></p>
+          <div class="row">
+            <button class="btn btn-primary btn-sm" id="confirm-go" type="button">Start River training</button>
+            <button class="btn btn-secondary btn-sm" id="confirm-cancel" type="button">Cancel</button>
+          </div>
+        </div>
+        <div class="err" id="retrain-err"></div>
+      </div>
+      <div class="inspector-section">
+        <h3>Record a correction</h3>
+        <form class="add" id="add">
+          <label>Passage from the de-identified document<textarea name="passage" required></textarea></label>
+          <div class="two">
+            <label>Correction<select name="kind"><option value="missed">Missed identifier</option><option value="wrong">Wrongly redacted</option></select></label>
+            <label>Placeholder<input name="replacement" placeholder="[PERSON]"></label>
+          </div>
+          <label>Exact text<input name="span_text" required></label>
+          <label>Note<input name="note" placeholder="Optional"></label>
+          <button class="btn btn-secondary" type="submit">Add correction</button>
+          <div class="err" id="add-err"></div>
+        </form>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var API = "/demo/api";
+  var $ = function (id) { return document.getElementById(id); };
+  var last = null;
+  var poll = null;
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function pct(x) { return x == null ? "–" : Math.round(x * 100) + "%"; }
+  function when(ts) { if (!ts) return ""; var d = new Date(ts * 1000); return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
+  function shortCkpt(p) { if (!p) return "Base model (no fine-tune yet)"; var parts = p.split("/"); return parts.slice(-3).join("/"); }
+
+  function snippet(passage, span) {
+    var i = passage.indexOf(span);
+    if (i < 0) return esc(passage.slice(0, 140));
+    var a = Math.max(0, i - 60), b = Math.min(passage.length, i + span.length + 60);
+    return (a > 0 ? "…" : "") + esc(passage.slice(a, i)) + "<mark class=\"span-text\">" + esc(span) + "</mark>" + esc(passage.slice(i + span.length, b)) + (b < passage.length ? "…" : "");
+  }
+
+  function renderCorrections(rows, learned) {
+    var pending = rows.slice(learned);
+    $("pending-badge").textContent = pending.length + " pending";
+    if (!rows.length) {
+      $("corrections").innerHTML = '<div class="empty"><h3>No corrections yet</h3><p>When an attorney marks an identifier the model missed, or one it should have left alone, it appears here and becomes a training example.</p></div>';
+      return;
+    }
+    var html = '<table class="table corrections"><thead><tr><th>Correction</th><th>In context</th><th>Placeholder</th><th>Matter</th><th class="n">Added</th></tr></thead><tbody>';
+    rows.slice().reverse().forEach(function (r, idx) {
+      var isLearned = rows.length - 1 - idx < learned;
+      var badge = r.kind === "missed" ? '<span class="badge badge-risk">Missed</span>' : '<span class="badge badge-info">Wrongly redacted</span>';
+      var ctx = snippet(r.passage, r.span_text);
+      if (r.kind === "wrong") ctx = ctx.replace('class="span-text"', 'class="span-text wrong"');
+      html += "<tr><td>" + badge + (isLearned ? '<div class="meta" style="margin-top:4px">Learned</div>' : "") + "</td>" +
+        '<td><div class="passage">' + ctx + "</div>" + (r.note ? '<div class="meta">' + esc(r.note) + "</div>" : "") + "</td>" +
+        "<td>" + (r.kind === "missed" ? '<span class="chip">' + esc(r.replacement || "[REDACTED]") + "</span>" : '<span class="meta">Keep as written</span>') + "</td>" +
+        '<td class="meta">' + esc(r.matter_id) + '</td><td class="n meta">' + when(r.ts) + "</td></tr>";
+    });
+    $("corrections").innerHTML = html + "</tbody></table>";
+  }
+
+  function renderModel(plan, st) {
+    var status = st.status || "idle";
+    var badge = $("status-badge");
+    var labels = { idle: "Not retrained yet", starting: "Starting", running: "Training", done: "Ready", failed: "Failed" };
+    badge.textContent = labels[status] || status;
+    badge.className = "badge " + ({ done: "badge-cleared", running: "badge-info", starting: "badge-info", failed: "badge-risk" }[status] || "plain");
+    var ckpt = status === "done" ? st.checkpoint : plan.from_checkpoint;
+    $("ckpt").innerHTML =
+      "<dt>Weights</dt><dd>" + esc(shortCkpt(ckpt)) + "</dd>" +
+      "<dt>Base model</dt><dd>" + esc(plan.base_model) + "</dd>" +
+      (st.job ? "<dt>Last job</dt><dd>" + esc(st.job) + "</dd>" : "") +
+      (status === "done" && st.n_feedback != null ? "<dt>Trained with</dt><dd>" + st.n_feedback + " corrections, " + st.n_examples + " examples</dd>" : "") +
+      (st.error ? '<dt>Error</dt><dd class="err">' + esc(st.error) + "</dd>" : "");
+
+    var running = status === "running" || status === "starting";
+    $("job").hidden = !running;
+    if (running) {
+      var total = st.n_steps_planned || 0, done = st.last_completed_step || 0;
+      $("bar").style.width = total ? Math.round(100 * done / total) + "%" : "4%";
+      $("job-meta").textContent = total ? "Step " + done + " of " + total + (st.loss_mean != null ? ", loss " + Number(st.loss_mean).toFixed(3) : "") : "Allocating GPU on River";
+    }
+    var btn = $("retrain");
+    btn.disabled = running || !plan.n_feedback;
+    btn.textContent = running ? "Retraining in progress" : "Retrain with " + plan.n_feedback + " correction" + (plan.n_feedback === 1 ? "" : "s");
+
+    $("counts").innerHTML =
+      "<span>Firm training set</span><span class=\"n\">" + plan.n_base + "</span>" +
+      "<span>Missed identifiers</span><span class=\"n\">" + (last.summary.by_kind.missed || 0) + "</span>" +
+      "<span>Wrongly redacted</span><span class=\"n\">" + (last.summary.by_kind.wrong || 0) + "</span>" +
+      '<span class="meta">Each correction is weighted ×4 in the retrain set</span><span></span>';
+
+    $("n-corr").textContent = last.summary.n;
+    $("n-ex").textContent = plan.n_examples;
+    $("s-ex").textContent = plan.n_base + " firm rows + " + plan.n_feedback + " corrections";
+    $("n-job").textContent = { done: "Done", running: "Running", starting: "Starting", failed: "Failed" }[status] || "Idle";
+    $("s-job").textContent = running && st.n_steps_planned ? "Step " + (st.last_completed_step || 0) + " of " + st.n_steps_planned : (status === "done" ? "Checkpoint saved on River" : "LoRA fine-tune on River");
+    $("step-job").classList.toggle("live", running);
+
+    if (running && !poll) poll = setInterval(load, 4000);
+    if (!running && poll) { clearInterval(poll); poll = null; }
+  }
+
+  function load() {
+    return fetch(API + "/feedback").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+      last = d;
+      var st = d.retrain.state || {};
+      var learned = st.status === "done" ? Math.min(st.n_feedback || 0, d.corrections.length) : 0;
+      renderCorrections(d.corrections, learned);
+      renderModel(d.retrain.plan, st);
+    }).catch(function (e) {
+      $("corrections").innerHTML = '<div class="empty"><h3>Feedback service unavailable</h3><p>' + esc(e.message) + "</p></div>";
+    });
+  }
+
+  function loadScores() {
+    fetch("/results/results.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (all) {
+      var rows = [];
+      Object.keys(all || {}).forEach(function (det) {
+        var r = all[det] && all[det].o1_deid_heldout;
+        if (r) rows.push({ det: det, r: r, recall: r.leaks ? r.caught / r.leaks : null });
+      });
+      if (!rows.length) {
+        $("metrics").innerHTML = '<div class="empty"><h3>No held-out score yet</h3><p>The before and after comparison appears once the de-identifier is scored on the held-out O-1 beneficiaries.</p></div>';
+        return;
+      }
+      var names = { regex: "Regex", carryover: "Known facts", prompt_judge: "Claude prompt", river_deid: "River, before corrections", river_deid_retrained: "River, after corrections" };
+      var base = null;
+      $("metrics").innerHTML = '<div class="metrics">' + rows.map(function (x) {
+        var delta = "";
+        if (/river/.test(x.det) && base != null && x.recall != null && x.recall > base) delta = '<div class="delta">+' + Math.round((x.recall - base) * 100) + " pts</div>";
+        if (/river/.test(x.det) && base == null) base = x.recall;
+        return '<div class="metric"><div class="v">' + pct(x.recall) + '</div><div class="d">' + esc(names[x.det] || x.det) + "</div>" +
+          '<div class="d num">' + x.r.caught + " of " + x.r.leaks + " identifiers, " + x.r.false_alarms + " false alarms</div>" + delta + "</div>";
+      }).join("") + "</div>";
+      var best = rows.filter(function (x) { return /river/.test(x.det); }).pop() || rows[rows.length - 1];
+      $("n-score").textContent = pct(best.recall);
+      $("s-score").textContent = (names[best.det] || best.det) + ", n=" + best.r.n;
+      $("step-score").classList.toggle("gain", rows.length > 1);
+    });
+  }
+
+  $("retrain").addEventListener("click", function () {
+    var p = last.retrain.plan;
+    $("confirm-text").textContent = "This starts a LoRA fine-tune on River with " + p.n_examples + " examples (" + p.n_feedback + " attorney corrections), continuing from " + shortCkpt(p.from_checkpoint) + ". It uses GPU time.";
+    $("confirm").hidden = false;
+    $("confirm-go").focus();
+  });
+  $("confirm-cancel").addEventListener("click", function () { $("confirm").hidden = true; });
+  $("confirm-go").addEventListener("click", function () {
+    $("confirm").hidden = true;
+    $("retrain-err").textContent = "";
+    $("retrain").disabled = true;
+    fetch(API + "/retrain", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirm: true }) })
+      .then(function (r) { return r.json().then(function (b) { if (!r.ok) throw new Error(b.detail || r.status); return b; }); })
+      .then(load)
+      .catch(function (e) { $("retrain-err").textContent = "Could not start: " + e.message; load(); });
+  });
+
+  $("add").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var f = ev.target, body = {
+      matter_id: (window.WallShell && WallShell.matter()) || "o1-umeh", practice: "immigration",
+      passage: f.passage.value, kind: f.kind.value, span_text: f.span_text.value,
+      replacement: f.replacement.value || null, note: f.note.value || null
+    };
+    $("add-err").textContent = "";
+    fetch(API + "/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (b) { if (!r.ok) throw new Error(typeof b.detail === "string" ? b.detail : "check the fields"); return b; }); })
+      .then(function () { f.span_text.value = ""; f.note.value = ""; return load(); })
+      .catch(function (e) { $("add-err").textContent = e.message; });
+  });
+
+  load();
+  loadScores();
+})();
+</script>
+</body>
+</html>
