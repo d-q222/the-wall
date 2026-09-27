@@ -145,7 +145,8 @@ document.getElementById('runWall').onclick = async () => {
   box.innerHTML = '<div class="req lit"><span>Trying...</span></div>';
   try {
     const r = await (await fetch('/demo/api/wall?matter=chen&target=delmarva', { method: 'POST' })).json();
-    const say = c => /own|control/i.test(c.name) ? ['Looks at its own client\'s files', 'Allowed']
+    const say = c => /control/i.test(c.name) ? ['The other client\'s AI opens its own files', 'Allowed']
+      : /own/i.test(c.name) ? ['Looks at its own client\'s files', 'Allowed']
       : /permission|denied/i.test(c.result) ? ['Opens the other client\'s file directly', 'Blocked']
       : /all|every/i.test(c.name + c.call) ? ['Asks for every client\'s files', 'Nothing found']
       : ['Searches for the other client', 'Nothing found'];
