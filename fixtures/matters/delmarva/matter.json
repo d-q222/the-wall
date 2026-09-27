@@ -1,0 +1,11 @@
+{
+  "id": "delmarva",
+  "client": "Delmarva Logistics LLC",
+  "practice": "litigation",
+  "facts": {
+    "names": ["Delmarva Logistics", "Marcus Pruitt", "Hollis Freight Brokers", "Dana Whitcombe"],
+    "orgs": ["Delmarva Logistics LLC", "Hollis Freight Brokers Inc."],
+    "amounts": ["$418,250", "$37,900"],
+    "distinctive": ["refrigerated trailer 7 left idling at the Salisbury yard for nineteen hours"]
+  }
+}

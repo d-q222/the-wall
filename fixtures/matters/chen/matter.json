@@ -1,0 +1,11 @@
+{
+  "id": "chen",
+  "client": "Chen Family Trust",
+  "practice": "trusts_estates",
+  "facts": {
+    "names": ["Eleanor Chen", "Victor Chen", "Mei-Lin Chen Barros"],
+    "orgs": ["Chen Family Trust", "Harborview Bank"],
+    "amounts": ["$2,340,000", "$186,400"],
+    "distinctive": ["the lake house in Deep Creek that Victor says was promised to him in a 2019 voicemail"]
+  }
+}

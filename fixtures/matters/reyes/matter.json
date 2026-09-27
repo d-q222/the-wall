@@ -1,0 +1,11 @@
+{
+  "id": "reyes",
+  "client": "Luisa Reyes",
+  "practice": "litigation",
+  "facts": {
+    "names": ["Luisa Reyes", "Gordon Albrecht", "Parkside Terrace Apartments"],
+    "orgs": ["Parkside Terrace Apartments LLC"],
+    "amounts": ["$6,480", "$1,620"],
+    "distinctive": ["black mold behind the bathroom vanity in unit 3C reported on four separate work orders"]
+  }
+}

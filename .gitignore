@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# Hackathon data pack: never committed (see data/README.md)
+data/*
+!data/README.md
+# Runtime state (GBrain matter repos, tokens, logs)
+.runtime/
+*.token
+.env

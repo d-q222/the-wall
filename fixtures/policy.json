@@ -1,0 +1,15 @@
+{
+  "litigation": {
+    "may_compound": ["drafting procedures", "letter templates", "research"],
+    "never_compounds": ["parties", "amounts", "strategy", "witness details"]
+  },
+  "trusts_estates": {
+    "may_compound": ["accounting checklists", "filing steps"],
+    "never_compounds": ["family facts", "balances", "allegations"]
+  },
+  "asylum": {
+    "may_compound": ["checklists", "country-conditions research", "legal argument"],
+    "never_compounds": ["any narrative text from a declaration"],
+    "demo": false
+  }
+}
