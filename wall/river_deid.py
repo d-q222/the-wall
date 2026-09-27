@@ -141,9 +141,12 @@ def _cache() -> dict:
 
 
 def spans(text: str, practice: str = "immigration", model: str = "tuned") -> list[dict]:
+    """Spans to remove, sampled paragraph by paragraph (the unit River was trained on)."""
     key = _key(text, practice, model)
     try:
-        result = parse(text, sample_many([text], practice, model)[0])
+        paras = [p for p in text.split("\n\n") if p.strip()] or [text]
+        found = [s for p, c in zip(paras, sample_many(paras, practice, model)) for s in parse(p, c)]
+        result = valid_spans(text, found)  # dedupe across paragraphs
     except Exception:
         cached = _cache().get(key)
         if cached is None:

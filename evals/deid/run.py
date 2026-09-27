@@ -80,7 +80,10 @@ def main(fixtures: Path, matters: list[str], detectors: list[str]) -> None:
     for name, model in [("river_deid_base", "base"), ("river_deid_tuned", "tuned")]:
         if name in detectors:
             completions = river_deid.sample_many(texts, "immigration", model)
-            predictions[name] = [text_spans(p, river_deid.parse(p, c)) for p, c in zip(texts, completions)]
+            parsed = [river_deid.parse(p, c) for p, c in zip(texts, completions)]
+            predictions[name] = [text_spans(p, sp) for p, sp in zip(texts, parsed)]
+            dump = river_deid.RUNTIME / "river-deid" / f"eval_{name}.jsonl"  # gitignored runtime dir
+            dump.write_text("".join(json.dumps({"paragraph": i, "spans": sp}) + "\n" for i, sp in enumerate(parsed)))
     for name, preds in predictions.items():
         total = {"caught": 0, "leaks": 0, "false_alarms": 0, "clean": 0, "q_caught": 0, "q_leaks": 0}
         for (p, idents), pred in zip(rows, preds):
