@@ -6,7 +6,8 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from wall import compound, deid, guard, judge, results, scrub, walldemo
+from wall import audit, blindapi, compound, deid, guard, judge, policyapi, results, scrub, walldemo
+from wall.matters import documents, matters
 from wall.contract import (
     CheckRequest,
     CheckResponse,
@@ -49,6 +50,37 @@ def wall_attack(matter: str = "chen", target: str = "delmarva") -> dict:
 @app.post("/demo/api/compound")
 def compound_(source: str = "delmarva", target: str = "chen") -> dict:
     return compound.run(source, target)
+
+
+@app.get("/demo/api/matters")
+def matters_() -> list[dict]:
+    """Every fixture matter with its documents, for the matters and datasets pages."""
+    return [{**m, "documents": documents(mid)} for mid, m in matters().items()]
+
+
+@app.get("/demo/api/policy")
+def policy_get() -> dict:
+    return policyapi.get()
+
+
+@app.post("/demo/api/policy")
+def policy_save(policy: dict) -> dict:
+    return policyapi.save(policy)
+
+
+@app.get("/demo/api/audit")
+def audit_recent(limit: int = 100) -> list[dict]:
+    return audit.recent(limit)
+
+
+@app.post("/demo/api/blind")
+def blind_append(row: dict) -> dict:
+    return blindapi.append(row)
+
+
+@app.get("/demo/api/blind")
+def blind_summary() -> dict:
+    return blindapi.summary()
 
 
 # Web demo (C4 shell + F-lane pages), same origin as the API.
