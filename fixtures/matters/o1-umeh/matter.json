@@ -1,0 +1,17 @@
+{
+  "id": "o1-umeh",
+  "client": "Terraform Grid Systems, Inc.",
+  "practice": "immigration",
+  "facts": {
+    "names": ["Adaeze Umeh", "Keiko Fujimori-Adeyemi", "Dr. Grant Beaumont-Osei", "Naomi Castellanos-Reyes"],
+    "orgs": ["Terraform Grid Systems, Inc.", "Voltaic Systems Inc.", "Continuum Ventures", "Ledger & Circuit"],
+    "amounts": ["$260,000", "$18,500,000"],
+    "distinctive": [
+      "named to Continuum Ventures' Founders Vanguard List two years running",
+      "closed the largest grid-software Series A the firm's investors had backed that year",
+      "A134-902-661",
+      "IOE0912345682",
+      "GX1928374"
+    ]
+  }
+}
