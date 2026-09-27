@@ -16,6 +16,7 @@ def tmp_runtime(tmp_path, monkeypatch):
     monkeypatch.setattr(retrain, "OUT", tmp_path / "river-retrain")
     monkeypatch.setattr(retrain, "STATE", tmp_path / "river-retrain" / "state.json")
     monkeypatch.setattr(retrain, "TRAIN", tmp_path / "river-retrain" / "train.jsonl")
+    monkeypatch.setattr(retrain, "LOG", tmp_path / "river-retrain" / "train.log")
     monkeypatch.setattr(retrain, "K3_DATA", tmp_path / "k3" / "train.jsonl")
     monkeypatch.setattr(retrain, "K3_STATE", tmp_path / "k3" / "state.json")
     return tmp_path
@@ -92,3 +93,16 @@ def test_routes_record_list_and_guard_retrain(monkeypatch):
     assert launched == []
     assert client.post("/demo/api/retrain", json={"confirm": True}).json()["launched"] is True
     assert launched == [1]
+
+
+def test_failed_retrain_keeps_last_good_checkpoint(monkeypatch):
+    retrain.OUT.mkdir(parents=True)
+    retrain.STATE.write_text(json.dumps({"status": "done", "checkpoint": "river://ours/final", "n_feedback": 1}))
+    feedback.record(_missed())
+
+    class P:
+        pid = 999999999
+    monkeypatch.setattr(retrain.subprocess, "Popen", lambda *a, **k: P())
+    assert retrain.launch()["checkpoint"] == "river://ours/final"
+    retrain._write_state(status="failed")
+    assert retrain.start_checkpoint() == "river://ours/final"

@@ -55,7 +55,7 @@ def start_checkpoint() -> str | None:
     ours = _read_json(STATE)
     if ours.get("status") == "done" and ours.get("checkpoint"):
         return ours["checkpoint"]
-    return _read_json(K3_STATE).get("checkpoint_path")
+    return ours.get("last_good_checkpoint") or _read_json(K3_STATE).get("checkpoint_path")
 
 
 def plan() -> dict:
@@ -110,10 +110,13 @@ def launch() -> dict:
         raise ValueError("no attorney corrections recorded yet")
     job = f"k2-deid-retrain-{int(time.time())}"
     from_ckpt = start_checkpoint()
+    prev = _read_json(STATE)
+    last_good = prev.get("checkpoint") if prev.get("status") == "done" else prev.get("last_good_checkpoint")
     STATE.write_text("{}")
     _write_state(
         job=job, status="starting", n_examples=n_examples, n_feedback=n_feedback,
         from_checkpoint=from_ckpt, checkpoint=None, started_at=time.time(),
+        last_good_checkpoint=last_good, last_good_n_feedback=prev.get("n_feedback") if prev.get("status") == "done" else prev.get("last_good_n_feedback"),
     )
     with LOG.open("w") as log:
         proc = subprocess.Popen(
