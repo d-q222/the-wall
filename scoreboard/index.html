@@ -1,427 +1,445 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethical Wall Brain - Leak Detection Scoreboard</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluation - The Wall</title>
+<meta name="description" content="Leak detection on held-out data: every rate with its n and a 95% Wilson interval, read live from results/results.json.">
+<link rel="stylesheet" href="/demo/assets/theme.css">
+<style>
+  /* Interval marks follow Vega-Lite's point + errorbar(extent: ci) layer
+     (vega/vega-lite examples/specs/layer_point_errorbar_ci.vl.json); intervals are
+     95% Wilson, ported from evals/stats.py wilson_interval. */
+  .app-main { max-width: 1320px; }
+  .status { display: flex; align-items: center; gap: 10px; font-size: var(--fs-13); color: var(--text-3); white-space: nowrap; }
+  .status .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cleared); }
+  .status.stale .live-dot { background: var(--risk); }
+  .sample-flag {
+    display: flex; gap: 12px; align-items: center; margin-bottom: 16px; padding: 10px 14px;
+    border: 1px dashed var(--line-strong); border-radius: var(--r-panel); background: var(--found-soft); font-size: var(--fs-15);
+  }
+  .sample-flag strong { font-weight: 600; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #0f0f0f;
-            color: #ffffff;
-            padding: 2rem;
-            line-height: 1.6;
-        }
+  /* headline: River's hard-set number is never shown without the independent set */
+  .headline { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin-bottom: 20px; }
+  .headline-title { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 12px; padding: 16px 20px 0; }
+  .headline-title h2 { font-size: var(--fs-17); }
+  .pair { padding: 14px 20px 18px; }
+  .pair + .pair { border-left: 1px solid var(--line); }
+  .pair h3 { font-size: var(--fs-15); font-weight: 600; }
+  .pair .set-note { font-size: var(--fs-13); color: var(--text-3); margin-top: 2px; max-width: 52ch; }
+  .figs { display: grid; grid-template-columns: auto auto; justify-content: start; gap: 28px; margin-top: 14px; }
+  .fig-label { font-size: var(--fs-13); color: var(--text-2); }
+  .fig-value { font-size: var(--fs-40); font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; margin: 2px 0 4px; font-variant-numeric: proportional-nums; }
+  .fig-value .of { color: var(--text-3); font-weight: 500; }
+  .fig-ci { font-size: var(--fs-13); color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .pair.missing .fig-value { color: var(--text-3); font-size: var(--fs-28); }
+  .reading { grid-column: 1 / -1; padding: 12px 20px 14px; border-top: 1px solid var(--line); background: var(--surface-2); border-radius: 0 0 var(--r-panel) var(--r-panel); font-size: var(--fs-15); }
+  .reading p + p { margin-top: 4px; }
+  .reading .meta { display: block; margin-top: 6px; }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+  /* set picker + table */
+  .section-head { display: flex; align-items: flex-end; gap: 16px; margin: 28px 0 12px; }
+  .section-head h2 { font-size: var(--fs-21); }
+  .section-head p { color: var(--text-2); margin-top: 4px; max-width: 80ch; }
+  .picker { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .picker label { display: flex; align-items: center; gap: 8px; font-size: var(--fs-13); color: var(--text-3); }
+  .set-desc { font-size: var(--fs-15); color: var(--text-2); padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .set-desc strong { color: var(--text); font-weight: 600; }
+  .table td { vertical-align: middle; }
+  .table th.grp { text-align: left; border-left: 1px solid var(--line); }
+  .table td.grp { border-left: 1px solid var(--line); }
+  .table th[scope="row"] { min-width: 200px; }
+  .det-name { font-weight: 600; }
+  .det-sub { white-space: nowrap; }
+  .det-sub { font-size: var(--fs-13); color: var(--text-3); }
+  tr.ours td { background: color-mix(in srgb, var(--blue-soft) 55%, var(--surface)); }
+  tr.ours:hover td { background: var(--blue-soft); }
+  .kn { font-weight: 600; white-space: nowrap; }
+  .pct { color: var(--text-2); font-size: var(--fs-13); white-space: nowrap; }
+  .ci { color: var(--text-2); font-size: var(--fs-13); white-space: nowrap; }
+  .na { color: var(--text-3); font-size: var(--fs-13); }
+  td.plot { width: 22%; min-width: 150px; padding-top: 6px; padding-bottom: 6px; }
+  .iv { display: block; width: 100%; height: 28px; overflow: visible; }
+  .iv .grid { stroke: var(--line); stroke-width: 1; }
+  .iv .whisker { stroke-width: 2; stroke-linecap: round; }
+  .iv .dot { stroke: var(--surface); stroke-width: 2; }
+  .iv .base { stroke: var(--text-3); fill: var(--text-3); }
+  .iv .accent { stroke: var(--blue); fill: var(--blue); }
+  .iv .dot.base, .iv .dot.accent { stroke: var(--surface); }
+  tr.ours .iv .dot.accent { stroke: color-mix(in srgb, var(--blue-soft) 55%, var(--surface)); }
+  .iv:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 2px; box-shadow: none; }
+  .axis-row th { background: var(--surface); font-weight: 400; padding-top: 4px; padding-bottom: 4px; }
+  .axis { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .table-foot { padding: 10px 16px; border-top: 1px solid var(--line); font-size: var(--fs-13); color: var(--text-3); display: flex; gap: 16px; flex-wrap: wrap; }
+  .key { display: inline-flex; align-items: center; gap: 6px; }
+  .key svg { width: 26px; height: 10px; }
 
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            color: #ffffff;
-            font-weight: 700;
-        }
+  .tip {
+    position: fixed; z-index: 20; pointer-events: none; min-width: 180px;
+    background: var(--surface); color: var(--text); border: 1px solid var(--line-strong); border-radius: 6px;
+    padding: 8px 10px; font-size: var(--fs-13); box-shadow: 0 4px 16px rgba(20, 33, 61, 0.14);
+  }
+  .tip strong { display: block; font-size: var(--fs-15); font-variant-numeric: tabular-nums; }
+  .tip span { color: var(--text-2); }
 
-        .subtitle {
-            font-size: 1.2rem;
-            color: #aaaaaa;
-            margin-bottom: 2rem;
-        }
+  /* empty / error: anatomy from Primer's Blankslate (primer/react packages/react/src/Blankslate/Blankslate.tsx):
+     visual, heading, description, primary action, secondary action */
+  .blankslate { padding: 48px 24px 44px; text-align: center; }
+  .blankslate .visual { width: 40px; height: 40px; margin: 0 auto 12px; color: var(--text-3); }
+  .blankslate h2 { font-size: var(--fs-21); margin-bottom: 6px; }
+  .blankslate > p { color: var(--text-2); max-width: 60ch; margin: 0 auto; }
+  .blankslate .actions { display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 18px; }
+  .cmds { text-align: left; max-width: 640px; margin: 18px auto 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); }
+  .cmds ol { margin: 0; padding: 10px 14px 10px 34px; font-size: var(--fs-13); color: var(--text-2); }
+  .cmds li + li { margin-top: 8px; }
+  .cmds code { display: block; margin-top: 2px; font-size: var(--fs-13); color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .skel-row { padding: 18px 20px; }
 
-        .last-updated {
-            font-size: 0.9rem;
-            color: #666666;
-            margin-bottom: 2rem;
-        }
-
-        .scoreboard {
-            background-color: #1a1a1a;
-            border: 2px solid #333333;
-            border-radius: 8px;
-            overflow: auto;
-            margin-bottom: 3rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 1.1rem;
-        }
-
-        thead {
-            background-color: #222222;
-            border-bottom: 2px solid #333333;
-        }
-
-        th {
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: #ffffff;
-            border-right: 1px solid #333333;
-        }
-
-        th:last-child {
-            border-right: none;
-        }
-
-        td {
-            padding: 1rem;
-            border-right: 1px solid #333333;
-            border-bottom: 1px solid #333333;
-            font-weight: 500;
-        }
-
-        td:last-child {
-            border-right: none;
-        }
-
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .detector-name {
-            font-weight: 700;
-            color: #ffffff;
-            min-width: 150px;
-        }
-
-        .eval-set-header {
-            background-color: #333333;
-            font-weight: 700;
-            color: #ffffff;
-            text-align: center;
-            padding: 0.8rem 1rem;
-        }
-
-        .metric-group {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .metric {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 100px;
-        }
-
-        .metric-label {
-            font-size: 0.75rem;
-            color: #888888;
-            text-transform: uppercase;
-            margin-bottom: 0.25rem;
-        }
-
-        .metric-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .caught {
-            color: #4ade80;
-        }
-
-        .false-alarm {
-            color: #f87171;
-        }
-
-        .neutral {
-            color: #888888;
-        }
-
-        .highlighted {
-            background-color: #374151;
-            border: 3px solid #fbbf24;
-            box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
-        }
-
-        .blind-section {
-            background-color: #1a1a1a;
-            border: 2px solid #333333;
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .blind-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: #ffffff;
-        }
-
-        .blind-detectors {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .blind-detector {
-            background-color: #222222;
-            padding: 1.5rem;
-            border-radius: 6px;
-            border: 1px solid #333333;
-        }
-
-        .blind-detector-name {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: #ffffff;
-        }
-
-        .blind-metrics {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        .blind-metric {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .blind-metric-label {
-            font-size: 0.8rem;
-            color: #888888;
-            text-transform: uppercase;
-            margin-bottom: 0.25rem;
-        }
-
-        .blind-metric-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .no-results {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: #888888;
-            font-size: 1.3rem;
-        }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            body {
-                padding: 1rem;
-            }
-
-            table {
-                font-size: 0.9rem;
-            }
-
-            th, td {
-                padding: 0.7rem;
-            }
-
-            .metric-value {
-                font-size: 1.1rem;
-            }
-        }
-    </style>
+  .next {
+    display: flex; align-items: center; gap: 16px; margin-top: 28px; padding: 16px 20px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel);
+  }
+  .next p { color: var(--text-2); }
+  .next strong { color: var(--text); font-weight: 600; display: block; }
+  .next .btn { margin-left: auto; }
+</style>
 </head>
-<body>
-    <div class="container">
-        <h1>Leak Detection Scoreboard</h1>
-        <p class="subtitle">Ethical Wall Brain Evaluation Results</p>
-        <p class="last-updated">Last updated: <span id="updateTime">--:--:--</span> (Auto-refresh every 5s)</p>
-
-        <div id="content">
-            <div class="no-results">Loading results...</div>
-        </div>
+<body data-crumb="Evaluation">
+<main class="app-main">
+  <div class="page-head">
+    <div>
+      <h1>Evaluation</h1>
+      <p>How often each detector catches a paraphrased cross-client leak, and how often it flags a clean draft. Every rate shows its n and a 95% Wilson interval.</p>
     </div>
+    <div class="actions">
+      <span class="status" id="status" role="status"><span class="live-dot" aria-hidden="true"></span><span id="status-text">Reading results</span></span>
+      <a class="btn btn-secondary btn-sm" id="raw-link" href="/results/results.json">Raw JSON</a>
+    </div>
+  </div>
 
-    <script>
-        const params = new URLSearchParams(window.location.search);
-        const useSample = params.has('sample');
-        const resultsUrl = params.get('src') || (useSample ? './sample_results.json' : '../results/results.json');
+  <div id="content">
+    <section class="panel" aria-busy="true" aria-label="Loading results">
+      <div class="skel-row"><span class="skeleton" style="width:30%"></span><span class="skeleton" style="width:62%;height:36px"></span><span class="skeleton" style="width:48%"></span></div>
+      <div class="skel-row" style="border-top:1px solid var(--line)"><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span><span class="skeleton" style="width:70%"></span></div>
+    </section>
+  </div>
 
-        async function loadAndRender() {
-            try {
-                const response = await fetch(resultsUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                const data = await response.json();
-                render(data);
-            } catch (error) {
-                document.getElementById('content').innerHTML = `
-                    <div class="no-results">
-                        Unable to load results. ${useSample ? '(Sample mode)' : '(Make sure results.json exists at ../results/)'}<br/>
-                        <small>${error.message}</small>
-                    </div>
-                `;
-            }
-            updateTimestamp();
-        }
+  <section class="next" aria-label="Next step">
+    <div>
+      <strong>Next: the firm's policy</strong>
+      <p>The judge measures what slipped through. The policy decides what may compound in the first place.</p>
+    </div>
+    <a class="btn btn-primary" href="/demo/policy.html">Open the practice policy</a>
+  </section>
+</main>
+<div class="tip" id="tip" hidden></div>
 
-        function updateTimestamp() {
-            const now = new Date();
-            document.getElementById('updateTime').textContent = now.toLocaleTimeString();
-        }
+<script src="/demo/assets/nav.js" defer></script>
+<script>
+(function () {
+  "use strict";
 
-        function render(data) {
-            if (!data || Object.keys(data).length === 0) {
-                document.getElementById('content').innerHTML = '<div class="no-results">No results yet</div>';
-                return;
-            }
+  var params = new URLSearchParams(location.search);
+  var SAMPLE = params.has("sample");
+  var SRC = params.get("src") || (SAMPLE ? "./sample_results.json" : "/results/results.json");
+  var REFRESH_MS = 5000;
 
-            // Separate blind results from other eval sets
-            const blindResults = {};
-            const regularResults = {};
+  var DETECTORS = [
+    { id: "regex", name: "Regex fingerprint", sub: "Pattern matching, no model" },
+    { id: "carryover", name: "Carryover", sub: "Verbatim 6-gram overlap" },
+    { id: "base_judge", name: "Base Qwen", sub: "Qwen3.6-35B-A3B, no tuning" },
+    { id: "prompt_judge", name: "Prompt judge", sub: "Claude Sonnet 5, frontier, no tuning" },
+    { id: "river_judge", name: "River-tuned judge", sub: "Qwen + LoRA trained on River", ours: true }
+  ];
+  // Wording follows docs/pitch/claims.md, README "The numbers" and evals/independent/README.md.
+  var SETS = {
+    hard: { name: "Hard held-out", note: "Synthetic legal drafts across matters (judge_eval_hard.jsonl), paraphrased with synonyms never seen in training. Legal drafts, not O-1 petitions." },
+    independent: { name: "Independent", note: "Written by five teammates who never opened the training data, across formats, paraphrase, adversarial and immigration cases. The number to trust most." },
+    blind: { name: "Blind", note: "Hand-written blind set (data/blind.jsonl), entered on the blind-set screen and scored once." },
+    o1_demo: { name: "O-1 sanity check", note: "Self-written O-1 cases. A sanity check, never the headline." },
+    standard: { name: "Standard", note: "judge_eval.jsonl. A sanity check only." },
+    demo: { name: "Demo cases", note: "demo_leak_cases.jsonl, the cases used on stage. Never the headline." }
+  };
+  var WRITERS = {
+    indep_i1: "i1, name mix-ups", indep_i2: "i2, formats", indep_i3: "i3, paraphrase",
+    indep_i4: "i4, adversarial", indep_i5: "i5, immigration"
+  };
+  var PRIMARY = ["hard", "independent", "blind", "o1_demo", "standard", "demo"];
 
-            for (const [detector, evalSets] of Object.entries(data)) {
-                regularResults[detector] = {};
-                blindResults[detector] = null;
+  var content = document.getElementById("content");
+  var statusEl = document.getElementById("status");
+  var statusText = document.getElementById("status-text");
+  var tip = document.getElementById("tip");
+  var lastText = null, lastOkAt = null, current = null;
+  document.getElementById("raw-link").href = SRC;
 
-                for (const [evalSet, result] of Object.entries(evalSets)) {
-                    if (evalSet === 'blind') {
-                        blindResults[detector] = result;
-                    } else {
-                        regularResults[detector][evalSet] = result;
-                    }
-                }
-            }
+  // 95% Wilson score interval, same as evals/stats.py wilson_interval.
+  var Z = 1.959963984540054;
+  function wilson(k, n) {
+    if (!(n > 0) || k < 0 || k > n) return null;
+    var p = k / n, z2 = Z * Z, denom = 1 + z2 / n;
+    var center = p + z2 / (2 * n);
+    var margin = Z * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n));
+    return [Math.max(0, (center - margin) / denom), Math.min(1, (center + margin) / denom)];
+  }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function pct(x) {
+    var v = x * 100;
+    if (v === 0 || v === 100) return v.toFixed(0) + "%";
+    return v.toFixed(1) + "%";
+  }
+  function ciText(ci) { return ci ? pct(ci[0]).replace("%", "") + "–" + pct(ci[1]) : ""; }
+  function setName(id) { return (SETS[id] && SETS[id].name) || WRITERS[id] || id.replace(/_/g, " "); }
+  function clock(d) { return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }); }
+  function num(v) { return typeof v === "number" && isFinite(v); }
+  function valid(r) { return r && num(r.caught) && num(r.leaks) && num(r.false_alarms) && num(r.clean); }
 
-            // Order of detectors to display
-            const detectorOrder = ['regex', 'carryover', 'prompt_judge', 'base_judge', 'river_judge'];
-            const orderedDetectors = detectorOrder.filter(d => Object.keys(regularResults).includes(d));
+  function metric(k, n) { return n > 0 ? { k: k, n: n, p: k / n, ci: wilson(k, n) } : null; }
+  function row(data, det, set) {
+    var r = data[det] && data[det][set];
+    if (!valid(r)) return null;
+    return { recall: metric(r.caught, r.leaks), fa: metric(r.false_alarms, r.clean), n: num(r.n) ? r.n : r.leaks + r.clean, leaks: r.leaks, clean: r.clean };
+  }
+  function overlap(a, b) { return a.ci[0] <= b.ci[1] && b.ci[0] <= a.ci[1]; }
 
-            // Order of eval sets
-            const allEvalSets = new Set();
-            for (const evalSets of Object.values(regularResults)) {
-                Object.keys(evalSets).forEach(e => allEvalSets.add(e));
-            }
-            const evalSetOrder = ['hard', 'standard', 'demo'];
-            const orderedEvalSets = evalSetOrder.filter(e => allEvalSets.has(e));
-            const otherEvalSets = Array.from(allEvalSets).filter(e => !evalSetOrder.includes(e));
-            const sortedEvalSets = [...orderedEvalSets, ...otherEvalSets];
+  // ---------- headline: River hard set, always paired with the independent set ----------
+  function figure(label, m, word) {
+    if (!m) return "";
+    return '<div><div class="fig-label">' + label + '</div>' +
+      '<div class="fig-value">' + m.k + '<span class="of">/' + m.n + '</span></div>' +
+      '<div class="fig-ci">' + pct(m.p) + ' ' + word + ', 95% CI ' + ciText(m.ci) + '</div></div>';
+  }
+  function pairCell(title, setId, r) {
+    var note = '<p class="set-note">' + esc(SETS[setId].note) + '</p>';
+    if (!r) {
+      return '<div class="pair missing"><h3>' + title + '</h3>' + note +
+        '<div class="figs"><div><div class="fig-label">Leaks caught</div><div class="fig-value">Not yet run</div>' +
+        '<div class="fig-ci">Run <code>uv run python -m evals.independent.run</code></div></div></div></div>';
+    }
+    return '<div class="pair"><h3>' + title + ' <span class="meta">n = ' + r.n + ', ' + r.leaks + ' leaks and ' + r.clean + ' clean</span></h3>' + note +
+      '<div class="figs">' + figure("Leaks caught", r.recall, "recall") + figure("False alarms", r.fa, "of clean drafts") + '</div></div>';
+  }
+  function reading(h, i) {
+    if (!h || !i) {
+      return '<p><strong>Read 102/102 with care.</strong> The hard set comes from the same generator as the training data. Until the independent set is scored, this number has nothing to be checked against.</p>';
+    }
+    var s = [];
+    if (h.recall && i.recall) {
+      s.push(overlap(h.recall, i.recall)
+        ? "Recall holds on independent data: " + i.recall.k + "/" + i.recall.n + " against " + h.recall.k + "/" + h.recall.n + ", and the intervals overlap."
+        : "Recall does not hold on independent data: " + i.recall.k + "/" + i.recall.n + " against " + h.recall.k + "/" + h.recall.n + ", and the intervals don't overlap.");
+    }
+    if (h.fa && i.fa) {
+      var up = i.fa.p > h.fa.p;
+      s.push(overlap(h.fa, i.fa)
+        ? "False alarms move from " + h.fa.k + "/" + h.fa.n + " to " + i.fa.k + "/" + i.fa.n + "; the intervals overlap, so that change is within noise."
+        : "False alarms " + (up ? "rise" : "fall") + " from " + h.fa.k + "/" + h.fa.n + " to " + i.fa.k + "/" + i.fa.n + ", and the intervals don't overlap. " +
+          (up ? "Precision is the part that doesn't carry over." : ""));
+    }
+    return s.map(function (x) { return "<p>" + esc(x) + "</p>"; }).join("") +
+      '<span class="meta">Per-row misses and false alarms: evals/independent/README.md.</span>';
+  }
+  function headline(data) {
+    var h = row(data, "river_judge", "hard"), i = row(data, "river_judge", "independent");
+    if (!h && !i) return "";
+    return '<section class="panel headline" aria-label="River-tuned judge headline">' +
+      '<div class="headline-title"><h2>River-tuned judge</h2><span class="meta">The hard-set number is only ever shown next to the independent one.</span></div>' +
+      pairCell("Hard held-out set", "hard", h) + pairCell("Independent set", "independent", i) +
+      '<div class="reading">' + reading(h, i) + '</div></section>';
+  }
 
-            let html = '';
+  // ---------- interval table ----------
+  var W = 200, H = 28, PAD = 6;
+  function ivSvg(m, domain, accent, label) {
+    if (!m) return '<span class="na">No cases</span>';
+    var x = function (v) { return PAD + (Math.min(v, domain) / domain) * (W - 2 * PAD); };
+    var cls = accent ? "accent" : "base";
+    var ticks = [0, 0.25, 0.5, 0.75, 1].map(function (t) { var xv = PAD + t * (W - 2 * PAD); return '<line class="grid" x1="' + xv + '" x2="' + xv + '" y1="4" y2="' + (H - 4) + '"/>'; }).join("");
+    var tipText = label + "|" + m.k + "/" + m.n + " (" + pct(m.p) + ")|95% CI " + ciText(m.ci);
+    return '<svg class="iv" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" tabindex="0" data-tip="' + esc(tipText) + '" aria-label="' + esc(label + ": " + m.k + " of " + m.n + ", " + pct(m.p) + ", 95% interval " + ciText(m.ci)) + '">' +
+      ticks +
+      '<line class="whisker ' + cls + '" x1="' + x(m.ci[0]) + '" x2="' + x(m.ci[1]) + '" y1="' + H / 2 + '" y2="' + H / 2 + '"/>' +
+      '<circle class="dot ' + cls + '" cx="' + x(m.p) + '" cy="' + H / 2 + '" r="5"/></svg>';
+  }
+  function numCells(m) {
+    if (!m) return '<td class="grp"><span class="na">No cases</span></td><td></td>';
+    return '<td class="grp"><div class="kn">' + m.k + '/' + m.n + '</div><div class="pct">' + pct(m.p) + '</div></td>' +
+      '<td><div class="ci">' + ciText(m.ci) + '</div></td>';
+  }
+  function axisCells(domain) {
+    var labels = [0, 0.5, 1].map(function (t) { return pct(t * domain); });
+    return '<div class="axis"><span>' + labels[0] + '</span><span>' + labels[1] + '</span><span>' + labels[2] + '</span></div>';
+  }
+  function setTable(data, set) {
+    var rows = DETECTORS.map(function (d) { return { d: d, r: row(data, d.id, set) }; }).filter(function (x) { return x.r; });
+    // extra detectors in the file that we don't have copy for still show, by id
+    Object.keys(data).forEach(function (id) {
+      if (!DETECTORS.some(function (d) { return d.id === id; })) {
+        var r = row(data, id, set);
+        if (r) rows.push({ d: { id: id, name: id.replace(/_/g, " "), sub: "" }, r: r });
+      }
+    });
+    if (!rows.length) return '<div class="blankslate"><h2>No detector has run on this set</h2><p>Pick another set above.</p></div>';
+    var sample = rows[0].r;
+    var maxFa = 0;
+    rows.forEach(function (x) { if (x.r.fa) maxFa = Math.max(maxFa, x.r.fa.ci[1]); });
+    var faDomain = maxFa <= 0.25 ? 0.25 : maxFa <= 0.5 ? 0.5 : 1;
+    var note = SETS[set] ? SETS[set].note : (WRITERS[set] ? "One writer's 40-row slice of the independent set: 20 leaks, 20 clean. Intervals are wide at this n." : "");
+    var html = '<div class="set-desc"><strong>' + esc(setName(set)) + '</strong>, n = ' + sample.n + ' (' + sample.leaks + ' leaks, ' + sample.clean + ' clean). ' + esc(note) + '</div>';
+    html += '<table class="table"><thead><tr><th scope="col">Detector</th>' +
+      '<th scope="col" class="grp">Leaks caught</th><th scope="col">95% CI</th><th scope="col">Recall, 0 to 100%</th>' +
+      '<th scope="col" class="grp">False alarms</th><th scope="col">95% CI</th><th scope="col">False-alarm rate, 0 to ' + pct(faDomain) + '</th></tr></thead><tbody>';
+    rows.forEach(function (x) {
+      var d = x.d, r = x.r;
+      html += '<tr' + (d.ours ? ' class="ours"' : '') + '><th scope="row" style="font-weight:400;text-align:left;background:none;border-bottom:1px solid var(--line);padding:10px 12px"><div class="det-name">' + esc(d.name) + '</div><div class="det-sub">' + esc(d.sub) + '</div></th>' +
+        numCells(r.recall) + '<td class="plot">' + ivSvg(r.recall, 1, d.ours, d.name + ", leaks caught") + '</td>' +
+        numCells(r.fa) + '<td class="plot">' + ivSvg(r.fa, faDomain, d.ours, d.name + ", false alarms") + '</td></tr>';
+    });
+    html += '<tr class="axis-row"><th></th><th class="grp"></th><th></th><th>' + axisCells(1) + '</th><th class="grp"></th><th></th><th>' + axisCells(faDomain) + '</th></tr>';
+    html += '</tbody></table>';
+    html += '<div class="table-foot"><span class="key"><svg viewBox="0 0 26 10" aria-hidden="true"><line x1="2" x2="24" y1="5" y2="5" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="5" r="4" fill="var(--blue)"/></svg>River-tuned judge</span>' +
+      '<span class="key"><svg viewBox="0 0 26 10" aria-hidden="true"><line x1="2" x2="24" y1="5" y2="5" stroke="var(--text-3)" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="5" r="4" fill="var(--text-3)"/></svg>Baselines</span>' +
+      '<span>Dot is the measured rate; the line is its 95% Wilson interval. Each judge was sampled once per row.</span></div>';
+    return html;
+  }
 
-            // Main scoreboard
-            html += '<div class="scoreboard">';
-            html += '<table><thead><tr>';
-            html += '<th>Detector</th>';
+  function setsIn(data) {
+    var all = {};
+    Object.keys(data).forEach(function (det) { Object.keys(data[det] || {}).forEach(function (s) { if (valid(data[det][s])) all[s] = true; }); });
+    return Object.keys(all);
+  }
+  function pickerHtml(sets, chosen) {
+    var primary = PRIMARY.filter(function (s) { return sets.indexOf(s) >= 0; });
+    var writers = sets.filter(function (s) { return WRITERS[s]; }).sort();
+    var other = sets.filter(function (s) { return primary.indexOf(s) < 0 && !WRITERS[s]; }).sort();
+    primary = primary.concat(other);
+    var seg = '<div class="segmented" role="group" aria-label="Eval set">' + primary.map(function (s) {
+      return '<button type="button" data-set="' + esc(s) + '" aria-pressed="' + (s === chosen) + '">' + esc(setName(s)) + '</button>';
+    }).join("") + '</div>';
+    var sel = writers.length ? '<label>Independent, by writer <select id="writer-pick"><option value="">Pick a writer</option>' + writers.map(function (s) {
+      return '<option value="' + esc(s) + '"' + (s === chosen ? " selected" : "") + '>' + esc(WRITERS[s]) + '</option>';
+    }).join("") + '</select></label>' : "";
+    return '<div class="picker">' + seg + sel + '</div>';
+  }
 
-            // Header for each eval set
-            for (const evalSet of sortedEvalSets) {
-                html += `<th class="eval-set-header" colspan="3">${evalSet.charAt(0).toUpperCase() + evalSet.slice(1)}</th>`;
-            }
+  var chosenSet = null;
+  try { chosenSet = sessionStorage.getItem("wall.eval.set"); } catch (e) {}
+  function render(data) {
+    current = data;
+    var sets = setsIn(data);
+    if (!sets.length) return renderMissing("empty");
+    if (sets.indexOf(chosenSet) < 0) chosenSet = sets.indexOf("hard") >= 0 ? "hard" : sets.indexOf("independent") >= 0 ? "independent" : sets[0];
+    var html = "";
+    if (SAMPLE) html += '<div class="sample-flag" role="note"><strong>Sample file, not measured results.</strong><span>These placeholder numbers come from scoreboard/sample_results.json.</span><a href="/scoreboard/">Show measured results</a></div>';
+    html += headline(data);
+    html += '<div class="section-head"><div><h2>Every detector, by eval set</h2><p>The same five detectors on each set. Baselines in gray, ours in blue. Hover or focus a mark for its exact interval.</p></div></div>';
+    html += pickerHtml(sets, chosenSet);
+    html += '<section class="panel" id="set-panel" aria-live="polite">' + setTable(data, chosenSet) + '</section>';
+    content.innerHTML = html;
+  }
 
-            html += '</tr><tr><th>Detector</th>';
+  function renderMissing(kind, detail) {
+    current = null;
+    var missing = kind === "missing" || kind === "empty";
+    var icon = missing
+      ? '<svg class="visual" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>'
+      : '<svg class="visual" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v5M12 18v.01"/></svg>';
+    var body = missing
+      ? '<h2>Run the evals to fill this page</h2><p>' + (kind === "empty"
+          ? "results/results.json exists but has no scored sets yet."
+          : "There is no results/results.json in this checkout. The eval runners write it, and it is never committed.") +
+        " Run them from the repo root and this page picks the numbers up within 5 seconds.</p>" +
+        '<div class="cmds"><ol>' +
+        '<li>Pattern detectors on every set in the data pack (see data/README.md)<code>uv run python -m evals.run_guard</code></li>' +
+        '<li>The three judges on the hard set; repeat with <code style="display:inline">--judge base</code> and <code style="display:inline">--judge river</code><code>uv run python -m evals.run_judges --judge prompt --set hard</code></li>' +
+        '<li>Every detector on the independent set<code>uv run python -m evals.independent.run</code></li>' +
+        '</ol></div>' +
+        '<div class="actions"><button class="btn btn-primary" type="button" data-retry>Check again</button><a href="?sample">Preview the layout with the sample file</a></div>'
+      : '<h2>Results could not be read</h2><p>' + esc(detail || "") + '</p>' +
+        '<div class="actions"><button class="btn btn-primary" type="button" data-retry>Try again</button><a href="' + esc(SRC) + '">Open the raw file</a></div>';
+    content.innerHTML = '<section class="panel blankslate">' + icon + body + '</section>';
+  }
 
-            // Sub-headers for each metric
-            for (const evalSet of sortedEvalSets) {
-                html += '<th style="text-align: center; font-size: 0.9rem;">Leaks Caught</th>';
-                html += '<th style="text-align: center; font-size: 0.9rem;">False Alarms</th>';
-                html += '<th style="text-align: center; font-size: 0.9rem;">n</th>';
-            }
+  function setStatus(ok, text) {
+    statusEl.classList.toggle("stale", !ok);
+    statusText.textContent = text;
+  }
 
-            html += '</tr></thead>';
-            html += '<tbody>';
+  function load() {
+    return fetch(SRC, { cache: "no-store" }).then(function (r) {
+      if (r.status === 404) { var e = new Error("missing"); e.missing = true; throw e; }
+      if (!r.ok) throw new Error("The server answered HTTP " + r.status + ".");
+      return r.text();
+    }).then(function (text) {
+      var now = new Date();
+      if (text === lastText && current) { lastOkAt = now; setStatus(true, (SAMPLE ? "Sample file" : "Live") + ", read " + clock(now)); return; }
+      var data;
+      if (!text.trim()) data = {};
+      else {
+        try { data = JSON.parse(text); } catch (e) { throw new Error("The file is not valid JSON (" + e.message + ")."); }
+      }
+      lastText = text; lastOkAt = now;
+      if (!data || typeof data !== "object" || !Object.keys(data).length) renderMissing("empty");
+      else render(data);
+      setStatus(true, (SAMPLE ? "Sample file" : "Live") + ", read " + clock(now));
+    }).catch(function (err) {
+      if (current && lastOkAt) {
+        // keep the last good numbers on screen; say they're stale
+        setStatus(false, "Last read failed at " + clock(new Date()) + ". Showing " + clock(lastOkAt));
+        return;
+      }
+      lastText = null;
+      if (err.missing) { renderMissing("missing"); setStatus(false, "No results file yet"); }
+      else { renderMissing("error", err.message || String(err)); setStatus(false, "Read failed"); }
+    });
+  }
 
-            // Data rows
-            for (const detector of orderedDetectors) {
-                html += '<tr>';
-                html += `<td class="detector-name">${detector}</td>`;
+  content.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-set]");
+    if (b) { choose(b.getAttribute("data-set")); return; }
+    if (e.target.closest("[data-retry]")) load();
+  });
+  content.addEventListener("change", function (e) {
+    if (e.target.id === "writer-pick" && e.target.value) choose(e.target.value);
+  });
+  function choose(set) {
+    chosenSet = set;
+    try { sessionStorage.setItem("wall.eval.set", set); } catch (e) {}
+    if (current) {
+      var focusSet = document.activeElement && document.activeElement.getAttribute("data-set");
+      render(current);
+      if (focusSet) { var nb = content.querySelector('button[data-set="' + focusSet + '"]'); if (nb) nb.focus(); }
+      else if (WRITERS[set]) { var sel = document.getElementById("writer-pick"); if (sel) sel.focus(); }
+    }
+  }
 
-                for (const evalSet of sortedEvalSets) {
-                    const result = regularResults[detector][evalSet];
+  // one tooltip for every interval mark, on hover and keyboard focus
+  function showTip(svg, x, y) {
+    var parts = svg.getAttribute("data-tip").split("|");
+    tip.innerHTML = "";
+    var s = document.createElement("strong"); s.textContent = parts[1];
+    var a = document.createElement("span"); a.textContent = parts[2];
+    var l = document.createElement("div"); l.className = "meta"; l.textContent = parts[0];
+    tip.appendChild(l); tip.appendChild(s); tip.appendChild(a);
+    tip.hidden = false;
+    var w = tip.offsetWidth;
+    tip.style.left = Math.min(x + 14, innerWidth - w - 12) + "px";
+    tip.style.top = (y + 14) + "px";
+  }
+  content.addEventListener("pointermove", function (e) {
+    var svg = e.target.closest && e.target.closest("svg.iv");
+    if (svg) showTip(svg, e.clientX, e.clientY); else tip.hidden = true;
+  });
+  content.addEventListener("pointerleave", function () { tip.hidden = true; });
+  content.addEventListener("focusin", function (e) {
+    if (e.target.matches && e.target.matches("svg.iv")) { var r = e.target.getBoundingClientRect(); showTip(e.target, r.left + r.width / 2, r.bottom - 10); }
+  });
+  content.addEventListener("focusout", function () { tip.hidden = true; });
 
-                    if (!result) {
-                        html += '<td>-</td><td>-</td><td>-</td>';
-                    } else {
-                        // Determine if this cell should be highlighted
-                        const isHighlighted = detector === 'river_judge' && evalSet === 'hard' ||
-                                              (detector === 'prompt_judge' && evalSet === 'hard' && !regularResults['river_judge']);
-
-                        const cellClass = isHighlighted ? 'highlighted' : '';
-
-                        // Leaks caught
-                        const caughtTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">Caught</div><div class="metric-value caught">${result.caught}</div><div class="metric-label" style="font-size: 0.65rem;">${result.caught}/${result.leaks}</div></div></td>`;
-
-                        // False alarms
-                        const falseAlarmTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">False Alarms</div><div class="metric-value false-alarm">${result.false_alarms}</div><div class="metric-label" style="font-size: 0.65rem;">${result.false_alarms}/${result.clean}</div></div></td>`;
-
-                        // n (sample size)
-                        const nTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">n</div><div class="metric-value neutral">${result.n}</div></div></td>`;
-
-                        html += caughtTd + falseAlarmTd + nTd;
-                    }
-                }
-
-                html += '</tr>';
-            }
-
-            html += '</tbody></table>';
-            html += '</div>';
-
-            // Blind evaluation set in separate box
-            if (Object.values(blindResults).some(r => r !== null)) {
-                html += '<div class="blind-section">';
-                html += '<div class="blind-title">Blind Evaluation Set</div>';
-                html += '<div class="blind-detectors">';
-
-                for (const detector of orderedDetectors) {
-                    const result = blindResults[detector];
-                    if (!result) continue;
-
-                    html += '<div class="blind-detector">';
-                    html += `<div class="blind-detector-name">${detector}</div>`;
-                    html += '<div class="blind-metrics">';
-
-                    html += '<div class="blind-metric">';
-                    html += '<div class="blind-metric-label">Leaks Caught</div>';
-                    html += `<div class="blind-metric-value caught">${result.caught}/${result.leaks}</div>`;
-                    html += '</div>';
-
-                    html += '<div class="blind-metric">';
-                    html += '<div class="blind-metric-label">False Alarms</div>';
-                    html += `<div class="blind-metric-value false-alarm">${result.false_alarms}/${result.clean}</div>`;
-                    html += '</div>';
-
-                    html += '<div class="blind-metric">';
-                    html += '<div class="blind-metric-label">Sample Size</div>';
-                    html += `<div class="blind-metric-value neutral">${result.n}</div>`;
-                    html += '</div>';
-
-                    html += '<div class="blind-metric">';
-                    html += '<div class="blind-metric-label">Accuracy</div>';
-                    const accuracy = result.n > 0 ? Math.round((result.caught + (result.clean - result.false_alarms)) / result.n * 100) : 0;
-                    html += `<div class="blind-metric-value">${accuracy}%</div>`;
-                    html += '</div>';
-
-                    html += '</div>';
-                    html += '</div>';
-                }
-
-                html += '</div>';
-                html += '</div>';
-            }
-
-            document.getElementById('content').innerHTML = html;
-        }
-
-        // Initial load and set up auto-refresh
-        loadAndRender();
-        setInterval(loadAndRender, 5000);
-    </script>
+  load();
+  setInterval(load, REFRESH_MS);
+})();
+</script>
 </body>
 </html>
