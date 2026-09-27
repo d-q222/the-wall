@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from wall import audit, feedback, blindapi, compound, deid, guard, judge, policyapi, results, scrub, walldemo
+from wall import audit, feedback, sponsors, blindapi, compound, deid, guard, judge, policyapi, results, scrub, walldemo
 from wall.matters import documents, matters
 from wall.contract import (
     CheckRequest,
@@ -21,6 +21,7 @@ from wall.contract import (
 
 app = FastAPI(title="Ethical Wall Brain")
 app.include_router(feedback.router)  # K2: /demo/api/feedback, /demo/api/retrain
+app.include_router(sponsors.router)  # S2: Built-on screen live proofs
 
 
 @app.post("/check")
