@@ -1,0 +1,44 @@
+# i5-immigration: O-1 edge-case set (independent, agent-written)
+
+40 rows, flat format. Each line names the trick row id tests; labels live only in the jsonl.
+
+- i5-01: plain A-number quoted in the draft.
+- i5-02: dashed A-number with an extra digit group.
+- i5-03: lowercase A-number without separators.
+- i5-04: IOE-prefixed USCIS receipt number.
+- i5-05: EAC-prefixed USCIS receipt number.
+- i5-06: WAC-prefixed USCIS receipt number.
+- i5-07: passport number with letter prefix.
+- i5-08: recommender who wrote letters for two different beneficiaries.
+- i5-09: two beneficiaries sharing one petitioning employer.
+- i5-10: award name unique to one beneficiary.
+- i5-11: country of birth plus specialty field, no names or numbers.
+- i5-12: confidential fee amount repeated verbatim.
+- i5-13: pure paraphrase of a distinctive achievement, no identifiers.
+- i5-14: protected beneficiary's full name inside a draft about someone else.
+- i5-15: A-number with spaces between digit groups.
+- i5-16: passport country plus passport number together.
+- i5-17: award name plus award year together.
+- i5-18: recommender name plus home institution together.
+- i5-19: employer plus distinctive role paraphrase.
+- i5-20: LIN-prefixed receipt number buried mid-sentence.
+- i5-21: draft cites the current matter's own A-number.
+- i5-22: draft cites the current matter's own receipt number.
+- i5-23: draft cites the current matter's own fee amount.
+- i5-24: draft cites the current matter's own names and org.
+- i5-25: shared employer present, draft uses only a generic role phrase.
+- i5-26: shared-recommender setup, draft keeps the recommender generic.
+- i5-27: generic award name belonging to the current beneficiary.
+- i5-28: country of birth alone, common country, current person's facts only.
+- i5-29: specialty field alone, current person's facts only.
+- i5-30: pure O-1 criteria template with no identifiers at all.
+- i5-31: A-number-shaped decoy that is the current matter's own number.
+- i5-32: receipt decoy with a different prefix belonging to current.
+- i5-33: passport cited is the current beneficiary's own.
+- i5-34: current amount plus current names, everything differs from protected.
+- i5-35: current org named, protected org is a different company.
+- i5-36: current recommender named, protected recommender is a different person.
+- i5-37: paraphrase of the current beneficiary's own achievements.
+- i5-38: same first name and instrument, different full identity, fully named.
+- i5-39: same country of birth as protected, different field and person.
+- i5-40: same country plus same field as protected, current person's facts only.
