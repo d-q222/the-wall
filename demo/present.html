@@ -1,818 +1,148 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="light">
+<!doctype html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Present — Okafor &amp; Lind Immigration</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Wall</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
 <style>
-  /* Design v2 tokens (docs/DESIGN.md). Kept local and prefixed so the deck
-     renders the same whatever state the shared theme.css is in. */
-  :root {
-    --ui: "Public Sans", -apple-system, "Segoe UI", sans-serif;
-    --doc: "Source Serif 4", Georgia, "Times New Roman", serif;
-    --paper: #FBFBF9;
-    --canvas: #E6E9ED;
-    --tab: #D3D9E1;
-    --line: #CBD2DC;
-    --ink: #14213D;
-    --ink-2: #4A5670;
-    --ink-3: #7A8499;
-    --blue: #1F4E9E;
-    --found: #FFE58A;
-    --risk: #C2410C;
-    --cleared: #1E7B4F;
-    --sheet-shadow: 0 1px 2px rgba(20, 33, 61, .08), 0 12px 32px -8px rgba(20, 33, 61, .18);
-    --turn: 420ms;
-  }
-  :root[data-theme="dark"] {
-    --paper: #182238;
-    --canvas: #0E1526;
-    --tab: #1F2A42;
-    --line: #2C3957;
-    --ink: #E6E9ED;
-    --ink-2: #AEB7C7;
-    --ink-3: #7F8AA0;
-    --blue: #8DB0F0;
-    --risk: #F08A5D;
-    --cleared: #5CC495;
-    --sheet-shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px -8px rgba(0, 0, 0, .6);
-  }
-
+  :root { --paper:#FBFBF9; --ink:#14213D; --muted:#5B6478; --blue:#1F4E9E; --found:#FFE58A; --risk:#C2410C; --ok:#1E7B4F; --line:#D5DAE1; }
   * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    overflow: hidden;
-    background: var(--canvas);
-    color: var(--ink);
-    font-family: var(--ui);
-    font-size: 17px;
-    line-height: 1.5;
-    font-variant-numeric: tabular-nums lining-nums;
-  }
-  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-
-  /* ---------- The binder: one paper sheet, index tabs on its right edge ---------- */
-  .binder {
-    position: fixed;
-    inset: 28px 0 28px 44px;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 184px;
-  }
-  .sheet {
-    position: relative;
-    background: var(--paper);
-    border-radius: 2px;
-    box-shadow: var(--sheet-shadow);
-    overflow: hidden;
-    z-index: 1;
-  }
-
-  .tabs {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding-top: 40px;
-    margin: 0;
-    list-style: none;
-    padding-left: 0;
-    position: relative;
-    z-index: 2;
-  }
-  .tabs button {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    width: 168px;
-    margin-left: -2px;
-    padding: 11px 14px 11px 18px;
-    border: 0;
-    border-radius: 0 4px 4px 0;
-    background: var(--tab);
-    color: var(--ink-2);
-    font: 500 15px/1.25 var(--ui);
-    text-align: left;
-    cursor: pointer;
-    transition: background 160ms ease, color 160ms ease, width 160ms ease;
-  }
-  .tabs button:hover { color: var(--ink); }
-  .tabs .ltr { flex: none; width: 1.1em; color: var(--ink-3); font-weight: 600; }
-  .tabs button[aria-current="step"] {
-    width: 182px;
-    background: var(--paper);
-    color: var(--ink);
-    font-weight: 600;
-    box-shadow: 4px 2px 10px -4px rgba(20, 33, 61, .18);
-  }
-  .tabs button[aria-current="step"] .ltr { color: var(--blue); }
-
-  /* Presenter clock sits under the tabs, where only the presenter looks. */
-  .clock {
-    position: absolute;
-    right: 16px;
-    bottom: 0;
-    width: 150px;
-    font-size: 13px;
-    color: var(--ink-3);
-    transition: opacity 200ms;
-  }
-  .clock p { margin: 0 0 2px; }
-  .clock .over { color: var(--risk); }
-  .clock .keys { margin-top: 10px; line-height: 1.9; }
-  kbd { font-family: inherit; border: 1px solid var(--line); border-radius: 4px; padding: 0 .35em; background: var(--paper); }
-  body.chrome-off .clock { opacity: 0; }
-
-  /* ---------- Beats ---------- */
-  .beat { position: absolute; inset: 0; display: none; }
-  .beat.on { display: flex; }
-  .beat.entering { display: flex; z-index: 2; background: var(--paper); animation: turn-in var(--turn) cubic-bezier(.6, 0, .2, 1) both; }
-  .beat.entering.back { animation-name: turn-in-back; }
-  /* Turning to a tab: the new page is uncovered from the tab edge. */
-  @keyframes turn-in { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
-  @keyframes turn-in-back { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
-
-  /* ---------- Cover ---------- */
-  .beat.cover.on, .beat.cover.entering { display: grid; }
-  .cover {
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    align-items: center;
-    gap: 5vw;
-    padding: 0 5vw 0 6vw;
-  }
-  .cover .beat-copy h1 {
-    font-family: var(--doc);
-    font-weight: 600;
-    font-size: clamp(2.4rem, 3.9vw, 4.2rem);
-    line-height: 1.08;
-    letter-spacing: -0.012em;
-    margin: 0 0 28px;
-    max-width: 15ch;
-  }
-  .cover .beat-copy p {
-    font-size: clamp(1.05rem, 1.35vw, 1.3rem);
-    line-height: 1.55;
-    color: var(--ink-2);
-    margin: 0 0 16px;
-    max-width: 40ch;
-  }
-  .cover .beat-copy p strong { color: var(--ink); font-weight: 600; }
-
-  /* The exhibit excerpt: a document inside the document. */
-  .excerpt {
-    font-family: var(--doc);
-    font-size: clamp(1rem, 1.3vw, 1.28rem);
-    line-height: 1.75;
-    color: var(--ink);
-    background: #FFFFFF;
-    border: 1px solid var(--line);
-    border-radius: 2px;
-    padding: 34px 38px 30px;
-    margin: 0;
-  }
-  :root[data-theme="dark"] .excerpt { background: #1E2944; }
-  .excerpt header {
-    font-family: var(--ui);
-    font-size: 13px;
-    color: var(--ink-3);
-    margin-bottom: 18px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--line);
-    display: flex;
-    justify-content: space-between;
-  }
-  .excerpt p { margin: 0 0 14px; }
-  .excerpt mark {
-    background: transparent;
-    color: inherit;
-    border-radius: 2px;
-    padding: 0 1px;
-    box-decoration-break: clone;
-    -webkit-box-decoration-break: clone;
-    transition: background-color 260ms ease;
-  }
-  .excerpt mark.lit { background: var(--found); color: #14213D; }
-  .excerpt .residual {
-    text-decoration: underline 2px transparent;
-    text-underline-offset: 4px;
-    transition: text-decoration-color 400ms ease;
-  }
-  .excerpt .residual.lit { text-decoration-color: var(--risk); }
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 22px;
-    margin-top: 18px;
-    font-family: var(--ui);
-    font-size: 13px;
-    color: var(--ink-2);
-    opacity: 0;
-    transition: opacity 300ms ease;
-  }
-  .legend.lit { opacity: 1; }
-  .legend span { white-space: nowrap; }
-  .legend span::before {
-    content: "";
-    display: inline-block;
-    width: 22px;
-    height: 10px;
-    margin-right: 8px;
-    vertical-align: 0;
-    border-radius: 2px;
-  }
-  .legend .k-found::before { background: var(--found); }
-  .legend .k-risk::before { height: 0; border-bottom: 2px solid var(--risk); vertical-align: 3px; }
-
-  /* ---------- Embed beats ---------- */
-  .embed { flex-direction: column; }
-  .caption {
-    flex: none;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 34ch);
-    align-items: end;
-    gap: 4vw;
-    padding: 30px 44px 20px;
-  }
-  .caption h2 {
-    font-family: var(--doc);
-    font-weight: 600;
-    font-size: clamp(1.6rem, 2.5vw, 2.5rem);
-    line-height: 1.14;
-    letter-spacing: -0.008em;
-    margin: 0;
-    max-width: 30ch;
-  }
-  .caption .aside {
-    font-size: 15px;
-    line-height: 1.5;
-    color: var(--ink-2);
-    margin: 0;
-  }
-  .stage {
-    position: relative;
-    flex: 1;
-    margin: 0 44px 36px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--canvas);
-    overflow: hidden;
-  }
-  .stage iframe {
-    position: absolute;
-    top: 0; left: 0;
-    border: 0;
-    transform-origin: 0 0;
-    background: var(--canvas);
-    opacity: 0;
-    transition: opacity 240ms ease;
-  }
-  .stage.ready iframe { opacity: 1; }
-
-  .skeleton {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    grid-template-columns: 17% 1fr;
-    gap: 3%;
-    padding: 0 3% 0 0;
-    transition: opacity 240ms ease;
-  }
-  .stage.ready .skeleton { opacity: 0; pointer-events: none; }
-  .skeleton i { display: block; background: var(--tab); animation: breathe 1.6s ease-in-out infinite alternate; }
-  .skeleton i:nth-child(1) { background: var(--ink); opacity: .9; animation: none; }
-  .skeleton i:nth-child(2) { margin: 4% 0; border-radius: 2px; background: var(--paper); }
-  @keyframes breathe { from { opacity: .55; } to { opacity: 1; } }
-
-  .missing {
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 2rem;
-    color: var(--ink-2);
-    font-size: 1.1rem;
-  }
-  .missing code { font-family: inherit; font-weight: 600; color: var(--ink); }
-  .stage.absent .missing { display: flex; }
-  .stage.absent .skeleton { display: none; }
-
-  /* ---------- Evaluation ---------- */
-  .score .caption { grid-template-columns: minmax(0, 1fr) 470px; align-items: start; }
-  .score h2 .n { font-family: var(--ui); font-weight: 700; letter-spacing: -0.02em; }
-  .score h2 .n.bad { color: var(--risk); }
-  .score h2 .n.good { color: var(--cleared); }
-  .blank { display: inline-block; min-width: 2ch; border-bottom: 3px solid var(--line); color: transparent; }
-
-  .ledger { width: 100%; border-collapse: collapse; font-size: 14px; }
-  .ledger th, .ledger td { padding: 5px 0; border-bottom: 1px solid var(--line); text-align: right; font-weight: 400; }
-  .ledger th:first-child, .ledger td:first-child { text-align: left; }
-  .ledger thead th { color: var(--ink-3); font-size: 13px; }
-  .ledger tbody tr:last-child td { border-bottom: 0; font-weight: 600; color: var(--ink); }
-  .ledger td { color: var(--ink-2); }
-  .ledger .ci { display: block; font-size: 12px; font-weight: 400; color: var(--ink-3); }
-  .ledger th:nth-child(2), .ledger td:nth-child(2) { padding-right: 18px; }
-  .caveat { margin: 10px 0 0; font-size: 13px; line-height: 1.45; color: var(--ink-2); }
-  .caveat strong { color: var(--ink); font-weight: 600; }
-
-  .bars {
-    position: absolute;
-    inset: 0;
-    display: none;
-    flex-direction: column;
-    justify-content: center;
-    gap: 22px;
-    padding: 4% 7%;
-    background: var(--paper);
-  }
-  .stage.bars-on .bars { display: flex; }
-  .stage.bars-on .missing, .stage.bars-on .skeleton { display: none; }
-  .bar { display: grid; grid-template-columns: 17ch 1fr 10ch; align-items: center; gap: 24px; font-size: clamp(1rem, 1.3vw, 1.3rem); }
-  .bar .track { height: 18px; background: var(--canvas); border-radius: 2px; overflow: hidden; }
-  .bar .fill { display: block; height: 100%; width: 0; background: var(--ink-3); transition: width 900ms cubic-bezier(.2, .7, .2, 1); }
-  .bar.river .fill { background: var(--blue); }
-  .bar .val { text-align: right; color: var(--ink-2); }
-
-  /* ---------- Close ---------- */
-  .close { flex-direction: column; justify-content: center; padding: 0 6vw; }
-  .split {
-    display: grid;
-    grid-template-columns: 1fr 2px 1fr;
-    grid-template-rows: auto auto;
-    column-gap: 4vw;
-    row-gap: 18px;
-  }
-  .split .rule { grid-column: 2; grid-row: 1 / 3; background: var(--risk); }
-  .split .l { grid-column: 1; text-align: right; justify-self: end; }
-  .split .r { grid-column: 3; }
-  .split .h {
-    grid-row: 1;
-    font-family: var(--doc);
-    font-weight: 600;
-    font-size: clamp(2.2rem, 4.2vw, 4.6rem);
-    line-height: 1.05;
-    letter-spacing: -0.012em;
-    margin: 0;
-    white-space: nowrap;
-  }
-  .split .s { grid-row: 2; max-width: 30ch; margin: 0; font-size: clamp(1rem, 1.3vw, 1.3rem); color: var(--ink-2); }
-  .close .repo { margin: 64px 0 0; text-align: center; font-size: 17px; color: var(--ink-2); }
-  .close .repo a { color: var(--blue); text-underline-offset: .25em; }
-
-  @media (prefers-reduced-motion: reduce) {
-    :root { --turn: 1ms; }
-    .skeleton i, .excerpt mark, .excerpt .residual, .legend { animation: none; transition: none; }
-  }
-  @media (max-width: 1100px) {
-    .binder { grid-template-columns: minmax(0, 1fr) 132px; inset: 16px 0 16px 16px; }
-    .tabs button { width: 124px; font-size: 13px; }
-    .tabs button[aria-current="step"] { width: 130px; }
-    .clock { width: 110px; }
-    .clock .keys { display: none; }
-    .cover { grid-template-columns: 1fr; overflow: auto; padding: 32px; }
-    .caption { grid-template-columns: 1fr; }
-  }
+  html, body { margin:0; height:100%; background:var(--paper); color:var(--ink); font-family:"Public Sans", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+  .slide { position:absolute; inset:0; display:none; flex-direction:column; justify-content:center; padding:0 9vw; }
+  .slide.on { display:flex; }
+  h1 { font:600 clamp(40px, 5.2vw, 76px)/1.08 "Source Serif 4", Georgia, serif; margin:0 0 3vh; max-width:18ch; }
+  p.lead { font-size:clamp(20px, 1.8vw, 28px); line-height:1.45; color:var(--muted); margin:0; max-width:46ch; }
+  .rows { display:grid; gap:2.2vh; margin-top:4vh; max-width:1100px; }
+  .row { display:grid; grid-template-columns:230px 1fr; gap:28px; align-items:baseline; font-size:clamp(20px, 1.7vw, 26px); }
+  .row b { font-weight:700; }
+  .row span { color:var(--muted); line-height:1.4; }
+  .req { display:flex; justify-content:space-between; gap:24px; padding:1.6vh 22px; border:1px solid var(--line); border-radius:8px; background:#fff; font-size:clamp(18px, 1.6vw, 24px); }
+  .req .out { font-weight:700; }
+  .req .out.held { color:var(--risk); } .req .out.ok { color:var(--ok); }
+  .doc { font:clamp(21px, 1.9vw, 29px)/1.6 "Source Serif 4", Georgia, serif; max-width:1100px; background:#fff; border:1px solid var(--line); border-radius:2px; padding:3.5vh 3vw; box-shadow:0 1px 2px rgba(20,33,61,.08); }
+  .doc mark { background:var(--found); padding:0 3px; border-radius:3px; }
+  .doc .ph { background:#E3ECF9; color:var(--blue); padding:0 6px; border-radius:4px; font:600 .78em "Public Sans", sans-serif; }
+  .doc .flag { text-decoration:underline 3px var(--risk); text-underline-offset:5px; }
+  .verdict { margin-top:2.5vh; font-size:clamp(18px, 1.5vw, 23px); color:var(--muted); }
+  .verdict b { color:var(--risk); }
+  .nums { display:grid; grid-template-columns:repeat(3, 1fr); gap:3vw; margin-top:4vh; max-width:1250px; }
+  .num strong { display:block; font:600 clamp(54px, 6vw, 92px)/1 "Source Serif 4", serif; }
+  .num span { display:block; margin-top:1.4vh; font-size:clamp(17px, 1.4vw, 21px); line-height:1.4; color:var(--muted); }
+  .note { margin-top:4vh; font-size:clamp(15px, 1.15vw, 18px); color:var(--muted); max-width:80ch; }
+  button { font:600 18px "Public Sans", sans-serif; color:#fff; background:var(--blue); border:0; border-radius:6px; padding:12px 20px; cursor:pointer; align-self:flex-start; margin-top:3vh; }
+  button:focus-visible { outline:3px solid var(--found); outline-offset:3px; }
+  .foot { position:fixed; bottom:18px; right:24px; font-size:14px; color:var(--muted); }
+  .tag { font-size:14px; color:var(--muted); margin-left:10px; }
 </style>
 </head>
 <body>
 
-<div class="binder">
-  <main class="sheet" id="deck" aria-live="polite">
+<section class="slide on">
+  <h1>Law firms can't let AI learn from past cases.</h1>
+  <p class="lead">Every file belongs to a client. ABA Formal Opinion 512: a tool that learns from one client can't carry their facts into another client's work without informed consent. So firms use AI that forgets.</p>
+</section>
 
-    <section class="beat cover" data-target="10" data-tab="Cover" aria-label="Cover">
-      <div class="beat-copy">
-        <h1>Every O-1 you have won is a playbook.</h1>
-        <p>It is also one person’s file. Under <strong>ABA Formal Opinion 512</strong>, a tool that learns from one client can’t carry their facts into another client’s matter without informed consent.</p>
-        <p>So firms use AI that forgets. We built one that remembers the argument and walls off the person.</p>
-      </div>
-      <figure class="excerpt" id="excerpt">
-        <header><span>Matter o1-achterberg</span><span>Cover letter, synthetic</span></header>
-        <p><mark>Halcyon Vision Labs, Inc.</mark> petitions for O-1A classification on behalf of <mark>Dr. Simone Achterberg</mark>, Principal Research Scientist, <mark>A128&#8209;773&#8209;410</mark>, USCIS receipt <mark>IOE0912345671</mark>.</p>
-        <p>She is <span class="residual">the only researcher to win the Halvorsen Prize twice</span>. Her compensation, <mark>$215,000</mark>, reflects <mark>Halcyon</mark>’s determination to keep her.</p>
-        <div class="legend" id="legend"><span class="k-found">Identifiers a pattern can find</span><span class="k-risk">Still points to one person</span></div>
-      </figure>
-    </section>
+<section class="slide">
+  <h1>Each client's AI can only see its own file.</h1>
+  <p class="lead">Chen's agent asks for another client's file.</p>
+  <div class="rows" id="wall"></div>
+  <button id="runWall">Run the attack live</button>
+</section>
 
-    <section class="beat embed" data-target="15" data-tab="Access wall" data-src="/demo/wall.html" data-run="wall" aria-label="Access wall">
-      <div class="caption">
-        <h2>One matter’s agent asks for another matter’s file. The wall refuses.</h2>
-        <p class="aside">A live request across two O-1 matters. Every refusal is written to the audit log.</p>
-      </div>
-      <div class="stage"><div class="skeleton"><i></i><i></i></div><div class="missing"><p>The access wall screen isn’t being served. Start the API and open <code>/demo/wall.html</code>.</p></div></div>
-    </section>
-
-    <section class="beat embed" data-target="25" data-tab="Review" data-src="/demo/?sample=o1-achterberg" data-run="deid" aria-label="Review">
-      <div class="caption">
-        <h2>Keep the argument. Lose the person.</h2>
-        <p class="aside">One exhibit from a synthetic O-1 matter. Identifiers become typed placeholders; the judge then reads what is left for anything that still points to one beneficiary.</p>
-      </div>
-      <div class="stage"><div class="skeleton"><i></i><i></i></div><div class="missing"><p>The review screen isn’t being served. Start the API and open <code>/demo/</code>.</p></div></div>
-    </section>
-
-    <section class="beat embed" data-target="15" data-tab="Datasets" data-src="/demo/datasets.html" data-run="datasets" aria-label="Datasets">
-      <div class="caption">
-        <h2>Past petitions become a training set, one cleared exhibit at a time.</h2>
-        <p class="aside">Batch de-identify a matter. Only exhibits the judge clears go into the set.</p>
-      </div>
-      <div class="stage"><div class="skeleton"><i></i><i></i></div><div class="missing"><p>The datasets screen isn’t being served. Start the API and open <code>/demo/datasets.html</code>.</p></div></div>
-    </section>
-
-    <section class="beat embed" data-target="15" data-tab="Model" data-src="/demo/training.html" data-run="model" data-optional aria-label="Model">
-      <div class="caption">
-        <h2>Every correction an attorney makes teaches the firm’s own model.</h2>
-        <p class="aside">Fixes to de-identified exhibits become training examples, and the firm’s River model retrains on them.</p>
-      </div>
-      <div class="stage"><div class="skeleton"><i></i><i></i></div><div class="missing"><p>The model screen isn’t being served. Start the API and open <code>/demo/training.html</code>.</p></div></div>
-    </section>
-
-    <section class="beat embed" data-target="15" data-tab="Know-how" data-src="/demo/compound.html" data-run="compound" aria-label="Know-how">
-      <div class="caption">
-        <h2>What worked on one petition improves the next. The facts stay behind.</h2>
-        <p class="aside">A drafting procedure learned on one matter, applied to another.</p>
-      </div>
-      <div class="stage"><div class="skeleton"><i></i><i></i></div><div class="missing"><p>The know-how screen isn’t being served. Start the API and open <code>/demo/compound.html</code>.</p></div></div>
-    </section>
-
-    <section class="beat embed score" data-target="15" data-tab="Evaluation" data-src="/scoreboard/" aria-label="Evaluation">
-      <div class="caption">
-        <div>
-          <h2>Regex caught <span class="n bad" data-k="regex"><span class="blank">__</span></span> of <span data-k="leaks">102</span> paraphrased leaks. The River-tuned judge caught <span class="n good" data-k="ours"><span class="blank">__</span></span>.</h2>
-          <p class="caveat"><strong>Held-out hard set, same generator as training.</strong> 69 of its 200 drafts share more than half their 8&#8209;grams with training drafts, so this is an easy test for a tuned model. The blind set, written by hand, is the stronger one.</p>
-        </div>
-        <table class="ledger" id="ledger" aria-label="Hard set results by detector">
-          <thead><tr><th>Detector</th><th>Leaks caught</th><th>False alarms</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="stage">
-        <div class="skeleton"><i></i><i></i></div>
-        <div class="missing"><p>The evaluation screen isn’t being served. Start the API and open <code>/scoreboard/</code>.</p></div>
-        <div class="bars" id="bars"></div>
-      </div>
-    </section>
-
-    <section class="beat close" data-target="10" data-tab="Close" aria-label="Close">
-      <div class="split">
-        <p class="h l">Compound the how.</p>
-        <span class="rule" aria-hidden="true"></span>
-        <p class="h r">Wall the what.</p>
-        <p class="s l">Procedure, structure and argument carry forward to every new petition.</p>
-        <p class="s r">Names, employers, salaries and awards stay inside the matter they came from.</p>
-      </div>
-      <p class="repo"><a href="https://github.com/d-q222/the-wall">github.com/d-q222/the-wall</a></p>
-    </section>
-
-  </main>
-
-  <div>
-    <ol class="tabs" id="tabs" aria-label="Story"></ol>
-    <div class="clock" id="clock-box" aria-hidden="true">
-      <p id="beat-clock">0:00 of 0:15</p>
-      <p id="clock">0:00 / 2:00</p>
-      <p class="keys"><kbd>←</kbd> <kbd>→</kbd> turn the tab<br><kbd>r</kbd> run again<br><kbd>f</kbd> full screen<br><kbd>h</kbd> hide this<br><kbd>d</kbd> dark mode</p>
-    </div>
+<section class="slide">
+  <h1>Past petitions become training data. The person doesn't.</h1>
+  <div class="doc" id="doc">
+    <mark>Halcyon Vision Labs, Inc.</mark> petitions on behalf of <mark>Dr. Simone Achterberg</mark>, <mark>A128-773-410</mark>. She is <span class="flag">the only researcher to win the Halvorsen Prize twice</span>. Salary <mark>$215,000</mark>.
   </div>
-</div>
+  <p class="verdict" id="verdict">Yellow: identifiers rules can find. Underlined: a description that still points to one person, which only a model catches.</p>
+  <button id="runDeid">De-identify</button>
+</section>
+
+<section class="slide">
+  <h1>Pattern matching isn't enough. Models are.</h1>
+  <div class="nums" id="nums"></div>
+  <p class="note" id="numnote"></p>
+</section>
+
+<section class="slide">
+  <h1>Built on</h1>
+  <div class="rows">
+    <div class="row"><b>GBrain</b><span>The wall. One isolated memory per client, each agent with read-only access to its own.</span></div>
+    <div class="row"><b>River</b><span>Trains models the firm owns: a de-identifier that follows the firm's rules, and a judge that catches what's left.</span></div>
+    <div class="row"><b>Memorable</b><span>Keeps the firm's know-how, only after scrubbing: procedures carry over, client facts don't.</span></div>
+    <div class="row"><b>QM</b><span>A room per matter. An admin approves anything that crosses between rooms.</span></div>
+    <div class="row"><b>Superset</b><span>How we built it: 40+ coding agents in parallel, one worktree each.</span></div>
+  </div>
+</section>
+
+<section class="slide">
+  <h1>Compound the how.<br>Wall the what.</h1>
+  <p class="lead">github.com/d-q222/the-wall</p>
+</section>
+
+<div class="foot" id="foot"></div>
 
 <script>
-(function () {
-  "use strict";
+const slides = [...document.querySelectorAll('.slide')];
+let i = Math.min(Math.max(parseInt(location.hash.slice(1), 10) || 0, 0), slides.length - 1);
+function show(n) {
+  i = Math.min(Math.max(n, 0), slides.length - 1);
+  slides.forEach((s, k) => s.classList.toggle('on', k === i));
+  document.getElementById('foot').textContent = `${i + 1} / ${slides.length}`;
+  history.replaceState(null, '', '#' + i);
+}
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')) return;
+  if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) show(i + 1);
+  if (['ArrowLeft', 'PageUp'].includes(e.key)) show(i - 1);
+});
+show(i);
 
-  var beats;
-  var TOTAL = 120;
-  var cur = -1;
-  var started = null;
-  var beatStarted = null;
-  var busy = false;
+const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
-  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var TURN = reduced ? 1 : 420;
+document.getElementById('runWall').onclick = async () => {
+  const box = document.getElementById('wall');
+  box.innerHTML = '<div class="req"><span>Sending requests to GBrain...</span></div>';
+  try {
+    const r = await (await fetch('/demo/api/wall?matter=chen&target=delmarva', { method: 'POST' })).json();
+    const plain = { 'search': 'Search', 'get_page': 'Open' };
+    box.innerHTML = r.checks.map(c => {
+      const own = /own|control/i.test(c.name);
+      return `<div class="req"><span>${esc(c.name)}</span><span class="out ${own ? 'ok' : 'held'}">${esc(c.result)}</span></div>`;
+    }).join('') + `<div class="req"><span><b>Wall held ${r.passed} of ${r.total}</b>${r.replayed ? '<span class="tag">replayed from last live run</span>' : ''}</span><span class="out ok">GBrain</span></div>`;
+  } catch { box.innerHTML = '<div class="req"><span>GBrain did not answer. Run walls/attack.py.</span></div>'; }
+};
 
-  // ---------- Binder tabs: lettered like exhibits, cover and close unlettered ----------
-  var tabs = document.getElementById("tabs");
-  var tabBtns;
-  function buildTabs() {
-  var letter = 0;
-  beats.forEach(function (b, i) {
-    var name = b.getAttribute("data-tab");
-    var lettered = i > 0 && i < beats.length - 1;
-    var li = document.createElement("li");
-    var btn = document.createElement("button");
-    btn.type = "button";
-    btn.innerHTML = '<span class="ltr">' + (lettered ? String.fromCharCode(65 + letter++) : "") + "</span><span></span>";
-    btn.lastChild.textContent = name;
-    btn.addEventListener("click", function () { go(i); });
-    li.appendChild(btn);
-    tabs.appendChild(li);
-  });
-  tabBtns = tabs.querySelectorAll("button");
-  }
+document.getElementById('runDeid').onclick = async () => {
+  const doc = document.getElementById('doc'), v = document.getElementById('verdict');
+  const text = doc.innerText;
+  v.textContent = 'De-identifying...';
+  try {
+    const r = await (await fetch('/deidentify', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text, practice: 'immigration', matter_id: 'o1-achterberg' }) })).json();
+    doc.innerHTML = esc(r.text).replace(/\[([A-Z_0-9]+)\]/g, '<span class="ph">$1</span>');
+    const res = r.residual;
+    v.innerHTML = `${r.removed} identifiers replaced. ` + (res ? (res.verdict === 'leak'
+      ? `The judge still flags: <b>${esc(res.evidence || 'a remaining identifier')}</b>`
+      : `The judge found nothing left that points to one person.`) + ` <span class="tag">judge: ${esc(r.judge || 'n/a')}</span>` : '');
+  } catch { v.textContent = 'The de-identifier did not answer.'; }
+};
 
-  // ---------- Cover: identifiers light up one by one, the residual last ----------
-  var coverTimers = [];
-  function playCover() {
-    coverTimers.forEach(clearTimeout);
-    var marks = document.querySelectorAll("#excerpt mark");
-    var res = document.querySelector("#excerpt .residual");
-    var leg = document.getElementById("legend");
-    marks.forEach(function (m) { m.classList.remove("lit"); });
-    res.classList.remove("lit");
-    leg.classList.remove("lit");
-    var step = reduced ? 0 : 260;
-    marks.forEach(function (m, k) { coverTimers.push(setTimeout(function () { m.classList.add("lit"); }, 900 + k * step)); });
-    coverTimers.push(setTimeout(function () { res.classList.add("lit"); leg.classList.add("lit"); }, 900 + marks.length * step + (reduced ? 0 : 700)));
-  }
-
-  // ---------- Embeds: preload every screen once, scale a 1440px layout to fit ----------
-  var DESIGN_W = 1440;
-
-  function fitStage(stage) {
-    var frame = stage.querySelector("iframe");
-    if (!frame) return;
-    var w = stage.clientWidth, h = stage.clientHeight;
-    var s = Math.min(1, w / DESIGN_W);
-    frame.style.width = (w / s) + "px";
-    frame.style.height = (h / s) + "px";
-    frame.style.transform = "scale(" + s + ")";
-  }
-
-  function frameDoc(beat) {
-    var f = beat.querySelector("iframe");
-    try { return f && f.contentDocument; } catch (e) { return null; }
-  }
-
-  // Keys pressed while an embedded screen has focus still turn the binder.
-  function onFrameLoad(beat) {
-    var d = frameDoc(beat);
-    if (d) {
-      d.addEventListener("keydown", onKey);
-      // Light is the demo mode: embedded screens follow the deck's theme.
-      d.documentElement.setAttribute("data-theme", document.documentElement.getAttribute("data-theme"));
-    }
-    beat.querySelector(".stage").classList.add("ready");
-  }
-
-  function mountEmbed(beat) {
-    var src = beat.getAttribute("data-src");
-    if (!src) return;
-    var stage = beat.querySelector(".stage");
-    beat._loaded = new Promise(function (resolve) {
-      fetch(src, { method: "GET", cache: "no-store" }).then(function (r) {
-        if (!r.ok) throw new Error(r.status);
-        var f = document.createElement("iframe");
-        f.title = beat.getAttribute("aria-label");
-        f.src = src + (src.indexOf("?") < 0 ? "?" : "&") + "embed=1";
-        f.addEventListener("load", function () { onFrameLoad(beat); resolve(true); });
-        stage.appendChild(f);
-        fitStage(stage);
-      }).catch(function () {
-        stage.classList.add("absent");
-        resolve(false);
-      });
-    });
-  }
-
-  // ---------- Live triggers inside the embedded screens (same origin) ----------
-  function findButton(doc, re) {
-    var exact = doc.querySelector("[data-present-run]");
-    if (exact) return exact;
-    var btns = doc.querySelectorAll("button");
-    for (var i = 0; i < btns.length; i++) {
-      var b = btns[i];
-      if (!b.disabled && b.offsetParent !== null && re.test(b.textContent)) return b;
-    }
-    return null;
-  }
-
-  function click(doc, re) { var b = findButton(doc, re); if (b) b.click(); }
-
-  var runners = {
-    wall: function (doc) { click(doc, /attack|request|run|try|ask/i); },
-    model: function (doc) { click(doc, /retrain|train|run/i); },
-    compound: function (doc) { click(doc, /compound|run|apply|learn/i); },
-    datasets: function (doc) { click(doc, /de-?identify|build|run|start/i); },
-    deid: function (doc) {
-      // Load the O-1 exhibit if the screen didn't pick it up from ?sample=.
-      var sel = doc.getElementById("sample-select");
-      if (sel && sel.options.length) {
-        var pick = -1;
-        for (var i = 0; i < sel.options.length; i++) {
-          if (/achterberg|o-?1/i.test(sel.options[i].textContent + " " + sel.options[i].value)) { pick = i; break; }
-        }
-        if (pick >= 0 && sel.selectedIndex !== pick) {
-          sel.selectedIndex = pick;
-          sel.dispatchEvent(new Event("change", { bubbles: true }));
-        }
-      }
-      setTimeout(function () { click(doc, /de-?identify|run/i); }, 450);
-    }
-  };
-
-  function run(beat) {
-    var kind = beat.getAttribute("data-run");
-    if (!kind || !beat._loaded) return;
-    beat._loaded.then(function (ok) {
-      if (!ok || beats[cur] !== beat) return;
-      // A moment of stillness so the room sees the "before" state.
-      setTimeout(function () {
-        var d = frameDoc(beat);
-        if (d && beats[cur] === beat) {
-          try { runners[kind](d); } catch (e) { /* screen changed shape; presenter drives by hand */ }
-        }
-      }, 700);
-    });
-  }
-
-  // ---------- Evaluation numbers: only what results.json says ----------
-  var LABELS = {
-    regex: "Regex",
-    carryover: "Carry-over",
-    base_judge: "Base Qwen, untuned",
-    prompt_judge: "Claude Sonnet 5, prompted",
-    river_judge: "River-tuned judge"
-  };
-  var ORDER = ["regex", "base_judge", "prompt_judge", "river_judge"];
-  var EVAL;
-
-  function hard(d, k) { return d && d[k] && d[k].hard; }
-
-  // 95% Wilson interval from the same counts shown, so it can't drift from them.
-  function band(c, n) {
-    var p = c / n, z = 1.96, z2 = z * z;
-    var mid = (p + z2 / (2 * n)) / (1 + z2 / n);
-    var half = z * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n)) / (1 + z2 / n);
-    return Math.round(100 * Math.max(0, mid - half)) + "–" + Math.round(100 * Math.min(1, mid + half)) + "%";
-  }
-
-  function setNum(key, val) {
-    document.querySelectorAll('[data-k="' + key + '"]').forEach(function (el) { el.textContent = String(val); });
-  }
-
-  function loadResults() {
-    var url = new URLSearchParams(location.search).get("results") || "/results/results.json";
-    fetch(url, { cache: "no-store" }).then(function (r) {
-      if (!r.ok) throw new Error(r.status);
-      return r.json();
-    }).then(function (d) {
-      var rx = hard(d, "regex"), ours = hard(d, "river_judge");
-      var leaks = (rx && rx.leaks) || (ours && ours.leaks);
-      if (leaks) setNum("leaks", leaks);
-      if (rx) setNum("regex", rx.caught);
-      if (ours) setNum("ours", ours.caught);
-
-      var rows = "";
-      ORDER.forEach(function (k) {
-        var h = hard(d, k);
-        if (!h || !h.leaks) return;
-        rows += "<tr><td>" + LABELS[k] + "</td><td>" + h.caught + " of " + h.leaks +
-          (k === "river_judge" ? '<span class="ci">95% CI ' + band(h.caught, h.leaks) + "</span>" : "") +
-          "</td><td>" + (h.clean != null ? h.false_alarms + " of " + h.clean : "") + "</td></tr>";
-      });
-      document.querySelector("#ledger tbody").innerHTML = rows;
-      renderBars(d);
-    }).catch(function () { /* unreachable: blanks stay visible, by design */ });
-  }
-
-  function renderBars(d) {
-    var box = document.getElementById("bars");
-    var html = "";
-    ORDER.forEach(function (k) {
-      var h = hard(d, k);
-      if (!h || !h.leaks) return;
-      html += '<div class="bar' + (k === "river_judge" ? " river" : "") + '"><span>' + LABELS[k] + "</span>" +
-        '<span class="track"><span class="fill" data-w="' + (100 * h.caught / h.leaks).toFixed(1) + '"></span></span>' +
-        '<span class="val">' + h.caught + " of " + h.leaks + "</span></div>";
-    });
-    if (!html) return;
-    box.innerHTML = html;
-    // Our own bars stand in only when the evaluation screen itself isn't served.
-    var ev = beats[EVAL];
-    ev._loaded && ev._loaded.then(function (ok) {
-      if (!ok) { box.parentNode.classList.add("bars-on"); if (cur === EVAL) growBars(); }
-    });
-  }
-
-  function growBars() {
-    document.querySelectorAll("#bars .fill").forEach(function (f) { f.style.width = f.getAttribute("data-w") + "%"; });
-  }
-
-  // ---------- Navigation ----------
-  function fmt(s) { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); }
-
-  function go(i) {
-    if (i < 0 || i >= beats.length || i === cur || busy) return;
-    var back = i < cur;
-    var prev = beats[cur];
-    var next = beats[i];
-    cur = i;
-    beatStarted = Date.now();
-    history.replaceState(null, "", location.search + "#" + (i + 1));
-    tabBtns.forEach(function (b, k) {
-      if (k === i) b.setAttribute("aria-current", "step");
-      else b.removeAttribute("aria-current");
-    });
-
-    if (!prev) { next.classList.add("on"); after(); return; }
-    busy = true;
-    next.classList.toggle("back", back);
-    next.classList.add("entering");
-    setTimeout(function () {
-      prev.classList.remove("on");
-      next.classList.remove("entering", "back");
-      next.classList.add("on");
-      busy = false;
-      after();
-    }, TURN);
-
-    function after() {
-      var st = next.querySelector(".stage");
-      if (st) fitStage(st);
-      if (i === 0) playCover();
-      run(next);
-      if (i === EVAL) growBars();
-    }
-  }
-
-  function toggleFull() {
-    if (document.fullscreenElement) document.exitFullscreen();
-    else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
-  }
-
-  function toggleDark() {
-    var root = document.documentElement;
-    var t = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    root.setAttribute("data-theme", t);
-    beats.forEach(function (b) { var d = frameDoc(b); if (d) d.documentElement.setAttribute("data-theme", t); });
-  }
-
-  function onKey(e) {
-    if (!beats) return;
-    if (started === null) { started = Date.now(); beatStarted = started; }
-    var t = e.target && e.target.tagName;
-    if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    var k = e.key;
-    if (k === "ArrowRight" || k === "ArrowDown" || k === " " || k === "PageDown") { e.preventDefault(); go(cur + 1); }
-    else if (k === "ArrowLeft" || k === "ArrowUp" || k === "PageUp" || k === "Backspace") { e.preventDefault(); go(cur - 1); }
-    else if (k === "Home") go(0);
-    else if (k === "End") go(beats.length - 1);
-    else if (k >= "1" && k <= String(beats.length)) go(Number(k) - 1);
-    else if (k === "h" || k === "H") document.body.classList.toggle("chrome-off");
-    else if (k === "f" || k === "F") toggleFull();
-    else if (k === "d" || k === "D") toggleDark();
-    else if (k === "r" || k === "R") replay(beats[cur]);
-  }
-  document.addEventListener("keydown", onKey);
-
-  function replay(b) {
-    if (b === beats[0]) { playCover(); return; }
-    var f = b && b.querySelector("iframe");
-    if (!f) return;
-    var stage = b.querySelector(".stage");
-    stage.classList.remove("ready");
-    b._loaded = new Promise(function (res) {
-      f.addEventListener("load", function once() {
-        f.removeEventListener("load", once);
-        onFrameLoad(b);
-        res(true);
-      });
-    });
-    f.contentWindow.location.reload();
-    run(b);
-  }
-
-  window.addEventListener("resize", function () { document.querySelectorAll(".stage").forEach(fitStage); });
-
-  setInterval(function () {
-    var el = document.getElementById("clock");
-    var t = started ? (Date.now() - started) / 1000 : 0;
-    el.textContent = fmt(t) + " / " + fmt(TOTAL);
-    el.classList.toggle("over", t > TOTAL);
-    var bt = started && beatStarted ? (Date.now() - beatStarted) / 1000 : 0;
-    var target = Number(beats && beats[cur] && beats[cur].getAttribute("data-target")) || 0;
-    var bc = document.getElementById("beat-clock");
-    bc.textContent = fmt(bt) + " of " + fmt(target) + " on this tab";
-    bc.classList.toggle("over", target && bt > target);
-  }, 250);
-
-  // Optional tabs appear only when their screen is served, so the stage never shows a gap.
-  var optional = Array.prototype.slice.call(document.querySelectorAll(".beat[data-optional]"));
-  Promise.all(optional.map(function (b) {
-    return fetch(b.getAttribute("data-src"), { cache: "no-store" })
-      .then(function (r) { if (!r.ok) b.remove(); })
-      .catch(function () { b.remove(); });
-  })).then(function () {
-    beats = Array.prototype.slice.call(document.querySelectorAll(".beat"));
-    EVAL = beats.indexOf(document.querySelector(".beat.score"));
-    buildTabs();
-    beats.forEach(mountEmbed);
-    loadResults();
-    var start = parseInt(location.hash.slice(1), 10);
-    go(start >= 1 && start <= beats.length ? start - 1 : 0);
-  });
+(async () => {
+  try {
+    const d = await (await fetch('/results/results.json')).json();
+    const f = (det, set) => d[det] && d[det][set];
+    const hard = f('regex', 'hard'), bR = f('regex', 'blind'), bP = f('prompt_judge', 'blind'), bRv = f('river_judge', 'blind'), iP = f('prompt_judge', 'independent'), iRv = f('river_judge', 'independent');
+    const cells = [];
+    if (hard) cells.push(`<div class="num"><strong>${hard.caught}/${hard.leaks}</strong><span>Paraphrased leaks caught by pattern matching</span></div>`);
+    if (bP) cells.push(`<div class="num"><strong>${bP.caught}/${bP.leaks}</strong><span>Leaks Claude caught on a blind set written by a different model family${bR ? ` (patterns: ${bR.caught}/${bR.leaks})` : ''}</span></div>`);
+    const riv = bRv || iRv, rivCmp = bRv ? bP : iP;
+    if (riv) cells.push(`<div class="num"><strong>${riv.caught}/${riv.leaks}</strong><span>Our River-tuned model, which the firm owns${rivCmp ? `, vs Claude's ${rivCmp.caught}/${rivCmp.leaks}` : ''}. It raises more false alarms (${riv.false_alarms}/${riv.clean}), so calibration is next.</span></div>`);
+    document.getElementById('nums').innerHTML = cells.join('');
+    document.getElementById('numnote').textContent = 'Every number is held out and read live from results.json. Synthetic data only; not a compliance guarantee.';
+  } catch {}
 })();
 </script>
 </body>
