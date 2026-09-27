@@ -382,7 +382,7 @@
 <div class="binder">
   <main class="sheet" id="deck" aria-live="polite">
 
-    <section class="beat cover" data-target="15" data-tab="Cover" aria-label="Cover">
+    <section class="beat cover" data-target="10" data-tab="Cover" aria-label="Cover">
       <div class="beat-copy">
         <h1>Every O-1 you have won is a playbook.</h1>
         <p>It is also one person’s file. Under <strong>ABA Formal Opinion 512</strong>, a tool that learns from one client can’t carry their facts into another client’s matter without informed consent.</p>
@@ -390,13 +390,13 @@
       </div>
       <figure class="excerpt" id="excerpt">
         <header><span>Matter o1-achterberg</span><span>Cover letter, synthetic</span></header>
-        <p><mark>Halcyon Vision Labs, Inc.</mark> petitions for O-1A classification on behalf of <mark>Dr. Simone Achterberg</mark>, Principal Research Scientist, <mark>A128-773-410</mark>, USCIS receipt <mark>IOE0912345671</mark>.</p>
+        <p><mark>Halcyon Vision Labs, Inc.</mark> petitions for O-1A classification on behalf of <mark>Dr. Simone Achterberg</mark>, Principal Research Scientist, <mark>A128&#8209;773&#8209;410</mark>, USCIS receipt <mark>IOE0912345671</mark>.</p>
         <p>She is <span class="residual">the only researcher to win the Halvorsen Prize twice</span>. Her compensation, <mark>$215,000</mark>, reflects <mark>Halcyon</mark>’s determination to keep her.</p>
         <div class="legend" id="legend"><span class="k-found">Identifiers a pattern can find</span><span class="k-risk">Still points to one person</span></div>
       </figure>
     </section>
 
-    <section class="beat embed" data-target="20" data-tab="Access wall" data-src="/demo/wall.html" data-run="wall" aria-label="Access wall">
+    <section class="beat embed" data-target="15" data-tab="Access wall" data-src="/demo/wall.html" data-run="wall" aria-label="Access wall">
       <div class="caption">
         <h2>One matter’s agent asks for another matter’s file. The wall refuses.</h2>
         <p class="aside">A live request across two O-1 matters. Every refusal is written to the audit log.</p>
@@ -420,6 +420,14 @@
       <div class="stage"><div class="skeleton"><i></i><i></i></div><div class="missing"><p>The datasets screen isn’t being served. Start the API and open <code>/demo/datasets.html</code>.</p></div></div>
     </section>
 
+    <section class="beat embed" data-target="15" data-tab="Model" data-src="/demo/training.html" data-run="model" data-optional aria-label="Model">
+      <div class="caption">
+        <h2>Every correction an attorney makes teaches the firm’s own model.</h2>
+        <p class="aside">Fixes to de-identified exhibits become training examples, and the firm’s River model retrains on them.</p>
+      </div>
+      <div class="stage"><div class="skeleton"><i></i><i></i></div><div class="missing"><p>The model screen isn’t being served. Start the API and open <code>/demo/training.html</code>.</p></div></div>
+    </section>
+
     <section class="beat embed" data-target="15" data-tab="Know-how" data-src="/demo/compound.html" data-run="compound" aria-label="Know-how">
       <div class="caption">
         <h2>What worked on one petition improves the next. The facts stay behind.</h2>
@@ -428,7 +436,7 @@
       <div class="stage"><div class="skeleton"><i></i><i></i></div><div class="missing"><p>The know-how screen isn’t being served. Start the API and open <code>/demo/compound.html</code>.</p></div></div>
     </section>
 
-    <section class="beat embed score" data-target="20" data-tab="Evaluation" data-src="/scoreboard/" aria-label="Evaluation">
+    <section class="beat embed score" data-target="15" data-tab="Evaluation" data-src="/scoreboard/" aria-label="Evaluation">
       <div class="caption">
         <div>
           <h2>Regex caught <span class="n bad" data-k="regex"><span class="blank">__</span></span> of <span data-k="leaks">102</span> paraphrased leaks. The River-tuned judge caught <span class="n good" data-k="ours"><span class="blank">__</span></span>.</h2>
@@ -473,7 +481,7 @@
 (function () {
   "use strict";
 
-  var beats = Array.prototype.slice.call(document.querySelectorAll(".beat"));
+  var beats;
   var TOTAL = 120;
   var cur = -1;
   var started = null;
@@ -485,6 +493,8 @@
 
   // ---------- Binder tabs: lettered like exhibits, cover and close unlettered ----------
   var tabs = document.getElementById("tabs");
+  var tabBtns;
+  function buildTabs() {
   var letter = 0;
   beats.forEach(function (b, i) {
     var name = b.getAttribute("data-tab");
@@ -498,7 +508,8 @@
     li.appendChild(btn);
     tabs.appendChild(li);
   });
-  var tabBtns = tabs.querySelectorAll("button");
+  tabBtns = tabs.querySelectorAll("button");
+  }
 
   // ---------- Cover: identifiers light up one by one, the residual last ----------
   var coverTimers = [];
@@ -580,6 +591,7 @@
 
   var runners = {
     wall: function (doc) { click(doc, /attack|request|run|try|ask/i); },
+    model: function (doc) { click(doc, /retrain|train|run/i); },
     compound: function (doc) { click(doc, /compound|run|apply|learn/i); },
     datasets: function (doc) { click(doc, /de-?identify|build|run|start/i); },
     deid: function (doc) {
@@ -623,7 +635,7 @@
     river_judge: "River-tuned judge"
   };
   var ORDER = ["regex", "base_judge", "prompt_judge", "river_judge"];
-  var EVAL = beats.length - 2;
+  var EVAL;
 
   function hard(d, k) { return d && d[k] && d[k].hard; }
 
@@ -737,6 +749,7 @@
   }
 
   function onKey(e) {
+    if (!beats) return;
     if (started === null) { started = Date.now(); beatStarted = started; }
     var t = e.target && e.target.tagName;
     if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
@@ -779,16 +792,27 @@
     el.textContent = fmt(t) + " / " + fmt(TOTAL);
     el.classList.toggle("over", t > TOTAL);
     var bt = started && beatStarted ? (Date.now() - beatStarted) / 1000 : 0;
-    var target = Number(beats[cur] && beats[cur].getAttribute("data-target")) || 0;
+    var target = Number(beats && beats[cur] && beats[cur].getAttribute("data-target")) || 0;
     var bc = document.getElementById("beat-clock");
     bc.textContent = fmt(bt) + " of " + fmt(target) + " on this tab";
     bc.classList.toggle("over", target && bt > target);
   }, 250);
 
-  beats.forEach(mountEmbed);
-  loadResults();
-  var start = parseInt(location.hash.slice(1), 10);
-  go(start >= 1 && start <= beats.length ? start - 1 : 0);
+  // Optional tabs appear only when their screen is served, so the stage never shows a gap.
+  var optional = Array.prototype.slice.call(document.querySelectorAll(".beat[data-optional]"));
+  Promise.all(optional.map(function (b) {
+    return fetch(b.getAttribute("data-src"), { cache: "no-store" })
+      .then(function (r) { if (!r.ok) b.remove(); })
+      .catch(function () { b.remove(); });
+  })).then(function () {
+    beats = Array.prototype.slice.call(document.querySelectorAll(".beat"));
+    EVAL = beats.indexOf(document.querySelector(".beat.score"));
+    buildTabs();
+    beats.forEach(mountEmbed);
+    loadResults();
+    var start = parseInt(location.hash.slice(1), 10);
+    go(start >= 1 && start <= beats.length ? start - 1 : 0);
+  });
 })();
 </script>
 </body>
