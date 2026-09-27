@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Built on — Ethical Wall Brain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/theme.css">
+<style>
+  .page-head h1 { font-family: var(--font-doc); }
+  .hosts { display: grid; gap: 16px; }
+  .host {
+    display: grid; grid-template-columns: 200px minmax(0, 1fr) minmax(0, 360px); gap: 24px;
+    background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 20px 24px;
+  }
+  .host-name { font-family: var(--font-doc); font-size: var(--fs-21); font-weight: 600; }
+  .host-num { font-variant-numeric: tabular-nums; color: var(--text-2); font-size: var(--fs-13); display: block; margin-bottom: 4px; }
+  .host dl { margin: 0; display: grid; gap: 10px; }
+  .host dt { font-size: var(--fs-13); font-weight: 600; color: var(--text-2); }
+  .host dd { margin: 2px 0 0; max-width: 62ch; line-height: 1.5; }
+  .facts { font-size: var(--fs-13); color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .facts b { color: var(--ink); font-weight: 600; }
+  .proof { border-left: 1px solid var(--line); padding-left: 24px; display: flex; flex-direction: column; gap: 10px; }
+  .proof .btn { align-self: flex-start; min-height: 40px; }
+  .out { font-size: var(--fs-15); line-height: 1.45; min-height: 44px; }
+  .out .big { font-family: var(--font-doc); font-size: var(--fs-28); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .out .ok { color: var(--cleared, #1F7A4D); }
+  .out .bad { color: var(--risk); }
+  .out pre { white-space: pre-wrap; font-size: var(--fs-13); background: var(--canvas); padding: 8px 10px; border-radius: 6px; max-height: 140px; overflow: auto; margin: 6px 0 0; }
+  .stamp { font-size: var(--fs-13); color: var(--text-2); }
+  .replay { background: var(--found-soft); color: #7A5A00; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+  table.sc { border-collapse: collapse; font-size: var(--fs-13); font-variant-numeric: tabular-nums; margin-top: 4px; }
+  table.sc th, table.sc td { text-align: left; padding: 3px 12px 3px 0; border-bottom: 1px solid var(--line); }
+  table.sc th { font-weight: 600; color: var(--text-2); }
+  .footer-note { margin-top: 20px; padding: 16px 24px; border: 1px dashed var(--line-strong); border-radius: 8px; color: var(--text-2); }
+  .footer-note b { color: var(--ink); }
+  @media (max-width: 1100px) { .host { grid-template-columns: 1fr; } .proof { border-left: 0; padding-left: 0; } }
+</style>
+</head>
+<body data-crumb="Built on">
+<main class="app-main">
+  <div class="page-head">
+    <div>
+      <h1>Built on</h1>
+      <p>Each host does one job in the product. Every proof button runs the real thing now; if a live call fails, the last live result replays with its timestamp.</p>
+    </div>
+  </div>
+
+  <div class="hosts">
+    <section class="host" aria-labelledby="h-gbrain">
+      <div><span class="host-num">1</span><div class="host-name" id="h-gbrain">GBrain</div></div>
+      <dl>
+        <div><dt>Job</dt><dd>The wall. Each matter is one isolated GBrain source with its own scoped, read-only OAuth client; agents never run as local trusted callers.</dd></div>
+        <div><dt>Use case</dt><dd>A paralegal's assistant working on the Chen visa can't search, list, or open Delmarva's files, even when asked to.</dd></div>
+        <div class="facts" id="gbrain-facts"></div>
+      </dl>
+      <div class="proof">
+        <button class="btn btn-primary" id="run-wall">Attack the wall</button>
+        <div class="out" id="out-wall" aria-live="polite"><span class="muted">Five live requests from Chen's client against Delmarva's source.</span></div>
+      </div>
+    </section>
+
+    <section class="host" aria-labelledby="h-river">
+      <div><span class="host-num">2</span><div class="host-name" id="h-river">River</div></div>
+      <dl>
+        <div><dt>Job</dt><dd>Trains the two models the firm owns: a residual-leak judge and a firm-policy de-identifier, both LoRA adapters on Qwen3.6-35B.</dd></div>
+        <div><dt>Use case</dt><dd>Before a letter leaves the firm, a model the firm owns checks it for another client's facts, and scrubs exhibits to the firm's own policy.</dd></div>
+        <div class="facts" id="river-facts"></div>
+      </dl>
+      <div class="proof">
+        <button class="btn btn-primary" id="run-judge">Judge a sample draft</button>
+        <div class="out" id="out-judge" aria-live="polite"><span class="muted">Runs the app's live judge on a synthetic draft that repeats another matter's figure.</span></div>
+      </div>
+    </section>
+
+    <section class="host" aria-labelledby="h-mem">
+      <div><span class="host-num">3</span><div class="host-name" id="h-mem">Memorable</div></div>
+      <dl>
+        <div><dt>Job</dt><dd>Procedural memory. Only scrubbed procedures are ingested, never client facts; recall brings the firm's know-how to the next matter.</dd></div>
+        <div><dt>Use case</dt><dd>How the firm assembled Delmarva's filing helps the Chen filing, without carrying a single Delmarva fact across.</dd></div>
+      </dl>
+      <div class="proof">
+        <button class="btn btn-primary" id="run-mem">Ingest and recall</button>
+        <div class="out" id="out-mem" aria-live="polite"><span class="muted">Runs memorable/ingest.sh on the scrubbed trace, then a recall.</span></div>
+      </div>
+    </section>
+
+    <section class="host" aria-labelledby="h-qm">
+      <div><span class="host-num">4</span><div class="host-name" id="h-qm">QM</div></div>
+      <dl>
+        <div><dt>Job</dt><dd>A room per matter. A skill learned in one room reaches another only after an admin approves; the judge above is QM's screening proxy.</dd></div>
+        <div><dt>Use case</dt><dd>A checklist written in the Delmarva room reaches the Chen room only when the managing attorney promotes it.</dd></div>
+      </dl>
+      <div class="proof">
+        <div class="out" id="out-qm" aria-live="polite"><span class="muted">Loading the recorded live run…</span></div>
+      </div>
+    </section>
+  </div>
+
+  <p class="footer-note"><b>Built with Superset:</b> 40+ parallel coding agents in isolated worktrees. The agents: Claude Code, Codex, Muse.</p>
+</main>
+
+<script src="assets/nav.js" defer></script>
+<script>
+(function () {
+  var API = "";
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function when(iso, replayed) {
+    var t = iso ? new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }) : "";
+    return replayed ? '<span class="replay">Replay</span> <span class="stamp">recorded live at ' + esc(t) + "</span>"
+                    : '<span class="stamp">Live at ' + esc(t) + "</span>";
+  }
+  function post(path) {
+    return fetch(API + path, { method: "POST" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+  }
+  function run(btn, out, path, render) {
+    btn.disabled = true; var label = btn.textContent; btn.textContent = "Running…";
+    post(path).then(function (d) { out.innerHTML = render(d); })
+      .catch(function (e) { out.innerHTML = '<span class="bad">Service unavailable (' + esc(e.message) + ").</span>"; })
+      .finally(function () { btn.disabled = false; btn.textContent = label; });
+  }
+  function frac(s) { return s ? s.caught + "/" + s.leaks : "—"; }
+  function fa(s) { return s ? s.false_alarms + "/" + s.clean : "—"; }
+
+  fetch(API + "/demo/api/stack").then(function (r) { return r.json(); }).then(function (f) {
+    var g = f.gbrain || {};
+    $("gbrain-facts").innerHTML = "<b>" + (g.matters || []).length + "</b> matters, one OAuth client each" +
+      ((g.o1 || []).length ? " · <b>" + g.o1.length + "</b> O-1 matters walled" : "");
+    var rv = f.river || {}, j = rv.judge || {}, d = rv.deid || {}, sc = rv.scores || {};
+    var rows = [["Pattern matching (regex)", sc.regex], ["Base Qwen, not tuned", sc.base_judge],
+                ["Claude Sonnet 5 prompt judge", sc.prompt_judge], ["River-tuned judge (ours)", sc.river_judge]];
+    var hasBlind = rows.some(function (r) { return r[1] && r[1].blind; });
+    var t = '<table class="sc"><thead><tr><th>Detector</th><th>Hard set</th><th>Independent caught</th><th>Independent false alarms</th>' +
+      (hasBlind ? "<th>Blind</th>" : "") + "</tr></thead><tbody>";
+    rows.forEach(function (r) {
+      var s = r[1] || {};
+      t += "<tr><td>" + r[0] + "</td><td>" + frac(s.hard) + "</td><td>" + frac(s.independent) + "</td><td>" + fa(s.independent) + "</td>" +
+        (hasBlind ? "<td>" + frac(s.blind) + "</td>" : "") + "</tr>";
+    });
+    t += "</tbody></table>";
+    $("river-facts").innerHTML =
+      "Leak judge: step <b>" + (j.checkpoint_step ?? "—") + "</b>/" + (j.n_steps_planned ?? "—") + ", <b>" + (j.n_examples ?? "—") + "</b> training examples, " + esc(j.status || "unknown") + "<br>" +
+      "De-identifier: step <b>" + (d.checkpoint_step ?? "—") + "</b>/" + (d.n_steps_planned ?? "—") + ", <b>" + (d.n_examples ?? "—") + "</b> training examples, " + esc(d.status || "unknown") + "<br>" +
+      "Weights are served on River, not exported." + t +
+      '<div style="margin-top:6px">The hard set shares templates with training, so read it with the independent set: ours matches Claude on recall but over-flags more. Calibration is next.</div>';
+    var q = f.qm || {};
+    $("out-qm").innerHTML = q.at
+      ? '<div class="big ' + (q.pass ? "ok" : "") + '">' + (q.pass ? "Promotion gate: PASS" : "Recorded run") + "</div>" +
+        "<div>Delmarva room skill: hidden from Chen (404) until admin promotion, then visible (200).</div>" +
+        '<span class="replay">Recorded</span> <span class="stamp">live run at ' + esc(q.at) + " (QM dev instance, Docker; not booted for the demo)</span>"
+      : '<span class="muted">No recorded QM run found.</span>';
+  }).catch(function () {});
+
+  $("run-wall").addEventListener("click", function () {
+    run(this, $("out-wall"), "/demo/api/wall?matter=chen&target=delmarva", function (d) {
+      var all = d.passed === d.total;
+      return '<div class="big ' + (all ? "ok" : "bad") + '">' + d.passed + "/" + d.total + " held</div>" +
+        (d.checks || []).map(function (c) { return (c.passed ? "✓ " : "✗ ") + esc(c.name); }).join("<br>") + "<br>" + when(d.at || new Date().toISOString(), d.replayed);
+    });
+  });
+  $("run-judge").addEventListener("click", function () {
+    run(this, $("out-judge"), "/demo/api/stack/judge", function (d) {
+      if (!d.ok && !d.verdict) return '<span class="bad">Judge unavailable: ' + esc(d.error) + "</span>";
+      return '<div class="big ' + (d.verdict === "leak" ? "bad" : "ok") + '">' + (d.verdict === "leak" ? "Leak caught" : "Clean") + "</div>" +
+        "<div>Answered by: <b>" + esc(d.answered_by) + "</b>. The River-tuned judge is scored offline from its River-served weights (table left).</div>" +
+        (d.evidence ? "<div class=\"stamp\">Evidence: " + esc(d.evidence) + "</div>" : "") + when(d.at, d.replayed);
+    });
+  });
+  $("run-mem").addEventListener("click", function () {
+    run(this, $("out-mem"), "/demo/api/stack/memorable", function (d) {
+      if (!d.ok && !d.mode) return '<span class="bad">Memorable unavailable: ' + esc(d.error) + "</span>";
+      var modeText = d.mode === "real" ? "Hosted Memorable service" : "Local extraction stub — hosted service needs the firm's key";
+      return '<div class="big ok">Ingested, recalled</div><div>Mode: <b>' + esc(modeText) + "</b></div>" +
+        (d.recall ? "<pre>" + esc(d.recall) + "</pre>" : "") + when(d.at, d.replayed);
+    });
+  });
+})();
+</script>
+</body>
+</html>
