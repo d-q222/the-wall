@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Datasets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/demo/assets/theme.css">
+<script src="/demo/assets/nav.js" defer></script>
+<style>
+  /* Page-scoped v2 tokens (docs/DESIGN.md). Falls back to these if theme.css has not defined them. */
+  .ds {
+    --ds-paper: var(--paper, #FBFBF9);
+    --ds-canvas: var(--canvas, #E6E9ED);
+    --ds-ink: var(--ink, #14213D);
+    --ds-ink-2: #4A5468;
+    --ds-ink-3: #6E7788;
+    --ds-line: #D3D8DF;
+    --ds-line-soft: #E4E7EC;
+    --ds-blue: var(--form-blue, #1F4E9E);
+    --ds-blue-soft: #E7EEF8;
+    --ds-found: var(--found, #FFE58A);
+    --ds-risk: var(--risk, #C2410C);
+    --ds-risk-soft: #FBEDE5;
+    --ds-cleared: var(--cleared, #1E7B4F);
+    --ds-cleared-soft: #E4F2EA;
+    font-family: "Public Sans", -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--ds-ink);
+    font-variant-numeric: tabular-nums;
+    padding: 28px 40px 64px;
+    max-width: 1320px;
+  }
+  body:has(.ds) { background: var(--canvas, #E6E9ED); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .ds {
+      --ds-paper: #1B2233; --ds-canvas: #111726; --ds-ink: #E8ECF3; --ds-ink-2: #B4BCCB; --ds-ink-3: #8993A5;
+      --ds-line: #2E374B; --ds-line-soft: #252D3F; --ds-blue: #7FA6E8; --ds-blue-soft: #1D2B47;
+      --ds-risk-soft: #3A2218; --ds-cleared-soft: #17311F;
+    }
+  }
+  :root[data-theme="dark"] .ds {
+    --ds-paper: #1B2233; --ds-canvas: #111726; --ds-ink: #E8ECF3; --ds-ink-2: #B4BCCB; --ds-ink-3: #8993A5;
+    --ds-line: #2E374B; --ds-line-soft: #252D3F; --ds-blue: #7FA6E8; --ds-blue-soft: #1D2B47;
+    --ds-risk-soft: #3A2218; --ds-cleared-soft: #17311F;
+  }
+
+  .ds-head { display: flex; align-items: flex-end; gap: 24px; margin-bottom: 20px; }
+  .ds-head h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 4px; }
+  .ds-head p { margin: 0; color: var(--ds-ink-2); font-size: 15px; max-width: 64ch; }
+  .ds-head .grow { flex: 1; }
+  .ds-actions { display: flex; gap: 8px; flex: none; }
+  .ds-btn {
+    font: 600 15px/1 "Public Sans", sans-serif; border-radius: 4px; padding: 11px 16px; cursor: pointer;
+    border: 1px solid var(--ds-blue); background: var(--ds-blue); color: #fff;
+  }
+  .ds-btn:hover:not(:disabled) { filter: brightness(1.08); }
+  .ds-btn.quiet { background: var(--ds-paper); color: var(--ds-blue); border-color: var(--ds-line); }
+  .ds-btn.quiet:hover:not(:disabled) { border-color: var(--ds-blue); filter: none; }
+  .ds-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .ds :focus-visible { outline: 2px solid var(--ds-blue); outline-offset: 2px; }
+
+  /* Summary strip: one panel, four fields, divided by rules */
+  .ds-summary {
+    display: grid; grid-template-columns: 1fr 2.3fr 1fr 1.4fr;
+    background: var(--ds-paper); border: 1px solid var(--ds-line); border-radius: 8px; margin-bottom: 16px;
+  }
+  .ds-summary > div { padding: 14px 18px; border-left: 1px solid var(--ds-line-soft); min-width: 0; }
+  .ds-summary > div:first-child { border-left: 0; }
+  .ds-summary .k { font-size: 13px; color: var(--ds-ink-3); margin-bottom: 4px; }
+  .ds-summary .v { font-size: 21px; font-weight: 600; }
+  .ds-summary .v small { font-size: 13px; font-weight: 400; color: var(--ds-ink-3); margin-left: 4px; }
+  .ds-kinds { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .ds-kinds:empty::before { content: "Kinds appear as documents are processed"; font-size: 13px; color: var(--ds-ink-3); }
+  .kind { font-size: 13px; border: 1px solid var(--ds-line); border-radius: 4px; padding: 1px 7px; color: var(--ds-ink-2); background: var(--ds-canvas); }
+  .kind b { font-weight: 600; color: var(--ds-ink); margin-left: 3px; }
+  .v.risk { color: var(--ds-risk); }
+
+  /* Table */
+  .ds-table-wrap { background: var(--ds-paper); border: 1px solid var(--ds-line); border-radius: 8px; overflow: hidden; }
+  table.ds-table { width: 100%; border-collapse: collapse; }
+  .ds-table th {
+    text-align: left; font-size: 13px; font-weight: 600; color: var(--ds-ink-2);
+    padding: 10px 16px; border-bottom: 1px solid var(--ds-line); background: var(--ds-canvas);
+  }
+  .ds-table th.num, .ds-table td.num { text-align: right; }
+  .ds-table td { padding: 11px 16px; border-bottom: 1px solid var(--ds-line-soft); vertical-align: top; position: relative; }
+  .ds-table tr.doc { cursor: pointer; }
+  .ds-table tr.doc:hover td { background: color-mix(in srgb, var(--ds-blue-soft) 45%, transparent); }
+  .ds-table tr.doc.open td { background: var(--ds-blue-soft); }
+  .doc-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .doc-name .caret { width: 12px; color: var(--ds-ink-3); font-size: 11px; transition: transform .15s; }
+  tr.open .doc-name .caret { transform: rotate(90deg); }
+  .doc-sub { color: var(--ds-ink-3); font-size: 13px; padding-left: 20px; }
+  .src-tag { font-size: 12px; font-weight: 500; color: var(--ds-blue); border: 1px solid var(--ds-line); border-radius: 4px; padding: 0 5px; margin-left: 4px; }
+  .ph {
+    font: 600 13px/1.6 "Public Sans", sans-serif; color: var(--ds-ink); background: var(--ds-blue-soft);
+    border: 1px solid color-mix(in srgb, var(--ds-blue) 30%, transparent); border-radius: 4px; padding: 0 5px; white-space: nowrap;
+  }
+  .benef-raw { font-weight: 500; }
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ds-line); }
+  .status.idle { color: var(--ds-ink-3); font-weight: 500; }
+  .status.running { color: var(--ds-blue); }
+  .status.running .dot { background: var(--ds-blue); animation: pulse 1s ease-in-out infinite; }
+  .status.clean { color: var(--ds-cleared); } .status.clean .dot { background: var(--ds-cleared); }
+  .status.flag { color: var(--ds-risk); } .status.flag .dot { background: var(--ds-risk); }
+  .status.error { color: var(--ds-risk); font-weight: 500; }
+  .replayed { font-size: 12px; font-weight: 500; color: var(--ds-ink-2); border: 1px dashed var(--ds-ink-3); border-radius: 4px; padding: 0 5px; margin-left: 6px; }
+  .progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: transparent; overflow: hidden; }
+  tr.running .progress::after {
+    content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: var(--ds-blue);
+    animation: fill 12s cubic-bezier(.2,.6,.3,1) var(--delay, 0s) forwards;
+  }
+  tr.done .progress::after { content: ""; position: absolute; inset: 0; background: var(--ds-blue); animation: fade .6s .2s forwards; }
+  @keyframes fill { to { width: 92%; } }
+  @keyframes fade { to { opacity: 0; } }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .removed { font-size: 17px; font-weight: 600; }
+  .muted { color: var(--ds-ink-3); }
+  .verdict { font-size: 13px; max-width: 34ch; }
+  .verdict .who { color: var(--ds-ink-3); display: block; }
+  .verdict q { color: var(--ds-risk); font-family: "Source Serif 4", Georgia, serif; font-size: 14px; }
+
+  /* Expanded preview: the de-identified document as a paper sheet */
+  tr.detail td { background: var(--ds-canvas); padding: 18px 24px 22px; }
+  .sheet {
+    background: var(--ds-paper); border-radius: 2px; box-shadow: 0 1px 2px rgba(20,33,61,.12), 0 6px 18px rgba(20,33,61,.08);
+    padding: 28px 40px; max-width: 78ch; margin: 0 auto;
+    font-family: "Source Serif 4", Georgia, serif; font-size: 16px; line-height: 1.65; white-space: pre-wrap;
+  }
+  .sheet .ph { font-size: 12.5px; }
+  .sheet mark.resid { background: none; color: inherit; border-bottom: 2px solid var(--ds-risk); }
+  .detail-meta { max-width: 78ch; margin: 0 auto 10px; font-size: 13px; color: var(--ds-ink-2); display: flex; gap: 16px; }
+  .detail-meta .grow { flex: 1; }
+
+  .ds-foot { margin-top: 12px; font-size: 13px; color: var(--ds-ink-3); display: flex; gap: 16px; }
+  .ds-foot .grow { flex: 1; }
+  .ds-error { background: var(--ds-risk-soft); color: var(--ds-risk); border-radius: 4px; padding: 10px 14px; margin-bottom: 12px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    tr.running .progress::after, .status.running .dot { animation: none; width: 60%; }
+    .doc-name .caret { transition: none; }
+  }
+  @media (max-width: 1100px) {
+    .ds { padding: 20px; }
+    .ds-summary { grid-template-columns: 1fr 1fr; }
+    .ds-summary > div:nth-child(3) { border-left: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="site-nav"></div>
+<main class="ds" id="datasets">
+  <header class="ds-head">
+    <div class="grow">
+      <h1>Training set: O-1 petitions</h1>
+      <p>Every O-1 document on file, de-identified and checked by the residual judge before it can be exported for model training.</p>
+    </div>
+    <div class="ds-actions">
+      <button class="ds-btn quiet" id="export" disabled>Export training JSONL</button>
+      <button class="ds-btn" id="run" disabled>De-identify all</button>
+    </div>
+  </header>
+
+  <div id="error"></div>
+
+  <section class="ds-summary" aria-label="Training set summary">
+    <div><div class="k">Documents</div><div class="v" id="s-docs">0</div></div>
+    <div><div class="k">Identifiers removed</div><div class="v" id="s-removed">0</div><div class="ds-kinds" id="s-kinds"></div></div>
+    <div><div class="k">Residual flags</div><div class="v" id="s-flags">0</div></div>
+    <div><div class="k">Residual judge</div><div class="v" id="s-judge"><span class="muted" style="font-size:15px;font-weight:400">Not run yet</span></div></div>
+  </section>
+
+  <div class="ds-table-wrap">
+    <table class="ds-table">
+      <thead>
+        <tr>
+          <th style="width:30%">Document</th>
+          <th style="width:17%">Beneficiary</th>
+          <th style="width:15%">Status</th>
+          <th class="num" style="width:10%">Identifiers removed</th>
+          <th>Judge verdict</th>
+        </tr>
+      </thead>
+      <tbody id="rows"><tr><td colspan="5" class="muted">Loading O-1 documents…</td></tr></tbody>
+    </table>
+  </div>
+  <div class="ds-foot"><span class="grow" id="foot"></span><span>Select a row to read its de-identified text.</span></div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var CACHE_KEY = "wall.datasets.cache";     // last live success per document (demo-safe replay)
+  var docs = [];                              // {id, label, petitioner, matter_id, beneficiary, text, state, result, error, source}
+  var openId = null;
+  var running = false;
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function readJSON(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; } }
+  function writeJSON(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+
+  function labelFor(filename) {
+    var base = filename.replace(/\.md$/, "").replace(/-/g, " ");
+    return base.charAt(0).toUpperCase() + base.slice(1);
+  }
+
+  function beneficiaryPlaceholder(d) {
+    if (!d.result || !d.beneficiary) return null;
+    var name = d.beneficiary.toLowerCase(), best = null;
+    (d.result.spans || []).forEach(function (s) {
+      var orig = d.text.slice(s.start, s.end).toLowerCase();
+      if (orig === name) best = best || s.replacement;
+    });
+    if (!best) (d.result.spans || []).forEach(function (s) {
+      var orig = d.text.slice(s.start, s.end).toLowerCase();
+      if (s.kind === "name" && (orig.indexOf(name) >= 0 || name.indexOf(orig) >= 0)) best = best || s.replacement;
+    });
+    return best;
+  }
+
+  function trainingSetFromReview() {
+    // Written by the Review screen. Tolerant of shape: [{id?, title?/name?, matter_id?, text|original, result?}]
+    var items = readJSON("wall.trainingSet", []);
+    if (!Array.isArray(items)) return [];
+    return items.map(function (it, i) {
+      var text = it.text || it.original || "";
+      var result = it.result || (it.deidentified && typeof it.deidentified === "object" ? it.deidentified : null);
+      return {
+        id: "review:" + (it.id || i), label: it.title || it.name || it.document || ("Review document " + (i + 1)),
+        petitioner: it.client || it.matter_id || "", matter_id: it.matter_id || it.matter || null,
+        beneficiary: it.beneficiary || null, text: text, source: "review",
+        state: result ? "done" : "idle", result: result
+      };
+    }).filter(function (d) { return d.text; });
+  }
+
+  function load() {
+    fetch("/demo/api/matters").then(function (r) {
+      if (!r.ok) throw new Error("GET /demo/api/matters returned " + r.status);
+      return r.json();
+    }).then(function (matters) {
+      docs = [];
+      matters.filter(function (m) { return m.practice === "immigration"; }).forEach(function (m) {
+        var names = (m.facts && m.facts.names) || [];
+        Object.keys(m.documents || {}).sort().forEach(function (fn) {
+          docs.push({
+            id: m.id + "/" + fn, label: labelFor(fn), petitioner: m.client, matter_id: m.id,
+            beneficiary: names[0] || null, text: m.documents[fn], source: "matter", state: "idle", result: null
+          });
+        });
+      });
+      docs = docs.concat(trainingSetFromReview());
+      $("run").disabled = docs.length === 0;
+      render();
+      if (/[?&]run=1/.test(location.search)) runAll();
+    }).catch(function (e) {
+      $("rows").innerHTML = "";
+      $("error").innerHTML = '<div class="ds-error">Could not load documents: ' + esc(e.message) + ". Start the API and reload this page.</div>";
+    });
+  }
+
+  function statusCell(d) {
+    if (d.state === "running") return '<span class="status running"><span class="dot"></span>De-identifying</span>';
+    if (d.state === "error") return '<span class="status error">Failed, run again</span>';
+    if (d.state !== "done") return '<span class="status idle"><span class="dot"></span>Not processed</span>';
+    var tag = d.result.replayed ? '<span class="replayed" title="The live call failed; showing the last live result">Replayed</span>' : "";
+    if (d.result.residual && d.result.residual.verdict === "leak")
+      return '<span class="status flag"><span class="dot"></span>Residual flagged</span>' + tag;
+    return '<span class="status clean"><span class="dot"></span>De-identified</span>' + tag;
+  }
+
+  function verdictCell(d) {
+    if (d.state !== "done") return '<span class="muted">—</span>';
+    var r = d.result.residual;
+    if (!r) return '<span class="muted">Judge unavailable</span>';
+    var who = '<span class="who">' + esc(d.result.judge || "judge") + "</span>";
+    if (r.verdict === "leak") return '<div class="verdict">' + who + "Still identifying: <q>" + esc(r.evidence || "") + "</q></div>";
+    return '<div class="verdict">' + who + "No residual identifiers</div>";
+  }
+
+  function renderSheet(d) {
+    var t = d.text, out = "", pos = 0;
+    var spans = (d.result.spans || []).slice().sort(function (a, b) { return a.start - b.start; });
+    spans.forEach(function (s) {
+      if (s.start < pos) return;
+      out += esc(t.slice(pos, s.start)) + '<span class="ph" title="' + esc(s.kind) + '">' + esc(s.replacement) + "</span>";
+      pos = s.end;
+    });
+    out += esc(t.slice(pos));
+    var ev = d.result.residual && d.result.residual.verdict === "leak" && d.result.residual.evidence;
+    if (ev) { var e = esc(ev), i = out.indexOf(e); if (i >= 0) out = out.slice(0, i) + '<mark class="resid">' + e + "</mark>" + out.slice(i + e.length); }
+    return out;
+  }
+
+  function render() {
+    var html = "";
+    docs.forEach(function (d) {
+      var ph = beneficiaryPlaceholder(d);
+      var benef = ph ? '<span class="ph">' + esc(ph) + "</span>"
+        : (d.beneficiary ? '<span class="benef-raw">' + esc(d.beneficiary) + "</span>" : '<span class="muted">—</span>');
+      var cls = "doc" + (d.state === "running" ? " running" : "") + (d.justDone ? " done" : "") + (openId === d.id ? " open" : "");
+      html += '<tr class="' + cls + '" data-id="' + esc(d.id) + '" tabindex="0" aria-expanded="' + (openId === d.id) + '"' +
+        (d.state === "running" ? ' style="--delay:-' + ((Date.now() - d.startedAt) / 1000).toFixed(2) + 's"' : "") + ">" +
+        '<td><div class="doc-name"><span class="caret" aria-hidden="true">&#9656;</span>' + esc(d.label) +
+        (d.source === "review" ? '<span class="src-tag">Added from Review</span>' : "") + "</div>" +
+        '<div class="doc-sub">' + esc(d.petitioner) + "</div></td>" +
+        "<td>" + benef + "</td>" +
+        "<td>" + statusCell(d) + "</td>" +
+        '<td class="num">' + (d.state === "done" ? '<span class="removed">' + d.result.removed + "</span>" : '<span class="muted">—</span>') + "</td>" +
+        "<td>" + verdictCell(d) + '<div class="progress"></div></td></tr>';
+      if (openId === d.id) {
+        html += '<tr class="detail"><td colspan="5">';
+        if (d.state === "done") {
+          html += '<div class="detail-meta"><span class="grow">De-identified text, as it will be exported</span><span>' +
+            d.result.removed + " identifiers replaced</span></div><div class=\"sheet\">" + renderSheet(d) + "</div>";
+        } else {
+          html += '<div class="detail-meta"><span class="grow">Original text. De-identify to see the training version.</span></div>' +
+            '<div class="sheet">' + esc(d.text) + "</div>";
+        }
+        html += "</td></tr>";
+      }
+    });
+    $("rows").innerHTML = html || '<tr><td colspan="5" class="muted">No O-1 documents on file.</td></tr>';
+    summarize();
+  }
+
+  function summarize() {
+    var done = docs.filter(function (d) { return d.state === "done"; });
+    var kinds = {}, removed = 0, flags = 0, judges = {}, replayed = 0;
+    done.forEach(function (d) {
+      removed += d.result.removed || 0;
+      (d.result.spans || []).forEach(function (s) { kinds[s.kind] = (kinds[s.kind] || 0) + 1; });
+      if (d.result.residual && d.result.residual.verdict === "leak") flags++;
+      if (d.result.judge) judges[d.result.judge] = true;
+      if (d.result.replayed) replayed++;
+    });
+    $("s-docs").innerHTML = done.length + "<small>of " + docs.length + " processed</small>";
+    $("s-removed").textContent = removed;
+    $("s-kinds").innerHTML = Object.keys(kinds).sort(function (a, b) { return kinds[b] - kinds[a]; }).map(function (k) {
+      return '<span class="kind">' + esc(k.replace(/_/g, " ")) + "<b>" + kinds[k] + "</b></span>";
+    }).join("");
+    $("s-flags").textContent = flags;
+    $("s-flags").className = "v" + (flags ? " risk" : "");
+    var j = Object.keys(judges);
+    if (j.length) $("s-judge").textContent = j.join(", ");
+    $("export").disabled = done.length === 0;
+    $("foot").textContent = done.length ? (done.length + " documents ready to export" + (replayed ? ", " + replayed + " replayed from the last live run" : "")) : "";
+  }
+
+  function deidentify(d) {
+    d.state = "running"; d.startedAt = Date.now(); d.justDone = false; render();
+    var cache = readJSON(CACHE_KEY, {});
+    return fetch("/deidentify", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: d.text, practice: "immigration", matter_id: d.matter_id })
+    }).then(function (r) {
+      if (!r.ok) throw new Error("POST /deidentify returned " + r.status);
+      return r.json();
+    }).then(function (res) {
+      if (!res.replayed) { cache[d.id] = res; writeJSON(CACHE_KEY, cache); }
+      d.result = res; d.state = "done";
+    }).catch(function () {
+      var prev = readJSON(CACHE_KEY, {})[d.id];
+      if (prev) { d.result = Object.assign({}, prev, { replayed: true }); d.state = "done"; }
+      else d.state = "error";
+    }).then(function () { d.justDone = true; render(); d.justDone = false; });
+  }
+
+  function runAll() {
+    if (running) return;
+    running = true; $("run").disabled = true; $("run").textContent = "De-identifying…";
+    var queue = docs.filter(function (d) { return d.state !== "done"; });
+    if (!queue.length) queue = docs.slice();
+    queue.forEach(function (d) { d.state = "idle"; d.result = null; });
+    render();
+    var workers = [], i = 0;
+    function next() { if (i >= queue.length) return Promise.resolve(); return deidentify(queue[i++]).then(next); }
+    for (var w = 0; w < 3; w++) workers.push(next());
+    Promise.all(workers).then(function () {
+      running = false; $("run").disabled = false; $("run").textContent = "De-identify all";
+    });
+  }
+
+  function exportJSONL() {
+    var lines = docs.filter(function (d) { return d.state === "done"; }).map(function (d) { return JSON.stringify({ text: d.result.text }); });
+    var blob = new Blob([lines.join("\n") + "\n"], { type: "application/jsonl" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "o1-training-set.jsonl";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  function toggle(tr) {
+    if (!tr) return;
+    var id = tr.getAttribute("data-id");
+    openId = openId === id ? null : id;
+    render();
+    var again = document.querySelector('tr.doc[data-id="' + id.replace(/"/g, '\\"') + '"]');
+    if (again) again.focus();
+  }
+
+  $("rows").addEventListener("click", function (e) { toggle(e.target.closest("tr.doc")); });
+  $("rows").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(e.target.closest("tr.doc")); }
+  });
+  $("run").addEventListener("click", runAll);
+  $("export").addEventListener("click", exportJSONL);
+  load();
+})();
+</script>
+</body>
+</html>
