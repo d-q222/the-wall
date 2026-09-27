@@ -44,7 +44,7 @@ for dir in "${MATTER_DIRS[@]}"; do
   # 1. Matter folder as a git repo with a commit (required before `sources add`).
   rt_dir="$RT/matters/$m"
   mkdir -p "$rt_dir"
-  cp "$dir"*.md "$dir"*.json "$rt_dir/" 2>/dev/null || true
+  cp "$dir"*.md "$rt_dir/"   # .md only, like walls/setup.sh (matter.json is the answer key)
   git -C "$rt_dir" init -q
   git -C "$rt_dir" add -A
   git -C "$rt_dir" -c user.name=wall -c user.email=wall@localhost commit -qm "matter $m" || true
