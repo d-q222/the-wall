@@ -103,8 +103,11 @@ execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0"
   "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", mp4]);
 const dur = execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", mp4]).toString().trim();
 if (!process.env.KEEP_FRAMES) rmSync(frames, { recursive: true, force: true });
-rmSync(join(OUT, "demo-latest.mp4"), { force: true });
-symlinkSync(`demo-${stamp}.mp4`, join(OUT, "demo-latest.mp4"));
+// Only a clean take replaces the backup the talk would fall back to.
+if (errors.length === 0) {
+  rmSync(join(OUT, "demo-latest.mp4"), { force: true });
+  symlinkSync(`demo-${stamp}.mp4`, join(OUT, "demo-latest.mp4"));
+}
 
 const summary = { mp4, duration_s: Number(Number(dur).toFixed(1)), frames: shots.length, beats, errors, url: URL };
 writeFileSync(join(OUT, `demo-${stamp}.json`), JSON.stringify(summary, null, 2));

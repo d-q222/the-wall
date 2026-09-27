@@ -77,14 +77,14 @@
   <section class="loop" aria-label="How the model improves">
     <div class="loop-step" id="step-corr"><div class="loop-n" id="n-corr">0</div><div class="loop-label">Attorney corrections</div><div class="loop-sub" id="s-corr">Missed or wrongly redacted identifiers</div></div>
     <div class="loop-step" id="step-ex"><div class="loop-n" id="n-ex">0</div><div class="loop-label">Training examples</div><div class="loop-sub" id="s-ex">Firm data plus corrections</div></div>
-    <div class="loop-step" id="step-job"><div class="loop-n word" id="n-job">Idle</div><div class="loop-label">River retrain</div><div class="loop-sub" id="s-job">LoRA fine-tune on River</div></div>
-    <div class="loop-step" id="step-score"><div class="loop-n" id="n-score">&ndash;</div><div class="loop-label">Held-out recall</div><div class="loop-sub" id="s-score">Unseen O-1 beneficiaries</div></div>
+    <div class="loop-step" id="step-job"><div class="loop-n word" id="n-job">Waiting</div><div class="loop-label">River retrain</div><div class="loop-sub" id="s-job">Fine-tune on River GPUs</div></div>
+    <div class="loop-step" id="step-score"><div class="loop-n" id="n-score">&ndash;</div><div class="loop-label" id="l-score">Recall on unseen matters</div><div class="loop-sub" id="s-score">Four O-1 matters it never saw</div></div>
   </section>
 
   <div class="grid">
     <div class="stack">
       <section class="panel">
-        <div class="panel-head"><h3>Held-out score</h3><span class="meta" id="score-meta">Eval set o1_deid_heldout</span></div>
+        <div class="panel-head"><h3>Score on unseen matters</h3><span class="meta" id="score-meta">Four O-1 beneficiaries held out of all training</span></div>
         <div id="metrics"><div class="panel-body"><span class="skeleton" style="width:60%"></span></div></div>
       </section>
 
@@ -96,7 +96,7 @@
 
     <aside class="inspector" aria-label="Model details">
       <div class="inspector-section">
-        <h3>Current checkpoint <span class="badge" id="status-badge">Loading</span></h3>
+        <h3>Current model <span class="badge" id="status-badge">Loading</span></h3>
         <dl class="kv" id="ckpt"></dl>
         <div id="job" hidden>
           <div class="progress"><span id="bar"></span></div>
@@ -152,7 +152,12 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function pct(x) { return x == null ? "–" : Math.round(x * 100) + "%"; }
   function when(ts) { if (!ts) return ""; var d = new Date(ts * 1000); return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
-  function shortCkpt(p) { if (!p) return "Base model (no fine-tune yet)"; var m = /^river:\/\/([0-9a-f]{8})[^/]*\/(?:.*\/)?([^/]+)$/.exec(p); return m ? "River checkpoint " + m[1] + ", " + m[2] : p; }
+  function modelName(st, plan) {
+    if (st.status === "done") return "Retrained with attorney corrections";
+    if (st.last_good_checkpoint) return "Retrained with attorney corrections (earlier run)";
+    if (plan.from_checkpoint) return "Trained on the firm's petitions, not yet retrained with corrections";
+    return "River base model, not trained yet";
+  }
 
   function snippet(passage, span) {
     var i = passage.indexOf(span);
@@ -185,14 +190,13 @@
   function renderModel(plan, st) {
     var status = st.status || "idle";
     var badge = $("status-badge");
-    var labels = { idle: "Not retrained yet", starting: "Starting", running: "Training", done: "Ready", failed: "Failed" };
+    var labels = { idle: plan.from_checkpoint ? "Firm-trained" : "Base model", starting: "Retraining", running: "Retraining", done: "Retrained", failed: "Retrain failed" };
     badge.textContent = labels[status] || status;
     badge.className = "badge " + ({ done: "badge-cleared", running: "badge-info", starting: "badge-info", failed: "badge-risk" }[status] || "plain");
-    var ckpt = status === "done" ? st.checkpoint : plan.from_checkpoint;
     $("ckpt").innerHTML =
-      "<dt>Weights</dt><dd>" + esc(shortCkpt(ckpt)) + "</dd>" +
-      "<dt>Base model</dt><dd>" + esc(plan.base_model) + "</dd>" +
-      (st.job ? "<dt>Last job</dt><dd>" + esc(st.job) + "</dd>" : "") +
+      "<dt>Model</dt><dd>" + esc(modelName(st, plan)) + "</dd>" +
+      "<dt>Runs on</dt><dd>River, private to the firm</dd>" +
+      (st.finished_at && status === "done" ? "<dt>Retrained</dt><dd>" + when(st.finished_at) + "</dd>" : "") +
       (status === "done" && st.n_feedback != null ? "<dt>Trained with</dt><dd>" + st.n_feedback + " corrections, " + st.n_examples + " examples</dd>" : "") +
       (st.error ? '<dt>Error</dt><dd class="err">' + esc(st.error) + "</dd>" : "");
 
@@ -205,10 +209,10 @@
     }
     var btn = $("retrain");
     btn.disabled = running || !plan.n_feedback;
-    btn.textContent = running ? "Retraining in progress" : "Retrain with " + plan.n_feedback + " correction" + (plan.n_feedback === 1 ? "" : "s");
+    btn.textContent = running ? "Retraining in progress" : !plan.n_feedback ? "Add a correction to retrain" : "Retrain with " + plan.n_feedback + " correction" + (plan.n_feedback === 1 ? "" : "s");
 
     $("counts").innerHTML =
-      "<span>Firm examples replayed</span><span class=\"n\">" + plan.n_base + "</span>" +
+      "<span>Firm examples reused</span><span class=\"n\">" + plan.n_base + "</span>" +
       "<span>Missed identifiers</span><span class=\"n\">" + (last.summary.by_kind.missed || 0) + "</span>" +
       "<span>Wrongly redacted</span><span class=\"n\">" + (last.summary.by_kind.wrong || 0) + "</span>" +
       '<span class="meta">Each correction is weighted ×4 in the retrain set</span><span></span>';
@@ -216,8 +220,8 @@
     $("n-corr").textContent = last.summary.n;
     $("n-ex").textContent = plan.n_examples;
     $("s-ex").textContent = plan.n_base + " firm rows + " + plan.n_feedback + " corrections";
-    $("n-job").textContent = { done: "Done", running: "Running", starting: "Starting", failed: "Failed" }[status] || "Idle";
-    $("s-job").textContent = running && st.n_steps_planned ? "Step " + (st.last_completed_step || 0) + " of " + st.n_steps_planned : (status === "done" ? "Checkpoint saved on River" : "LoRA fine-tune on River");
+    $("n-job").textContent = { done: "Done", running: "Running", starting: "Starting", failed: "Failed" }[status] || "Waiting";
+    $("s-job").textContent = running && st.n_steps_planned ? "Step " + (st.last_completed_step || 0) + " of " + st.n_steps_planned : (status === "done" ? "New model saved on River" : "Fine-tune on River GPUs");
     $("step-job").classList.toggle("live", running);
 
     if (running && !poll) poll = setInterval(load, 4000);
@@ -252,7 +256,7 @@
         return;
       }
       var base = rows.filter(function (x) { return x.det === "river_deid_base"; })[0];
-            var html = '<div class="bars"><span class="h">Detector</span><span class="h">Identifiers caught</span><span class="h r">Recall</span><span class="h r">Over-redacted</span>';
+            var html = '<div class="bars"><span class="h">Method</span><span class="h">Identifiers caught</span><span class="h r">Recall</span><span class="h r">Over-redacted</span>';
       rows.forEach(function (x) {
         var isRiver = /^river_deid/.test(x.det), delta = "";
         if (base && /^river_deid(_retrained)?$/.test(x.det) && x.recall != null && base.recall != null) {
@@ -268,14 +272,15 @@
       var river = rows.filter(function (x) { return /^river_deid/.test(x.det); });
       var best = river[river.length - 1] || rows[rows.length - 1];
       $("n-score").textContent = pct(best.recall);
-      $("s-score").textContent = (names[best.det] || best.det) + ", " + best.r.caught + " of " + best.r.leaks;
+      $("l-score").textContent = { river_deid_base: "Base recall, before training", river_deid: "Recall after firm training", river_deid_retrained: "Recall after corrections" }[best.det] || "Recall on unseen matters";
+      $("s-score").textContent = best.r.caught + " of " + best.r.leaks + " identifiers in four unseen matters";
       $("step-score").classList.toggle("gain", !!(base && best !== base && best.recall > base.recall));
     });
   }
 
   $("retrain").addEventListener("click", function () {
     var p = last.retrain.plan;
-    $("confirm-text").textContent = "This starts a LoRA fine-tune on River with " + p.n_examples + " examples (" + p.n_feedback + " attorney corrections), continuing from " + shortCkpt(p.from_checkpoint) + ". It uses GPU time.";
+    $("confirm-text").textContent = "This fine-tunes the de-identifier on River with " + p.n_examples + " examples, including " + p.n_feedback + " attorney correction" + (p.n_feedback === 1 ? "" : "s") + ", starting from " + (p.from_checkpoint ? "the current firm-trained model" : "the base model") + ". It takes a few minutes of GPU time.";
     $("confirm").hidden = false;
     $("confirm-go").focus();
   });

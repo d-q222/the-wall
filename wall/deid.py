@@ -111,7 +111,10 @@ def _find_all(text: str, needle: str) -> list[tuple[int, int]]:
 
 
 def _river_candidates(text: str, practice: str) -> list[tuple[int, int, str]]:
-    """Optional detector hook for K3's River de-identifier; skipped when absent or failing."""
+    """Optional detector hook for K3's River de-identifier (a live River call), so it is
+    opt-in via WALL_DEID_RIVER=1; skipped when off, absent or failing."""
+    if os.environ.get("WALL_DEID_RIVER") != "1":
+        return []
     try:
         from wall import river_deid  # type: ignore[attr-defined]
     except ImportError:
@@ -122,8 +125,12 @@ def _river_candidates(text: str, practice: str) -> list[tuple[int, int, str]]:
         return []
     out = []
     for s in spans or []:
-        get = s.get if isinstance(s, dict) else lambda k, s=s: getattr(s, k)
-        out.append((int(get("start")), int(get("end")), str(get("kind"))))
+        get = s.get if isinstance(s, dict) else lambda k, s=s: getattr(s, k, None)
+        if get("start") is not None and get("end") is not None:
+            out.append((int(get("start")), int(get("end")), str(get("kind"))))
+        elif get("text"):
+            # K3 returns span text without offsets: mark every occurrence.
+            out += [(a, b, str(get("kind") or "quasi_identifier")) for a, b in _find_all(text, str(get("text")))]
     return out
 
 

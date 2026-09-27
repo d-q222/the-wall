@@ -63,7 +63,7 @@ flowchart TD
 | Immigration practice policy (may/never compound) | `fixtures/policy.json` → `"immigration"` |
 | Judge: `/judge` runs the prompt frontier judge (`claude-sonnet-5` via the `anthropic` SDK) live; `evals/run_judges.py` also samples base Qwen and the River-tuned LoRA checkpoint off River, recording all three to `results/results.json` | `wall/judge.py`, `river/`, `evals/run_judges.py` |
 | O-1-specific eval set (self-written, never the headline) | `evals/` (set name `o1_demo` in `results/results.json`) |
-| Web demo: de-identify workspace, wall + compounding pages | `demo/`, `wall/walldemo.py`, `wall/compound.py` — ownership in `docs/CONTRACT.md` § "Web demo" |
+| Web demo: de-identify ("Review") workspace + shared shell, wall + compounding pages | `demo/index.html`, `demo/assets/`, `wall/walldemo.py`, `wall/compound.py` — ownership in `docs/CONTRACT.md` § "Web demo" |
 | Scoreboard (reads `results/results.json` only) | `scoreboard/`, `wall/results.py` |
 
 The contract for every shape above — `CheckRequest`/`CheckResponse`, `ScrubRequest`/`ScrubResponse`,
