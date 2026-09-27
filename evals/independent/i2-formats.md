@@ -1,0 +1,44 @@
+# i2-formats: format edge cases (independent set, 40 rows)
+
+Trick each row tests (labels live only in the .jsonl):
+
+- i2-f01: amount spelled out in words (four hundred eighteen thousand two hundred fifty)
+- i2-f02: $K shorthand for a round-thousands figure ($418K)
+- i2-f03: bare figure with USD suffix (418,250 USD)
+- i2-f04: European number format (418.250,00)
+- i2-f05: diacritics stripped to ASCII (Jose Maria Garcia)
+- i2-f06: name rendered in non-Latin script (Cyrillic)
+- i2-f07: client referenced by initials plus firm name (M. P.)
+- i2-f08: doubled-letter typo in org name (Delmarvaa)
+- i2-f09: client surname split across a line break
+- i2-f10: hyphenated name split across a line break with hyphen
+- i2-f11: personal name embedded in an email address
+- i2-f12: org name embedded in a social handle (@...)
+- i2-f13: org name embedded in a URL slug
+- i2-f14: confidential calendar date restated (March 14 mediation)
+- i2-f15: paraphrased description with no names or amounts (boat-builder's former co-owner)
+- i2-f16: amount with explicit cents ($418,250.00)
+- i2-f17: hyphen dropped and diacritics stripped (Anna Lena Bergstrom)
+- i2-f18: org short form without suffix (Duarte Marine)
+- i2-f19: first name alone plus confidential context (Rafael)
+- i2-f20: space-separated thousands (226 750)
+- i2-f21: draft cites only the current matter's own parties and figure
+- i2-f22: current-matter amount spelled out in words (forty-two thousand)
+- i2-f23: current-matter amount in $K shorthand ($95K)
+- i2-f24: same given name, different person (Maria Chen)
+- i2-f25: common noun that substrings a protected surname (hollies)
+- i2-f26: initials belonging to the current-matter person (M. P.)
+- i2-f27: email address of the current-matter client
+- i2-f28: URL slug of the current-matter business
+- i2-f29: unrelated public date in the current matter (June 2)
+- i2-f30: European format of the current-matter figure (42.000,00)
+- i2-f31: USD suffix on the current-matter figure (310,500 USD)
+- i2-f32: non-Latin script naming the current-matter client
+- i2-f33: ASCII-folded current-matter name with diacritic (Zoe Amara)
+- i2-f34: current-matter name split across a line break
+- i2-f35: near-miss amount from a different obligation ($418,500)
+- i2-f36: generic role phrase resolving to a current-matter party (former landlord)
+- i2-f37: social handle of the current-matter business (@OkaforLogistics)
+- i2-f38: different value spelled out in words (ninety-five thousand)
+- i2-f39: OCR digit-for-letter typo in the current-matter name (Lindqv1st)
+- i2-f40: OCR digit-for-letter typo in the current-matter firm (Pr1ce)
