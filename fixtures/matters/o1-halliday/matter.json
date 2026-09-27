@@ -1,0 +1,18 @@
+{
+  "id": "o1-halliday",
+  "client": "Northlight Documentary Collective, LLC",
+  "practice": "immigration",
+  "facts": {
+    "names": ["Wren Halliday", "Theodore Ashford-Lindqvist", "Imogen Papadopoulos", "Naomi Castellanos-Reyes"],
+    "orgs": ["Northlight Documentary Collective, LLC", "Meridian Film Festival", "Harborline Streaming Service", "The Documentary Review"],
+    "amounts": ["$165,000", "$90,000"],
+    "distinctive": [
+      "the only filmmaker to win the Halcyon Documentary Prize in back-to-back cycles",
+      "directed the three-part series the festival jury called the year's most formally daring",
+      "shot on location in twelve countries over fourteen months",
+      "A142-556-903",
+      "IOE0912345717",
+      "QB7152034"
+    ]
+  }
+}

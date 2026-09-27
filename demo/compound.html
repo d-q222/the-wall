@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compounding — Ethical Wall Brain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+  /* Design tokens match demo/assets/theme.css (c4-demo-ui). Inlined because
+     that file hasn't landed on main yet; swap this block for a <link> once it does. */
+  :root {
+    --font-ui: "Public Sans", -apple-system, "Segoe UI", sans-serif;
+    --font-doc: "Source Serif 4", Georgia, "Times New Roman", serif;
+
+    --bg: #14171c;
+    --surface: #1b1f26;
+    --surface-raised: #20242c;
+    --border: #2c313b;
+    --border-strong: #3a4150;
+    --text: #e9e6df;
+    --text-secondary: #9ba1ac;
+    --text-tertiary: #6b7280;
+    --accent: #c69a4e;
+    --accent-strong: #d9ae63;
+    --accent-text: #1a1408;
+    --success: #6fa287;
+    --success-bg: rgba(111, 162, 135, 0.14);
+    --success-border: rgba(111, 162, 135, 0.4);
+    --danger: #d08a7d;
+    --danger-bg: rgba(201, 112, 100, 0.14);
+    --danger-border: rgba(201, 112, 100, 0.4);
+    --neutral-badge: #8a8f98;
+    --neutral-bg: rgba(138, 143, 152, 0.14);
+    --neutral-border: rgba(138, 143, 152, 0.4);
+    --focus-ring: #d9ae63;
+  }
+
+  :root[data-theme="light"] {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface-raised: #fbfaf7;
+    --border: #ddd9cf;
+    --border-strong: #c7c2b5;
+    --text: #201d18;
+    --text-secondary: #5b564c;
+    --text-tertiary: #8a8478;
+    --accent: #8c6420;
+    --accent-strong: #6f4f19;
+    --accent-text: #fbf6ec;
+    --success: #2f6b4e;
+    --success-bg: rgba(47, 107, 78, 0.1);
+    --success-border: rgba(47, 107, 78, 0.35);
+    --danger: #963d2e;
+    --danger-bg: rgba(150, 61, 46, 0.1);
+    --danger-border: rgba(150, 61, 46, 0.35);
+    --neutral-badge: #6b6f76;
+    --neutral-bg: rgba(107, 111, 118, 0.1);
+    --neutral-border: rgba(107, 111, 118, 0.35);
+    --focus-ring: #8c6420;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 17px;
+    line-height: 1.5;
+  }
+
+  ::selection { background: var(--accent); color: var(--accent-text); }
+
+  :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+  .page { max-width: 1440px; margin: 0 auto; padding: 1.5rem 2.5rem 3rem; }
+
+  nav.top {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  nav.top a {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 0.3rem 0;
+  }
+  nav.top a:hover { color: var(--text); }
+  nav.top a[aria-current="page"] {
+    color: var(--text);
+    border-bottom: 2px solid var(--accent);
+  }
+  nav.top .brand {
+    font-family: var(--font-doc);
+    font-weight: 600;
+    color: var(--text);
+    margin-right: auto;
+  }
+  .theme-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { border-color: var(--border-strong); color: var(--text); }
+
+  header.hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+  .tagline {
+    font-family: var(--font-doc);
+    font-weight: 600;
+    font-size: 2.1rem;
+    line-height: 1.3;
+    max-width: 30ch;
+    margin: 0;
+  }
+  .run-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; flex: none; }
+  .run-controls .path {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+  .run-controls .path b { color: var(--text); font-weight: 600; }
+
+  button.primary {
+    background: var(--accent);
+    color: var(--accent-text);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.75rem;
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: 1.05rem;
+    cursor: pointer;
+  }
+  button.primary:hover { background: var(--accent-strong); }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* --- pipeline --- */
+  .pipeline {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    align-items: stretch;
+    gap: 0 0.25rem;
+  }
+
+  .stage {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    min-height: 380px;
+    opacity: 0.4;
+    transform: translateY(6px);
+    transition: opacity 0.5s ease, transform 0.5s ease, border-color 0.3s ease;
+  }
+  .stage.lit { opacity: 1; transform: translateY(0); border-color: var(--border-strong); }
+
+  .stage-head {
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .stage-head h2 {
+    font-family: var(--font-ui);
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 0.2rem;
+  }
+  .stage-head p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .stage-body {
+    flex: 1;
+    padding: 1.1rem 1.25rem;
+    overflow: auto;
+    font-family: var(--font-doc);
+    font-size: 0.98rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .stage-body .placeholder {
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+    color: var(--text-tertiary);
+    white-space: normal;
+  }
+
+  .stage-foot {
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    min-height: 2.4em;
+  }
+  .stage-foot strong { color: var(--text); font-size: 1.05rem; }
+
+  mark.fact {
+    all: unset;
+    background: color-mix(in srgb, var(--danger) 20%, transparent);
+    color: color-mix(in srgb, var(--danger) 85%, var(--text));
+    border-radius: 3px;
+    padding: 0.02em 0.15em;
+  }
+  mark.replaced {
+    all: unset;
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    color: color-mix(in srgb, var(--accent) 85%, var(--text));
+    border-radius: 3px;
+    padding: 0.02em 0.15em;
+    font-weight: 600;
+  }
+  mark.structure {
+    all: unset;
+    color: var(--success);
+    font-weight: 700;
+  }
+
+  .connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    position: relative;
+  }
+  .connector .track {
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .connector .beam {
+    position: absolute;
+    inset: 0 100% 0 auto;
+    width: 100%;
+    background: var(--accent);
+    transition: right 0.6s ease;
+  }
+  .connector.filled .beam { right: 0; }
+  .connector::after {
+    content: "";
+    position: absolute;
+    right: -1px;
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid var(--border);
+    transition: border-left-color 0.4s ease;
+  }
+  .connector.filled::after { border-left-color: var(--accent); }
+
+  /* --- stamp --- */
+  .stamp {
+    margin-top: 1.5rem;
+    padding: 1.35rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .stamp .icon {
+    flex: none;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+  }
+  .stamp.clean .icon { background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success); }
+  .stamp.leak .icon { background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger); }
+  .stamp.idle .icon { background: var(--neutral-bg); border: 1px solid var(--neutral-border); color: var(--neutral-badge); }
+  .stamp .verdict {
+    font-family: var(--font-doc);
+    font-weight: 600;
+    font-size: 1.25rem;
+  }
+  .stamp.clean .verdict { color: var(--success); }
+  .stamp.leak .verdict { color: var(--danger); }
+  .stamp .detail { font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.15rem; }
+  .stamp .spacer { flex: 1; }
+  .replayed-tag, .error-note {
+    font-size: 0.8rem;
+    border: 1px solid var(--neutral-border);
+    background: var(--neutral-bg);
+    color: var(--neutral-badge);
+    padding: 0.3rem 0.65rem;
+    border-radius: 6px;
+    flex: none;
+  }
+  .error-note { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger); }
+
+  @media (max-width: 1000px) {
+    .pipeline { grid-template-columns: 1fr; }
+    .connector { width: 1.75rem; height: 1.75rem; justify-self: center; transform: rotate(90deg); margin: -0.4rem 0; }
+    header.hero { flex-direction: column; align-items: flex-start; }
+    .run-controls { align-items: flex-start; width: 100%; }
+    .page { padding: 1.25rem 1.25rem 2.5rem; }
+    .tagline { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <nav class="top">
+    <span class="brand">Ethical Wall Brain</span>
+    <a href="index.html">Home</a>
+    <a href="index.html">De-identify</a>
+    <a href="wall.html">Wall</a>
+    <a href="compound.html" aria-current="page">Compounding</a>
+    <a href="../scoreboard/index.html">Scoreboard</a>
+    <a href="present.html">Present</a>
+    <button class="theme-toggle" id="theme-toggle" type="button">Light mode</button>
+  </nav>
+
+  <header class="hero">
+    <h1 class="tagline">The firm's know-how carried over. The client's facts did not.</h1>
+    <div class="run-controls">
+      <span class="path"><b>Delmarva</b>'s procedure &rarr; <b>Chen</b>'s letter</span>
+      <button class="primary" id="run-btn" type="button" data-present-run>Compound</button>
+    </div>
+  </header>
+
+  <div class="pipeline">
+    <section class="stage" id="stage-raw">
+      <div class="stage-head">
+        <h2>Learned on Delmarva</h2>
+        <p>The session notes from Delmarva's demand letter</p>
+      </div>
+      <div class="stage-body" id="raw-body"><span class="placeholder">Click Compound to pull Delmarva's procedure notes.</span></div>
+      <div class="stage-foot" id="raw-foot">&nbsp;</div>
+    </section>
+
+    <div class="connector" id="connector-1"><div class="track"><div class="beam"></div></div></div>
+
+    <section class="stage" id="stage-scrubbed">
+      <div class="stage-head">
+        <h2>Scrubbed</h2>
+        <p>Delmarva's facts struck, the procedure kept</p>
+      </div>
+      <div class="stage-body" id="scrubbed-body"><span class="placeholder">Waiting on the source procedure.</span></div>
+      <div class="stage-foot" id="scrubbed-foot">&nbsp;</div>
+    </section>
+
+    <div class="connector" id="connector-2"><div class="track"><div class="beam"></div></div></div>
+
+    <section class="stage" id="stage-draft">
+      <div class="stage-head">
+        <h2>Applied to Chen</h2>
+        <p>A new draft, Chen's own facts only</p>
+      </div>
+      <div class="stage-body" id="draft-body"><span class="placeholder">Waiting on the scrubbed procedure.</span></div>
+      <div class="stage-foot" id="draft-foot">&nbsp;</div>
+    </section>
+  </div>
+
+  <div class="stamp idle" id="stamp">
+    <div class="icon" id="stamp-icon">&mdash;</div>
+    <div>
+      <div class="verdict" id="stamp-verdict">Not run yet</div>
+      <div class="detail" id="stamp-detail">Compound the procedure to check Chen's letter for Delmarva's facts.</div>
+    </div>
+    <div class="spacer"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var themeToggle = document.getElementById("theme-toggle");
+  var root = document.documentElement;
+
+  function applyTheme(theme) {
+    root.setAttribute("data-theme", theme);
+    themeToggle.textContent = theme === "dark" ? "Light mode" : "Dark mode";
+    try { localStorage.setItem("wall-demo-theme", theme); } catch (e) {}
+  }
+  (function initTheme() {
+    var saved = null;
+    try { saved = localStorage.getItem("wall-demo-theme"); } catch (e) {}
+    applyTheme(saved === "light" ? "light" : "dark");
+  })();
+  themeToggle.addEventListener("click", function () {
+    applyTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  });
+
+  var runBtn = document.getElementById("run-btn");
+  var stages = {
+    raw: { el: document.getElementById("stage-raw"), body: document.getElementById("raw-body"), foot: document.getElementById("raw-foot") },
+    scrubbed: { el: document.getElementById("stage-scrubbed"), body: document.getElementById("scrubbed-body"), foot: document.getElementById("scrubbed-foot") },
+    draft: { el: document.getElementById("stage-draft"), body: document.getElementById("draft-body"), foot: document.getElementById("draft-foot") }
+  };
+  var connector1 = document.getElementById("connector-1");
+  var connector2 = document.getElementById("connector-2");
+  var stamp = document.getElementById("stamp");
+  var stampIcon = document.getElementById("stamp-icon");
+  var stampVerdict = document.getElementById("stamp-verdict");
+  var stampDetail = document.getElementById("stamp-detail");
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  function setStamp(mode, verdict, detail) {
+    stamp.className = "stamp " + mode;
+    stampIcon.textContent = mode === "clean" ? "✓" : mode === "leak" ? "!" : "—";
+    stampVerdict.textContent = verdict;
+    stampDetail.textContent = detail;
+  }
+
+  function labelFor(id) {
+    return id.charAt(0).toUpperCase() + id.slice(1);
+  }
+
+  async function runCompound() {
+    runBtn.disabled = true;
+    runBtn.textContent = "Compounding…";
+
+    stages.raw.body.innerHTML = '<span class="placeholder">Reading Delmarva’s procedure notes…</span>';
+    stages.scrubbed.body.innerHTML = '<span class="placeholder">Waiting on the source procedure.</span>';
+    stages.draft.body.innerHTML = '<span class="placeholder">Waiting on the scrubbed procedure.</span>';
+    stages.raw.foot.innerHTML = "&nbsp;";
+    stages.scrubbed.foot.innerHTML = "&nbsp;";
+    stages.draft.foot.innerHTML = "&nbsp;";
+    stages.raw.el.classList.remove("lit");
+    stages.scrubbed.el.classList.remove("lit");
+    stages.draft.el.classList.remove("lit");
+    connector1.classList.remove("filled");
+    connector2.classList.remove("filled");
+    setStamp("idle", "Compounding…", "Reading Delmarva's procedure, scrubbing it, and drafting Chen's letter.");
+
+    var response, data, failed = false;
+    try {
+      response = await fetch("/demo/api/compound", { method: "POST" });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      data = await response.json();
+    } catch (err) {
+      failed = true;
+    }
+
+    if (failed || !data) {
+      setStamp("leak", "Compounding failed", "No cached run is available yet. Try again once the API is reachable.");
+      runBtn.disabled = false;
+      runBtn.textContent = "Compound";
+      return;
+    }
+
+    var source = labelFor(data.source || "delmarva");
+    var target = labelFor(data.target || "chen");
+
+    // stage 1: the request travels in from the source matter
+    stages.raw.body.innerHTML = data.raw_procedure_html || escapeHtml(data.raw_procedure || "");
+    stages.raw.el.classList.add("lit");
+    await sleep(450);
+
+    connector1.classList.add("filled");
+    await sleep(500);
+
+    // stage 2: scrubbed
+    stages.scrubbed.body.innerHTML = data.scrubbed_procedure_html || escapeHtml(data.scrubbed_procedure || "");
+    stages.scrubbed.foot.innerHTML = "<strong>" + (data.removed || 0) + "</strong> facts removed";
+    stages.scrubbed.el.classList.add("lit");
+    await sleep(450);
+
+    connector2.classList.add("filled");
+    await sleep(500);
+
+    // stage 3: applied
+    stages.draft.body.innerHTML = data.draft_html || escapeHtml(data.draft || "");
+    stages.draft.el.classList.add("lit");
+    await sleep(300);
+
+    var hits = (data.check && data.check.hits) || [];
+    var sourceHits = hits.filter(function (h) { return h.matter === (data.source || "delmarva"); });
+    var replayedTag = data.replayed ? '<span class="replayed-tag">replayed</span>' : "";
+
+    if (sourceHits.length === 0) {
+      setStamp("clean", "0 " + source + " facts in " + target + "’s letter", "The procedure compounded. The client's facts stayed home.");
+    } else {
+      setStamp("leak", sourceHits.length + " " + source + " fact" + (sourceHits.length === 1 ? "" : "s") + " found in " + target + "’s letter", "Evidence: " + escapeHtml(sourceHits[0].evidence));
+    }
+    stamp.querySelector(".spacer").insertAdjacentHTML("afterend", replayedTag);
+
+    runBtn.disabled = false;
+    runBtn.textContent = "Compound";
+  }
+
+  runBtn.addEventListener("click", runCompound);
+})();
+</script>
+</body>
+</html>
