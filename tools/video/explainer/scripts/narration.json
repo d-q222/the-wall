@@ -1,14 +1,15 @@
 {
   "voice": "Samantha",
-  "rate": 185,
+  "rate": 175,
+  "tempo": 0.94,
   "scenes": [
-    {"id": "s1", "text": "Business is booming at Okafor & Lind Immigration. Every O-1 petition the firm has won is a playbook. Every one is also one person's file. Today: what removing identifiers means, how to choose a technique, and the wall that keeps each client's file to itself."},
-    {"id": "s2", "text": "Removing identifiers means taking out the facts that point to one person: the name, the A-number, the USCIS receipt, the employer, the salary. How you do it depends on the kind of data, and on the purpose. We want the argument to compound, and the person to stay walled in."},
-    {"id": "s3", "text": "Take a recommendation letter. Masking turns each identifier into hash marks, so you can't tell what was there. Replacement uses typed placeholders: name, org, amount. The Wall does this, so the letter still reads as an argument."},
-    {"id": "s4", "text": "But some leaks have no pattern: the founder of the delivery startup that raised its Series A last year. On our hard held-out set of legal drafts, pattern matching catches 0 of 102 such leaks. So a model judge reads what's left."},
-    {"id": "s5", "text": "Each matter lives in its own GBrain source, with scoped credentials. When one beneficiary's agent asks for another's file, GBrain answers: permission denied. Permissions hold the wall, not the prompt."},
-    {"id": "s6", "text": "Every detector sits on a trade-off. On 82 held-out paragraphs with 123 identifiers, simple rules remove 88. Models remove 118 to 123, but the strongest also remove 29 to 38 percent of clean words."},
-    {"id": "s7", "text": "Now the honest scoreboard. Our River-tuned judge catches 102 of 102 on the hard set, which came from its own training generator. On 200 independent rows, it catches 100 of 100 leaks, with 12 false alarms on 100 clean drafts."},
-    {"id": "s8", "text": "The Wall removes identifiers, with residual leakage measured. Compound the how. Wall the what."}
+    {"id": "s1", "text": "Meet Okafor & Lind, a small immigration firm. They've won a lot of O-1 visa cases. Each win is a great example to learn from. But each one is also one person's private file. Today: how we take out private details, catch the sneaky ones, and lock each client's files away."},
+    {"id": "s2", "text": "First, we find the details that point to a real person: the name, the ID numbers, the employer, the salary. Some are easy to spot. Some are not. The rule is simple. Keep how the case was won. Remove who it was about."},
+    {"id": "s3", "text": "Take a support letter. We could black out each detail, but then you can't tell what was there. Instead, The Wall swaps each one for a label, like name, company, or amount. The letter still reads clearly."},
+    {"id": "s4", "text": "Some details are sneaky. This sentence has no name and no number, but it still points to one person. Simple search rules missed all 102 of these in our hardest test. So an AI reviewer reads what's left, and flags them."},
+    {"id": "s5", "text": "Each client's files sit behind their own wall. When one client's assistant asks for another client's file, the answer is always the same: access denied. It's a real lock, not a polite request."},
+    {"id": "s6", "text": "Here's the app. A firm sets up in four quick steps: the firm, its rules, its cases, and a first petition. Then open a case and click one button. Every private detail turns into a label, and the AI reviewer checks what's left."},
+    {"id": "s7", "text": "Here are our honest results. On our hardest test, our AI reviewer caught all 102 hidden leaks. On new tests written by others, it caught all 100, but it also raised 12 false alarms on 100 clean letters. That's what we're fixing next."},
+    {"id": "s8", "text": "Learn from every case. Keep every client private. That's The Wall."}
   ]
 }

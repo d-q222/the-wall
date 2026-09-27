@@ -5,7 +5,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 const run = promisify(execFile);
 const root = new URL("..", import.meta.url).pathname;
-const { voice, rate, scenes } = JSON.parse(readFileSync(root + "scripts/narration.json", "utf8"));
+const { voice, rate, tempo = 1, scenes } = JSON.parse(readFileSync(root + "scripts/narration.json", "utf8"));
 
 // Spoken forms only; captions keep the written text.
 const speak = (t) =>
@@ -21,7 +21,7 @@ const todo = only.length ? scenes.filter((s) => only.includes(s.id)) : scenes;
 await Promise.all(todo.map(async (s) => {
   const aiff = `${root}audio/${s.id}.aiff`;
   await run("say", ["-v", voice, "-r", String(rate), "-o", aiff, speak(s.text)]);
-  await run("ffmpeg", ["-y", "-loglevel", "error", "-i", aiff, "-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", `${root}audio/${s.id}.wav`]);
+  await run("ffmpeg", ["-y", "-loglevel", "error", "-i", aiff, "-af", `atempo=${tempo}`, "-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", `${root}audio/${s.id}.wav`]);
 }));
 const durations = {};
 for (const s of scenes) {
