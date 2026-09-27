@@ -175,6 +175,15 @@ const BEATS = {
     await p.goto(BASE + '/demo/present.html', { waitUntil: 'networkidle' });
     await sleep(8000);
   }],
+  9: ['stack', 'Built on: sponsor stack and what each host does (optional; skipped until deployed)', async p => {
+    const r = await p.goto(BASE + '/demo/stack.html', { waitUntil: 'networkidle' });
+    if (r.status() === 404) throw Object.assign(new Error('not deployed'), { skip: true });
+    await sleep(2000);
+    await scrollBy(p, 500, 40);
+    await sleep(2500);
+    await scrollBy(p, 500, 40);
+    await sleep(3000);
+  }],
 };
 
 async function record(browser, n) {
@@ -195,7 +204,9 @@ async function record(browser, n) {
   let start = 0;
   page.once('load', () => { start = (Date.now() - t0) / 1000 + 0.6; });
   let ok = true;
-  try { await run(page); } catch (e) { ok = false; console.error(`beat ${n} error:`, e.message.split('\n')[0]); }
+  try { await run(page); } catch (e) {
+    if (e.skip) { await ctx.close(); console.log(`beat ${n} ${name}: skipped (${e.message})`); return null; }
+    ok = false; console.error(`beat ${n} error:`, e.message.split('\n')[0]); }
   await page.screenshot({ path: path.join(OUT, `${n}-${name}.png`) });
   const total = (Date.now() - t0) / 1000;
   const video = page.video();
@@ -224,6 +235,7 @@ async function record(browser, n) {
   const browser = await chromium.launch();
   for (const n of beats) {
     const entry = await record(browser, n);
+    if (!entry) continue;
     const i = manifest.findIndex(m => m.beat === n);
     if (i >= 0) manifest[i] = entry; else manifest.push(entry);
     manifest.sort((a, b) => a.beat - b.beat);
