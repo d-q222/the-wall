@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit log — Ethical Wall Brain</title>
+<link rel="stylesheet" href="assets/theme.css">
+<script src="assets/nav.js" defer></script>
+<style>
+  .stats-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel);
+    padding: 10px 16px; min-width: 8.5rem;
+  }
+  .stat-card .num { font-size: var(--fs-21); font-weight: 700; }
+  .stat-card .lbl { font-size: var(--fs-13); color: var(--text-2); }
+  .filter-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel);
+    padding: 12px 16px; margin-bottom: 16px;
+  }
+  .filter-bar label { display: flex; align-items: center; gap: 8px; font-size: var(--fs-15); color: var(--text-2); }
+  .filter-bar .spacer { flex: 1; }
+  .event-summary { margin: 0; }
+  .event-time { white-space: nowrap; }
+  details.counts summary { cursor: pointer; font-size: var(--fs-13); color: var(--text-2); }
+  details.counts summary:hover { color: var(--blue); }
+  .counts-table { border-collapse: collapse; margin-top: 6px; font-size: var(--fs-13); }
+  .counts-table th, .counts-table td { text-align: left; padding: 2px 12px 2px 0; border-bottom: 1px solid var(--line); }
+  .counts-table th { font-weight: 500; color: var(--text-2); }
+</style>
+</head>
+<body data-crumb="Audit log">
+<main class="app-main">
+  <div class="page-head">
+    <div>
+      <h1>Audit log</h1>
+      <p>Only scrubbed procedure crosses clients, and this log shows it. Every de-identification run, wall attack, scrubbed procedure and recorded evaluation, newest first. Open a row to see the exact counts.</p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-secondary" id="refresh-btn" type="button">Refresh</button>
+    </div>
+  </div>
+
+  <div class="stats-row" id="stat-strip" aria-label="Event totals"></div>
+
+  <div class="filter-bar">
+    <label>Kind
+      <select id="kind-filter"><option value="">All kinds</option></select>
+    </label>
+    <label id="matter-wrap">Matter
+      <select id="matter-filter"><option value="">All matters</option></select>
+    </label>
+    <div class="spacer"></div>
+    <span class="meta" id="results-count"></span>
+  </div>
+
+  <div class="panel">
+    <table class="table" id="audit-table">
+      <thead>
+        <tr><th scope="col">Time</th><th scope="col">Event</th><th scope="col">Matter</th><th scope="col">Detail</th><th scope="col">Counts</th></tr>
+      </thead>
+      <tbody id="audit-body"></tbody>
+    </table>
+    <div class="empty" id="empty-note" hidden>
+      <h3>No audit events yet</h3>
+      <p>Events appear here as de-identification runs, wall attacks and evaluations are recorded.</p>
+    </div>
+    <div class="empty" id="error-note" hidden>
+      <h3>Audit log failed to load</h3>
+      <p id="error-text"></p>
+    </div>
+  </div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var KIND_LABELS = {
+    deidentify: "De-identify",
+    wall: "Wall attack",
+    scrub: "Scrubbed",
+    promote: "Promoted",
+    eval: "Eval recorded",
+    note: "Note"
+  };
+  var KIND_BADGES = {
+    deidentify: "badge",
+    wall: "badge badge-cleared",
+    scrub: "badge badge-found",
+    promote: "badge badge-cleared",
+    eval: "badge badge-info",
+    note: "badge"
+  };
+
+  var auditBody = document.getElementById("audit-body");
+  var emptyNote = document.getElementById("empty-note");
+  var errorNote = document.getElementById("error-note");
+  var errorText = document.getElementById("error-text");
+  var kindFilter = document.getElementById("kind-filter");
+  var matterFilter = document.getElementById("matter-filter");
+  var matterWrap = document.getElementById("matter-wrap");
+  var statStrip = document.getElementById("stat-strip");
+  var resultsCount = document.getElementById("results-count");
+  var events = [];
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function kindLabel(kind) { return KIND_LABELS[kind] || kind || "Note"; }
+
+  function formatTime(iso) {
+    var d = new Date(iso);
+    return isNaN(d.getTime()) ? String(iso || "") : d.toLocaleString();
+  }
+
+  function buildFilters() {
+    var kinds = {};
+    var matters = {};
+    events.forEach(function (e) {
+      kinds[e.kind || "note"] = true;
+      if (e.matter) matters[e.matter] = true;
+    });
+    var keepKind = kindFilter.value;
+    var keepMatter = matterFilter.value;
+    kindFilter.innerHTML = '<option value="">All kinds</option>';
+    Object.keys(kinds).sort().forEach(function (k) {
+      var n = events.filter(function (e) { return (e.kind || "note") === k; }).length;
+      var opt = document.createElement("option");
+      opt.value = k;
+      opt.textContent = kindLabel(k) + " (" + n + ")";
+      kindFilter.appendChild(opt);
+    });
+    matterFilter.innerHTML = '<option value="">All matters</option>';
+    Object.keys(matters).sort().forEach(function (m) {
+      var opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m;
+      matterFilter.appendChild(opt);
+    });
+    matterWrap.style.display = Object.keys(matters).length ? "" : "none";
+    if (kinds[keepKind]) kindFilter.value = keepKind;
+    if (matters[keepMatter]) matterFilter.value = keepMatter;
+  }
+
+  function renderStats() {
+    var byKind = {};
+    events.forEach(function (e) {
+      var k = e.kind || "note";
+      byKind[k] = (byKind[k] || 0) + 1;
+    });
+    var html = '<div class="stat-card"><div class="num">' + events.length +
+      '</div><div class="lbl">Total events</div></div>';
+    Object.keys(byKind).sort().forEach(function (k) {
+      html += '<div class="stat-card"><div class="num">' + byKind[k] +
+        '</div><div class="lbl">' + escapeHtml(kindLabel(k)) + "</div></div>";
+    });
+    statStrip.innerHTML = html;
+  }
+
+  function renderRows() {
+    var fk = kindFilter.value;
+    var fm = matterFilter.value;
+    var shown = events.filter(function (e) {
+      return (!fk || (e.kind || "note") === fk) && (!fm || e.matter === fm);
+    });
+    auditBody.innerHTML = "";
+    shown.forEach(function (e) {
+      var kind = e.kind || "note";
+      var tr = document.createElement("tr");
+      var counts = e.counts || {};
+      var keys = Object.keys(counts);
+      var countsCell = "No counts";
+      if (keys.length) {
+        var rows = keys.sort().map(function (k) {
+          return "<tr><th>" + escapeHtml(k) + '</th><td class="n">' +
+            escapeHtml(counts[k]) + "</td></tr>";
+        }).join("");
+        countsCell = '<details class="counts"><summary>Exact counts</summary>' +
+          '<table class="counts-table"><tbody>' + rows + "</tbody></table></details>";
+      }
+      tr.innerHTML =
+        '<td class="event-time meta">' + escapeHtml(formatTime(e.timestamp)) + "</td>" +
+        '<td><span class="' + KIND_BADGES[kind] + '">' + escapeHtml(kindLabel(kind)) + "</span></td>" +
+        "<td>" + (e.matter ? escapeHtml(e.matter) : '<span class="meta">Firm-wide</span>') + "</td>" +
+        '<td><p class="event-summary">' + escapeHtml(e.summary || "") + "</p></td>" +
+        "<td>" + countsCell + "</td>";
+      auditBody.appendChild(tr);
+    });
+    emptyNote.hidden = shown.length > 0 || events.length > 0;
+    document.getElementById("audit-table").style.display = events.length ? "" : "none";
+    resultsCount.textContent = shown.length === events.length
+      ? events.length + " events"
+      : shown.length + " of " + events.length + " events";
+  }
+
+  function load() {
+    errorNote.hidden = true;
+    fetch("/demo/api/audit?limit=200")
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        events = Array.isArray(data) ? data : [];
+        buildFilters();
+        renderStats();
+        renderRows();
+      })
+      .catch(function (err) {
+        errorText.textContent = "Could not reach the audit log (" + err.message + ").";
+        errorNote.hidden = false;
+      });
+  }
+
+  kindFilter.addEventListener("change", renderRows);
+  matterFilter.addEventListener("change", renderRows);
+  document.getElementById("refresh-btn").addEventListener("click", load);
+  load();
+})();
+</script>
+</body>
+</html>
