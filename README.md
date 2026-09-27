@@ -44,11 +44,13 @@ Headline is the **hard** held-out set (`judge_eval_hard.jsonl`, n=200: 102 parap
 | Carryover (6-gram) | hard | 0/102 | 0/98 | 200 |
 | Prompt judge (frontier, no tuning) | hard | 59/102 | 7/98 | 200 |
 | Base Qwen (no tuning) | hard | 39/102 | 5/98 | 200 |
-| River-tuned judge | hard | — | — | — |
+| **River-tuned judge** | hard | **102/102** | **0/98** | 200 |
 | Regex fingerprint | `o1_demo` (self-written, never the headline) | 5/20 | 0/20 | 40 |
 | Carryover (6-gram) | `o1_demo` (self-written, never the headline) | 5/20 | 0/20 | 40 |
 | Regex / carryover | standard (`judge_eval.jsonl`, sanity check only) | — | — | — |
 | All detectors | blind (hand-written in the room, most trusted) | — | — | — |
+
+Cost (n=20, live `claude-sonnet-5` calls): prompt judge runs **$1.34 per 1,000 judgments**, p50 latency 1.6s. River judge cost is not yet measured — no deployment/pricing path confirmed as of this run. Method and caveats: [`evals/cost/README.md`](evals/cost/README.md).
 
 ## Hosts
 

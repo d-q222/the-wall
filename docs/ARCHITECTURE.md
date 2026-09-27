@@ -57,7 +57,7 @@ flowchart TD
 | De-identify endpoint: replace spans, verify residual | `wall/deid.py` |
 | Synthetic O-1 beneficiaries (matter.json + petition docs) | `fixtures/matters/o1-achterberg/`, `fixtures/matters/o1-umeh/`, `fixtures/matters/o1-duarte/` |
 | Immigration practice policy (may/never compound) | `fixtures/policy.json` → `"immigration"` |
-| Judge (prompt-based today; River-tuned is the SFT target) | `wall/judge.py`, `river/` |
+| Judge: prompt frontier, base Qwen, River-tuned Qwen (`/judge` HTTP endpoint lands with B2's merge; the three-way numbers in `results/results.json` are already recorded by B2's eval harness) | `wall/judge.py`, `river/` |
 | O-1-specific eval set (self-written, never the headline) | `evals/` (set name `o1_demo` in `results/results.json`) |
 | Web demo: de-identify workspace, wall + compounding pages | `demo/`, `wall/walldemo.py`, `wall/compound.py` — ownership in `docs/CONTRACT.md` § "Web demo" |
 | Scoreboard (reads `results/results.json` only) | `scoreboard/`, `wall/results.py` |
