@@ -14,24 +14,31 @@ import json
 import os
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 from agent.env import load_env
-from agent.gbrain_client import GBrainClient, content_text
+from walls.client import Client
 
 API_URL = os.environ.get("WALL_API_URL", "http://localhost:8788")
 CHECK_URL = f"{API_URL}/check"
 SCRUB_URL = f"{API_URL}/scrub"
 DEFAULT_MODEL = "claude-sonnet-5"
+# Demo-safe rule (docs/CONTRACT.md "Web demo"): keep the last live success, replay it on failure.
+CACHE_DIR = Path(__file__).resolve().parent.parent / ".runtime" / "demo_cache"
 
 
 def recall_online(matter_id: str, task: str) -> str:
     """Recall the matter's own facts through its scoped GBrain client. Never a
     local trusted caller or __all__ — those would see every matter."""
-    client = GBrainClient(matter_id)
+    client = Client(matter_id)
     keywords = " ".join(w for w in task.split() if len(w) > 2) or task
-    search_hits = content_text(client.call("search", {"query": keywords}))
-    intake = content_text(client.call("get_page", {"slug": "intake"}))
-    return f"# Search results for '{keywords}'\n{search_hits}\n\n# Intake\n{intake}"
+    hits = client.search(keywords)
+    search_text = "\n\n".join(f"## {h.get('title') or h.get('slug')}\n{h.get('chunk_text', '')}" for h in hits)
+    intake = client.get_page("intake")
+    if "error" in intake:
+        raise PermissionError(f"intake: {intake['error']}")
+    intake_text = intake.get("compiled_truth") or intake.get("content") or json.dumps(intake)
+    return f"# Search results for '{keywords}'\n{search_text}\n\n# Intake\n{intake_text}"
 
 
 def recall_offline(matter_id: str) -> str:
@@ -101,6 +108,30 @@ def run(
     return draft, verdict
 
 
+def cache_path(matter_id: str, procedure_path: str | None) -> Path:
+    return CACHE_DIR / f"agent-{matter_id}{'-procedure' if procedure_path else ''}.json"
+
+
+def run_demo_safe(
+    matter_id: str, task: str, procedure_path: str | None = None
+) -> tuple[str, dict | None, bool]:
+    """Live run; on success cache it, on failure replay the last live success.
+    Returns (draft, verdict, replayed). Re-raises if nothing was ever cached."""
+    path = cache_path(matter_id, procedure_path)
+    try:
+        draft, verdict = run(matter_id, task, procedure_path=procedure_path)
+    except Exception as e:
+        if not path.exists():
+            raise
+        cached = json.loads(path.read_text())
+        print(f"[REPLAYED last live success from {path.name}: live call failed ({type(e).__name__})]")
+        return cached["draft"], cached["verdict"], True
+    if verdict is not None:  # only cache fully live runs (guard answered)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"task": task, "draft": draft, "verdict": verdict, "replayed": False}))
+    return draft, verdict, False
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Matter agent: scoped recall, draft, guard check")
     parser.add_argument("--matter", required=True)
@@ -114,7 +145,10 @@ def main() -> None:
     if args.offline:
         print("[OFFLINE MODE — reading wall.matters fixtures directly, not live GBrain recall]")
 
-    draft, verdict = run(args.matter, args.task, args.offline, args.procedure)
+    if args.offline:
+        draft, verdict = run(args.matter, args.task, True, args.procedure)
+    else:
+        draft, verdict, _ = run_demo_safe(args.matter, args.task, args.procedure)
 
     print("\n=== DRAFT ===\n")
     print(draft)

@@ -31,6 +31,13 @@ saves it under `.runtime/`, then drafts the chen letter with `--procedure` point
 Shows the procedure's structure (sections, deadline, exhibits) carried over into an unrelated
 matter with zero Delmarva facts — confirmed by `/check`.
 
+## Demo-safe replay
+
+Recall goes through `walls.client.Client` (one cached token per matter, shared across processes).
+Each live run that the guard answered is cached under `.runtime/demo_cache/agent-<matter>[-procedure].json`.
+If a later live run fails (GBrain, LLM), the CLI prints `[REPLAYED last live success ...]` and
+shows that cached result. With no prior live success it fails loudly and never fabricates a draft.
+
 ## Offline (no live API/LLM)
 
 ```sh
