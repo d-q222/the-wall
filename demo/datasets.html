@@ -107,6 +107,7 @@
   .muted { color: var(--ds-ink-3); }
   .verdict { font-size: 13px; }
   .verdict .who { color: var(--ds-ink-3); display: block; }
+  .verdict q.fixed { color: var(--ds-ink-2); text-decoration: line-through; text-decoration-color: var(--ds-cleared); }
   .verdict q { color: var(--ds-risk); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
   /* Expanded preview: the de-identified document as a paper sheet */
@@ -257,15 +258,26 @@
     if (d.state === "error") return '<span class="status error">Failed, run again</span>';
     if (d.state !== "done") return '<span class="status idle"><span class="dot"></span>Not processed</span>';
     var tag = d.result.replayed ? '<span class="replayed" title="The live call failed; showing the last live result">Replayed</span>' : "";
-    if (d.result.residual && d.result.residual.verdict === "leak")
+    if (isOpenFlag(d))
       return '<span class="status flag"><span class="dot"></span>Residual flagged</span>' + tag;
     return '<span class="status clean"><span class="dot"></span>De-identified</span>' + tag;
   }
 
+  // c2's 4th stage: the judge's first catch is redacted and reported as spans of kind "judge_flag";
+  // `residual` is then the verdict after that redaction.
+  function judgeFlags(d) {
+    return (d.result && d.result.spans || []).filter(function (s) { return s.kind === "judge_flag"; });
+  }
+  function isOpenFlag(d) { return !!(d.result && d.result.residual && d.result.residual.verdict === "leak"); }
+
   function verdictCell(d) {
     if (d.state !== "done") return '<span class="muted">—</span>';
-    var r = d.result.residual;
+    var r = d.result.residual, jf = judgeFlags(d);
     if (!r) return '<span class="muted">Judge unavailable</span>';
+    if (r.verdict !== "leak" && jf.length) {
+      var caught = d.text.slice(jf[0].start, jf[0].end);
+      return '<div class="verdict"><span class="who">Judge caught ' + jf.length + ', redacted</span><q class="fixed" title="' + esc(caught) + '">' + esc(caught) + "</q></div>";
+    }
     if (r.verdict === "leak") return '<div class="verdict"><span class="who">Still identifying</span><q title="' + esc(r.evidence || "") + '">' + esc(r.evidence || "") + "</q></div>";
     return '<div class="verdict">No residual identifiers</div>';
   }
@@ -321,11 +333,12 @@
 
   function summarize() {
     var done = docs.filter(function (d) { return d.state === "done"; });
-    var kinds = {}, removed = 0, flags = 0, judges = {}, replayed = 0;
+    var kinds = {}, removed = 0, flags = 0, redacted = 0, judges = {}, replayed = 0;
     done.forEach(function (d) {
       removed += d.result.removed || 0;
       (d.result.spans || []).forEach(function (s) { kinds[s.kind] = (kinds[s.kind] || 0) + 1; });
-      if (d.result.residual && d.result.residual.verdict === "leak") flags++;
+      if (isOpenFlag(d)) flags++;
+      if (judgeFlags(d).length) redacted++;
       if (d.result.judge) judges[d.result.judge] = true;
       if (d.result.replayed) replayed++;
     });
@@ -334,7 +347,7 @@
     $("s-kinds").innerHTML = Object.keys(kinds).sort(function (a, b) { return kinds[b] - kinds[a]; }).map(function (k) {
       return '<span class="kind">' + esc(k.replace(/_/g, " ")) + "<b>" + kinds[k] + "</b></span>";
     }).join("");
-    $("s-flags").textContent = flags;
+    $("s-flags").innerHTML = flags + (redacted ? "<small>open, " + redacted + " caught and redacted</small>" : "");
     $("s-flags").className = "v" + (flags ? " risk" : "");
     var j = Object.keys(judges);
     if (j.length) { $("s-judge").textContent = j.map(judgeName).join(", "); $("s-judge").title = j.join(", "); }
