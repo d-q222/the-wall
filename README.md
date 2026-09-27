@@ -17,18 +17,20 @@ Full request path and de-identification pipeline: [`docs/ARCHITECTURE.md`](docs/
 ```sh
 uv sync
 uv run pytest -q
-uv run uvicorn wall.server:app --port 8788
+scripts/demo.sh
 ```
 
-Then open, on the same origin:
+`scripts/demo.sh` checks GBrain, starts the API on `:8788`, and serves everything from one origin (Ctrl-C stops just the API; GBrain is left running). Then open:
 
 | URL | What |
 |---|---|
-| `http://localhost:8788/demo/` | Web demo (O-1 de-identify workspace + wall/compounding/presenter pages) |
+| `http://localhost:8788/demo/wall.html` | Live wall attack, two rooms side by side |
+| `http://localhost:8788/demo/compound.html` | A procedure learned on one matter improving another, facts stripped |
+| `http://localhost:8788/demo/policy.html`, `/demo/audit.html`, `/demo/training.html` | Practice-policy editor, audit log, attorney-correction/retrain loop |
 | `http://localhost:8788/scoreboard/` | Leak-detection scoreboard, reads `results/results.json` live |
 | `http://localhost:8788/results/results.json` | Raw numbers behind the scoreboard |
 
-Live wall attack (own terminal, prints `permission_denied` for a cross-matter read):
+Live wall attack from a terminal (prints `permission_denied` for a cross-matter read):
 
 ```sh
 uv run python walls/attack.py
@@ -36,7 +38,7 @@ uv run python walls/attack.py
 
 ## The numbers
 
-Headline is the **hard** held-out set (`judge_eval_hard.jsonl`, n=200: 102 paraphrased leaks with synonyms never seen in training, 98 clean drafts) — the set where naive pattern matching is known to score 0/102. All numbers below are read live from `results/results.json`; blanks are eval sets not yet run.
+Headline is the **hard** held-out set (`judge_eval_hard.jsonl`, n=200: 102 paraphrased leaks with synonyms never seen in training, 98 clean drafts) — the set where naive pattern matching is known to score 0/102. The **independent** set (n=80, written by teammates who never opened the training data, across formats/paraphrase/adversarial/immigration cases) is the number to trust most. All figures are read live from `results/results.json`; blanks are eval sets not yet run.
 
 | Detector | Eval set | Leaks caught | False alarms | n |
 |---|---|---|---|---|
@@ -45,10 +47,15 @@ Headline is the **hard** held-out set (`judge_eval_hard.jsonl`, n=200: 102 parap
 | Prompt judge (frontier, no tuning) | hard | 59/102 | 7/98 | 200 |
 | Base Qwen (no tuning) | hard | 39/102 | 5/98 | 200 |
 | **River-tuned judge** | hard | **102/102** | **0/98** | 200 |
+| Regex fingerprint | independent (written by teammates blind to training data, most trusted) | 7/40 | 0/40 | 80 |
+| Carryover (6-gram) | independent | 3/40 | 0/40 | 80 |
+| Base Qwen (no tuning) | independent | 38/40 | 2/40 | 80 |
+| Prompt judge (frontier, no tuning) | independent | 40/40 | 3/40 | 80 |
+| **River-tuned judge** | independent | **40/40** | 6/40 | 80 |
 | Regex fingerprint | `o1_demo` (self-written, never the headline) | 5/20 | 0/20 | 40 |
 | Carryover (6-gram) | `o1_demo` (self-written, never the headline) | 5/20 | 0/20 | 40 |
 | Regex / carryover | standard (`judge_eval.jsonl`, sanity check only) | — | — | — |
-| All detectors | blind (hand-written in the room, most trusted) | — | — | — |
+| All detectors | blind (Daniel's hand-written set, `data/blind.jsonl`) | — | — | — |
 
 Cost (n=20, live `claude-sonnet-5` calls): prompt judge runs **$1.34 per 1,000 judgments**, p50 latency 1.6s. River judge cost is not yet measured — no deployment/pricing path confirmed as of this run. Method and caveats: [`evals/cost/README.md`](evals/cost/README.md).
 
