@@ -6,7 +6,7 @@ from wall.server import app
 
 
 def test_routes_exist():
-    paths = {r.path for r in app.routes}
+    paths = {getattr(r, "path", None) for r in app.routes}
     assert {"/check", "/scrub", "/judge", "/deidentify"} <= paths
 
 
