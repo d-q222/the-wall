@@ -1,0 +1,7 @@
+Lawyers keep every client's story in a secret box. They are not allowed to mix one client's secrets into another client's work.
+AI could learn from all those old cases and help next time. But it might spill one client's secrets. So today, lawyers use AI that forgets.
+We put each client's box behind a wall. Watch: one helper asks for another client's box. The wall says no. Every time.
+To learn from old cases, we hide everything that says who someone is: their name, their company, their numbers. Even a sneaky clue like 'the only person who won this prize twice'. The lesson stays. The person disappears.
+Simple rules miss most of the sneaky clues. Our own small AI, trained on River, caught 20 out of 20 on a test it had never seen. As good as the big AI models.
+GBrain builds the walls. River trains our AI. Memorable remembers the lessons. QM gives every client their own room.
+Learn from every case. Keep every secret.
