@@ -26,5 +26,5 @@ Open http://localhost:8788/demo/present.html. Arrow keys move. Press `f` for ful
 ## Likely questions
 - **Does this replace client consent?** No. It makes it easier to ask for: only lessons cross between clients, never who they're about.
 - **Why not just search for names?** Slide 4: a word search caught 0 of 102 clues.
-- **Where does your AI live?** We trained it on River and it runs there. It's ours, and it isn't shared with other firms.
+- **Where does your AI live?** We trained it on River, and it runs on River. It learned only from made-up examples.
 - **Is this real client data?** No. Every person, company and case is made up.
