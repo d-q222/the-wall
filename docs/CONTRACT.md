@@ -12,7 +12,7 @@ No agent invents an endpoint. Contract changes go through the coordinator and la
 | POST /judge | current, protected[], draft | verdict, matter, evidence | `wall/judge.py` (B2) |
 | results/results.json (shared: `$WALL_RESULTS`, default `~/the-wall/results/results.json`, gitignored) | `wall.results.record()` | {detector: {eval_set: {caught, leaks, false_alarms, clean, n}}} | eval runners |
 
-Run the API: `uv run uvicorn wall.server:app --port 8787`
+Run the API: `uv run uvicorn wall.server:app --port 8788` (8787 is taken on the demo machine by an unrelated proxy). Clients read the base URL from env `WALL_API_URL`, default `http://localhost:8788`.
 
 Eval set names in results.json: `standard` (judge_eval.jsonl), `hard` (judge_eval_hard.jsonl),
 `demo` (demo_leak_cases.jsonl), `blind` (blind.jsonl).

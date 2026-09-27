@@ -10,5 +10,5 @@ Procedures learn across matters; client facts never cross them.
 ```sh
 uv sync
 uv run pytest -q
-uv run uvicorn wall.server:app --port 8787
+uv run uvicorn wall.server:app --port 8788
 ```
