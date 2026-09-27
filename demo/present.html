@@ -139,9 +139,10 @@ document.getElementById('runDeid').onclick = async () => {
     if (hard) cells.push(`<div class="num"><strong>${hard.caught}/${hard.leaks}</strong><span>Paraphrased leaks caught by pattern matching</span></div>`);
     if (bP) cells.push(`<div class="num"><strong>${bP.caught}/${bP.leaks}</strong><span>Leaks Claude caught on a blind set written by a different model family${bR ? ` (patterns: ${bR.caught}/${bR.leaks})` : ''}</span></div>`);
     const riv = bRv || iRv, rivCmp = bRv ? bP : iP;
-    if (riv) cells.push(`<div class="num"><strong>${riv.caught}/${riv.leaks}</strong><span>Our River-tuned model, which the firm owns${rivCmp ? `, vs Claude's ${rivCmp.caught}/${rivCmp.leaks}` : ''}. It raises more false alarms (${riv.false_alarms}/${riv.clean}), so calibration is next.</span></div>`);
+    if (riv) cells.push(`<div class="num"><strong>${riv.caught}/${riv.leaks}</strong><span>Our small River-tuned model, which the firm owns${rivCmp ? `, vs Claude's ${rivCmp.caught}/${rivCmp.leaks}` : ''}. False alarms: ${riv.false_alarms}/${riv.clean}${rivCmp ? ` vs ${rivCmp.false_alarms}/${rivCmp.clean}` : ''}.</span></div>`);
     document.getElementById('nums').innerHTML = cells.join('');
-    document.getElementById('numnote').textContent = 'Every number is held out and read live from results.json. Synthetic data only; not a compliance guarantee.';
+    const over = (iRv && iP && iRv.false_alarms > iP.false_alarms) ? ` On larger agent-written test sets it over-flags more (${iRv.false_alarms}/${iRv.clean} false alarms vs Claude's ${iP.false_alarms}/${iP.clean}); calibrating that is next.` : '';
+    document.getElementById('numnote').textContent = 'Every number is held out and read live from results.json.' + over + ' Synthetic data only; not a compliance guarantee.';
   } catch {}
 })();
 </script>
