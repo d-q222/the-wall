@@ -1,7 +1,7 @@
 """River as the de-identifier: a LoRA-tuned Qwen that reads a firm's practice
 policy and returns the exact spans to remove from a passage.
 
-    spans(text, practice="immigration", model="tuned") -> [{text, kind, replacement}]
+    spans(text, practice="immigration", model="tuned") -> [{text, kind, replacement, start, end}]
 
 model="tuned" samples the checkpoint in .runtime/river-deid/state.json;
 model="base" samples the untuned base model (for comparison). Every live success
@@ -23,6 +23,7 @@ STATE_PATH = RUNTIME / "river-deid" / "state.json"
 CACHE_PATH = RUNTIME / "demo_cache" / "river_deid.json"
 POLICY_PATH = Path(__file__).resolve().parent.parent / "fixtures" / "policy.json"
 BASE_MODEL = "Qwen/Qwen3.6-35B-A3B-FP8"
+TIMEOUT_S = float(os.environ.get("WALL_RIVER_DEID_TIMEOUT", "60"))  # a hung sample must not hang /deidentify
 
 KINDS = {
     "name": "[PERSON]",
@@ -85,6 +86,17 @@ def parse(text: str, completion: str) -> list[dict]:
         return []
 
 
+def with_offsets(text: str, found: list[dict]) -> list[dict]:
+    """One entry per occurrence, with start/end offsets into text (wall.deid's hook needs them)."""
+    out = []
+    for s in found:
+        start = text.find(s["text"])
+        while start >= 0:
+            out.append({**s, "start": start, "end": start + len(s["text"])})
+            start = text.find(s["text"], start + 1)
+    return out
+
+
 def checkpoint_path() -> str | None:
     if not STATE_PATH.exists():
         return None
@@ -115,7 +127,7 @@ def sample_many(texts: list[str], practice: str, model: str) -> list[str]:
     ]
     client = river.Client(api_key=os.environ["RIVER_API_KEY"])
     try:
-        with client.session(job="k3-river-deid-sample") as session:
+        with client.session(timeout=TIMEOUT_S, job="k3-river-deid-sample") as session:
             groups = session.sample(
                 prompts=prompts,
                 base_model=BASE_MODEL,
@@ -123,6 +135,7 @@ def sample_many(texts: list[str], practice: str, model: str) -> list[str]:
                 max_tokens=1024,
                 temperature=0.0,
                 stop=renderer.get_stop_strings(),
+                timeout=TIMEOUT_S,
             )
         return [g[0].text for g in groups]
     finally:
@@ -146,7 +159,7 @@ def spans(text: str, practice: str = "immigration", model: str = "tuned") -> lis
     try:
         paras = [p for p in text.split("\n\n") if p.strip()] or [text]
         found = [s for p, c in zip(paras, sample_many(paras, practice, model)) for s in parse(p, c)]
-        result = valid_spans(text, found)  # dedupe across paragraphs
+        result = with_offsets(text, valid_spans(text, found))  # dedupe across paragraphs
     except Exception:
         cached = _cache().get(key)
         if cached is None:

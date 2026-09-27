@@ -1,16 +1,18 @@
 # QA drill — 25 hardest judge questions
 
 Numbers below were read from `/Users/dqi26/the-wall/results/results.json`
-and `evals/cost/results.json` on main at **15:35 PDT**; refresh at 16:10
-before stage time. Every answer is true of the repo on main; the proving
-file is named per question. "**Not yet**" marks the honest gaps.
+and `evals/cost/results.json` on main at **16:10 PDT** (final refresh).
+Every answer is true of the repo on main; the proving file is named per
+question. "**Not yet**" marks the honest gaps.
 
 ## The score
 
 **1. What exactly does "102/102" mean?**
 It means the River-tuned judge flagged all 102 paraphrased leaks in
 `judge_eval_hard.jsonl` (n = 200: 102 leaks + 98 clean, 0/98 false alarms) —
-currently in `results.json` under `river_judge.hard`.
+currently in `results.json` under `river_judge.hard`. Cross-checks that
+landed at 16:05: blind 20/20 (1/20 false alarms), independent 100/100
+(12/100 false alarms — see Q6).
 Proof: `/Users/dqi26/the-wall/results/results.json`, `evals/run_judges.py`.
 
 **2. Is the hard set really held out, or did the model train on it?**
@@ -28,12 +30,14 @@ method) — so 102/102 partly reflects familiar templates, and the
 hand-written blind set is the stronger test. Proof: `docs/pitch/slides.html`
 (scoreboard note); verify with `evals/run_judges.py`.
 
-**4. Where is the blind set? — Not yet.**
-`data/blind.jsonl` (30 hand-written cases, flat `{current, protected[],
-draft, label}` rows, author must not have opened train/eval files) does not
-exist yet; `evals/check_blind.py` validates it once written, and
-`evals/run_judges.py` already parses the flat format. Closes when Daniel
-writes the 30 rows. Proof: `docs/BLIND_SET.md`, `evals/check_blind.py`.
+**4. What does the blind set say?**
+The hand-written blind file per `docs/BLIND_SET.md` has landed (40 rows:
+20 LEAK / 20 CLEAN, flat `{current, protected[], draft, label}` format) and
+is scored: River 20/20, prompt judge 19/20, base Qwen 19/20 (each 1/20
+false alarms), regex 12/20, carryover 0/20. This is the number judges
+should trust most — no generator overlap. Proof:
+`/Users/dqi26/the-wall/data/blind.jsonl`, `/Users/dqi26/the-wall/results/results.json`,
+`evals/check_blind.py`.
 
 **5. The prompt-judge number moved (37 vs 59 of 102) — which is it?**
 Both were true at different times: earlier runs scored ~37/102, current
@@ -45,8 +49,11 @@ entry). Proof: `/Users/dqi26/the-wall/results/results.json`,
 
 **6. What are the false-alarm rates, and what is the target?**
 Currently on hard (of 98 clean): regex 0, carryover 0, base Qwen 5,
-prompt judge 7, River judge 0; the PRD target is false alarms at or under
-5% of clean drafts, so the prompt judge (7/98 ≈ 7%) is over target.
+prompt judge 7, River judge 0 — but on the independent set (of 100 clean)
+River has 12 false alarms (12%, worst in any slice: 5/20 on immigration),
+over the PRD target of at most 5%; say both numbers, not just hard.
+Proof: `/Users/dqi26/the-wall/results/results.json`, `docs/PRD.md`
+("Targets").
 Proof: `/Users/dqi26/the-wall/results/results.json`, `docs/PRD.md`
 ("Targets").
 
@@ -66,7 +73,12 @@ check, never the headline. Proof: `docs/pitch/claims.md`, `docs/CONTRACT.md`.
 
 **9. What are the O-1 numbers?**
 On `o1_demo` (n = 40: 20 leaks + 20 clean): regex 5/20, carryover 5/20,
-0/20 false alarms; no judge rows reported on `o1_demo` yet.
+prompt judge 14/20, River judge 20/20, all 0/20 false alarms. Five
+independent slices also landed (formats, immigration, paraphrase,
+adversarial, mixups; 20/20 each): judges catch ~all, regex only the
+literal slices (2–16/20) and carryover near zero — but the independent
+files live outside this worktree's data dir, so cite them as "recorded in
+results.json" and let the coordinator confirm provenance.
 Proof: `/Users/dqi26/the-wall/results/results.json`.
 
 **10. What is the "standard" set, and why isn't it the headline?**
@@ -181,10 +193,12 @@ declarations and the Board reversed a grant — so in asylum no narrative
 text ever compounds, while in litigation shared letter templates are a
 firm asset. Proof: `docs/PRD.md`, `fixtures/policy.json` (asylum row).
 
-## Open items for the coordinator (16:10 refresh)
+## Open items for the coordinator (after 16:10)
 
-- Re-read `results.json`/`ci.json`/`evals/cost/results.json`; river cost row
-  and blind-set rows may have landed.
+- Confirm provenance of the five `indep_*` slices in `results.json` (source
+  files not in this worktree's data dir).
 - b2-river owes: why training state says n_examples=640 vs 900 rows in
   `judge_train_v2.jsonl` (holdout vs dropped rows).
+- River-judge cost row still unmeasured (`evals/cost/results.json` says
+  "not measured"); `results/ci.json` still has no `river_judge` entry.
 - E1 redteam findings, if merged, supersede Q23.

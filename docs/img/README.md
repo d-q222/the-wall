@@ -2,7 +2,7 @@
 
 Captured at 1440x900 with headless Chrome from the demo served same-origin
 with the API, so live/stub data renders where the page supports it.
-Re-captured as pages improve; last full pass 15:32.
+Re-captured as pages improve; last full pass 16:10 (live backend).
 
 | Screen | File | Source page |
 |---|---|---|

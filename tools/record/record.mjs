@@ -35,7 +35,8 @@ page.on("response", (r) => { if (r.status() >= 400) errors.push(`${r.status()} $
 
 const resp = await page.goto(URL, { waitUntil: "networkidle" });
 if (!resp || !resp.ok()) throw new Error(`presenter not reachable: ${URL} -> ${resp && resp.status()}`);
-await page.waitForSelector(".beat.on", { timeout: 10000 });
+// Presenter v1 used .beat (auto-runs live screens); the condensed one uses .slide with a button per live slide.
+await page.waitForSelector(".beat.on, .slide.on", { timeout: 10000 });
 
 // Start the screencast.
 const cdp = await ctx.newCDPSession(page);
@@ -52,9 +53,11 @@ if (HIDE_CHROME) await page.keyboard.press("h");
 
 const beatInfo = () =>
   page.evaluate(() => {
-    const all = [...document.querySelectorAll(".beat")];
-    const on = document.querySelector(".beat.on");
-    return { i: all.indexOf(on), n: all.length, tab: on?.dataset.tab || "", target: Number(on?.dataset.target || 10), run: !!on?.dataset.run };
+    const all = [...document.querySelectorAll(".beat, .slide")];
+    const on = all.find((e) => e.classList.contains("on"));
+    const click = !on?.dataset.run && !!on?.querySelector("button");
+    const tab = on?.dataset.tab || on?.querySelector("h1")?.innerText.trim().split(/\s+/).slice(0, 5).join(" ") || "";
+    return { i: all.indexOf(on), n: all.length, tab, target: Number(on?.dataset.target || (click ? 14 : 7)), run: !!on?.dataset.run || click, click };
   });
 
 // Wait at least the beat's target; if it triggers a live call, also wait for the network to settle.
@@ -75,8 +78,12 @@ const beats = [];
 let b = await beatInfo();
 while (true) {
   log(`beat ${b.i + 1}/${b.n} "${b.tab}" target ${b.target}s${b.run ? " (live)" : ""}`);
+  if (b.click) {
+    await sleep(1500); // let the room see the "before" state
+    await page.locator(".slide.on button").first().click();
+  }
   await dwell(b);
-  const png = join(OUT, `demo-${stamp}-beat${b.i + 1}-${b.tab.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`);
+  const png = join(OUT, `demo-${stamp}-beat${b.i + 1}-${b.tab.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.png`);
   await page.screenshot({ path: png });
   beats.push({ beat: b.i + 1, tab: b.tab, png });
   await page.keyboard.press("ArrowRight");
