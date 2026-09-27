@@ -1,73 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethical Wall Brain - Leak Detection Scoreboard</title>
+    <title>Leak Detection Scoreboard — Ethical Wall Brain</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/demo/assets/theme.css">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #0f0f0f;
-            color: #ffffff;
-            padding: 2rem;
-            line-height: 1.6;
-        }
+        body { padding: 2.5rem; }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
         }
 
+        header.top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
         h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            color: #ffffff;
-            font-weight: 700;
+            font-family: var(--font-doc);
+            font-size: 2.25rem;
+            font-weight: 600;
+            color: var(--text);
         }
 
         .subtitle {
-            font-size: 1.2rem;
-            color: #aaaaaa;
-            margin-bottom: 2rem;
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            margin-top: 0.35rem;
         }
 
         .last-updated {
-            font-size: 0.9rem;
-            color: #666666;
-            margin-bottom: 2rem;
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+            margin-top: 0.75rem;
         }
 
         .scoreboard {
-            background-color: #1a1a1a;
-            border: 2px solid #333333;
-            border-radius: 8px;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
             overflow: auto;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
 
         thead {
-            background-color: #222222;
-            border-bottom: 2px solid #333333;
+            background-color: var(--surface-raised);
+            border-bottom: 1px solid var(--border);
         }
 
         th {
-            padding: 1rem;
+            padding: 0.9rem 1rem;
             text-align: left;
             font-weight: 600;
-            color: #ffffff;
-            border-right: 1px solid #333333;
+            color: var(--text);
+            border-right: 1px solid var(--border);
         }
 
         th:last-child {
@@ -75,10 +75,9 @@
         }
 
         td {
-            padding: 1rem;
-            border-right: 1px solid #333333;
-            border-bottom: 1px solid #333333;
-            font-weight: 500;
+            padding: 0.9rem 1rem;
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
         }
 
         td:last-child {
@@ -90,23 +89,17 @@
         }
 
         .detector-name {
-            font-weight: 700;
-            color: #ffffff;
+            font-weight: 600;
+            color: var(--text);
             min-width: 150px;
         }
 
         .eval-set-header {
-            background-color: #333333;
-            font-weight: 700;
-            color: #ffffff;
+            background-color: var(--surface-raised);
+            font-weight: 600;
+            color: var(--text-secondary);
             text-align: center;
-            padding: 0.8rem 1rem;
-        }
-
-        .metric-group {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
+            padding: 0.7rem 1rem;
         }
 
         .metric {
@@ -118,74 +111,73 @@
 
         .metric-label {
             font-size: 0.75rem;
-            color: #888888;
-            text-transform: uppercase;
+            color: var(--text-tertiary);
             margin-bottom: 0.25rem;
         }
 
         .metric-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #ffffff;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
         }
 
         .caught {
-            color: #4ade80;
+            color: var(--success);
         }
 
         .false-alarm {
-            color: #f87171;
+            color: var(--danger);
         }
 
         .neutral {
-            color: #888888;
+            color: var(--text-secondary);
         }
 
         .highlighted {
-            background-color: #374151;
-            border: 3px solid #fbbf24;
-            box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+            background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+            border: 1px solid var(--accent);
         }
 
         .blind-section {
-            background-color: #1a1a1a;
-            border: 2px solid #333333;
-            border-radius: 8px;
-            padding: 2rem;
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.75rem;
             margin-bottom: 2rem;
         }
 
         .blind-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: #ffffff;
+            font-family: var(--font-doc);
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            color: var(--text);
         }
 
         .blind-detectors {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
         }
 
         .blind-detector {
-            background-color: #222222;
-            padding: 1.5rem;
-            border-radius: 6px;
-            border: 1px solid #333333;
+            background-color: var(--surface-raised);
+            padding: 1.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
         }
 
         .blind-detector-name {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.9rem;
+            color: var(--text);
         }
 
         .blind-metrics {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+            gap: 0.9rem;
         }
 
         .blind-metric {
@@ -194,63 +186,76 @@
         }
 
         .blind-metric-label {
-            font-size: 0.8rem;
-            color: #888888;
-            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
             margin-bottom: 0.25rem;
         }
 
         .blind-metric-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #ffffff;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text);
         }
 
         .no-results {
             text-align: center;
             padding: 4rem 2rem;
-            color: #888888;
-            font-size: 1.3rem;
+            color: var(--text-tertiary);
+            font-size: 1.15rem;
         }
 
         @media (max-width: 768px) {
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            body {
-                padding: 1rem;
-            }
-
-            table {
-                font-size: 0.9rem;
-            }
-
-            th, td {
-                padding: 0.7rem;
-            }
-
-            .metric-value {
-                font-size: 1.1rem;
-            }
+            header.top { flex-direction: column; gap: 1rem; }
+            h1 { font-size: 1.6rem; }
+            body { padding: 1.25rem; }
+            table { font-size: 0.85rem; }
+            th, td { padding: 0.6rem; }
+            .metric-value { font-size: 1.05rem; }
         }
     </style>
 </head>
 <body>
+    <div id="site-nav"></div>
     <div class="container">
-        <h1>Leak Detection Scoreboard</h1>
-        <p class="subtitle">Ethical Wall Brain Evaluation Results</p>
-        <p class="last-updated">Last updated: <span id="updateTime">--:--:--</span> (Auto-refresh every 5s)</p>
+        <header class="top">
+            <div>
+                <h1>Leak Detection Scoreboard</h1>
+                <p class="subtitle">Ethical Wall Brain — evaluation results</p>
+                <p class="last-updated">Last updated <span id="updateTime">--:--:--</span>, refreshing every 5s</p>
+            </div>
+            <button class="theme-toggle" id="theme-toggle" type="button">Light mode</button>
+        </header>
 
         <div id="content">
-            <div class="no-results">Loading results...</div>
+            <div class="no-results">Loading results…</div>
         </div>
     </div>
 
+    <script src="/demo/assets/nav.js" defer></script>
     <script>
+        var themeToggle = document.getElementById("theme-toggle");
+        var root = document.documentElement;
+
+        function applyTheme(theme) {
+            root.setAttribute("data-theme", theme);
+            themeToggle.textContent = theme === "dark" ? "Light mode" : "Dark mode";
+            try { localStorage.setItem("wall-scoreboard-theme", theme); } catch (e) {}
+        }
+
+        (function initTheme() {
+            var saved = null;
+            try { saved = localStorage.getItem("wall-scoreboard-theme"); } catch (e) {}
+            applyTheme(saved === "light" ? "light" : "dark");
+        })();
+
+        themeToggle.addEventListener("click", function () {
+            var current = root.getAttribute("data-theme");
+            applyTheme(current === "dark" ? "light" : "dark");
+        });
+
         const params = new URLSearchParams(window.location.search);
         const useSample = params.has('sample');
-        const resultsUrl = params.get('src') || (useSample ? './sample_results.json' : '../results/results.json');
+        const resultsUrl = params.get('src') || (useSample ? './sample_results.json' : '/results/results.json');
 
         async function loadAndRender() {
             try {
@@ -263,7 +268,7 @@
             } catch (error) {
                 document.getElementById('content').innerHTML = `
                     <div class="no-results">
-                        Unable to load results. ${useSample ? '(Sample mode)' : '(Make sure results.json exists at ../results/)'}<br/>
+                        Unable to load results. ${useSample ? '(Sample mode)' : '(Make sure the API is serving /results/results.json)'}<br/>
                         <small>${error.message}</small>
                     </div>
                 `;
@@ -329,9 +334,9 @@
 
             // Sub-headers for each metric
             for (const evalSet of sortedEvalSets) {
-                html += '<th style="text-align: center; font-size: 0.9rem;">Leaks Caught</th>';
-                html += '<th style="text-align: center; font-size: 0.9rem;">False Alarms</th>';
-                html += '<th style="text-align: center; font-size: 0.9rem;">n</th>';
+                html += '<th style="text-align: center; font-size: 0.85rem;">Leaks caught</th>';
+                html += '<th style="text-align: center; font-size: 0.85rem;">False alarms</th>';
+                html += '<th style="text-align: center; font-size: 0.85rem;">n</th>';
             }
 
             html += '</tr></thead>';
@@ -346,7 +351,7 @@
                     const result = regularResults[detector][evalSet];
 
                     if (!result) {
-                        html += '<td>-</td><td>-</td><td>-</td>';
+                        html += '<td>—</td><td>—</td><td>—</td>';
                     } else {
                         // Determine if this cell should be highlighted
                         const isHighlighted = detector === 'river_judge' && evalSet === 'hard' ||
@@ -358,7 +363,7 @@
                         const caughtTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">Caught</div><div class="metric-value caught">${result.caught}</div><div class="metric-label" style="font-size: 0.65rem;">${result.caught}/${result.leaks}</div></div></td>`;
 
                         // False alarms
-                        const falseAlarmTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">False Alarms</div><div class="metric-value false-alarm">${result.false_alarms}</div><div class="metric-label" style="font-size: 0.65rem;">${result.false_alarms}/${result.clean}</div></div></td>`;
+                        const falseAlarmTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">False alarms</div><div class="metric-value false-alarm">${result.false_alarms}</div><div class="metric-label" style="font-size: 0.65rem;">${result.false_alarms}/${result.clean}</div></div></td>`;
 
                         // n (sample size)
                         const nTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">n</div><div class="metric-value neutral">${result.n}</div></div></td>`;
@@ -376,7 +381,7 @@
             // Blind evaluation set in separate box
             if (Object.values(blindResults).some(r => r !== null)) {
                 html += '<div class="blind-section">';
-                html += '<div class="blind-title">Blind Evaluation Set</div>';
+                html += '<div class="blind-title">Blind evaluation set</div>';
                 html += '<div class="blind-detectors">';
 
                 for (const detector of orderedDetectors) {
@@ -388,17 +393,17 @@
                     html += '<div class="blind-metrics">';
 
                     html += '<div class="blind-metric">';
-                    html += '<div class="blind-metric-label">Leaks Caught</div>';
+                    html += '<div class="blind-metric-label">Leaks caught</div>';
                     html += `<div class="blind-metric-value caught">${result.caught}/${result.leaks}</div>`;
                     html += '</div>';
 
                     html += '<div class="blind-metric">';
-                    html += '<div class="blind-metric-label">False Alarms</div>';
+                    html += '<div class="blind-metric-label">False alarms</div>';
                     html += `<div class="blind-metric-value false-alarm">${result.false_alarms}/${result.clean}</div>`;
                     html += '</div>';
 
                     html += '<div class="blind-metric">';
-                    html += '<div class="blind-metric-label">Sample Size</div>';
+                    html += '<div class="blind-metric-label">Sample size</div>';
                     html += `<div class="blind-metric-value neutral">${result.n}</div>`;
                     html += '</div>';
 

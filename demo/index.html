@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>De-identify — Ethical Wall Brain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/theme.css">
+<style>
+  header.top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .tagline {
+    font-family: var(--font-doc);
+    font-weight: 600;
+    font-size: var(--text-display);
+    line-height: 1.25;
+    max-width: 42ch;
+    margin: 0;
+  }
+
+  .panes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  .pane {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    min-height: 420px;
+  }
+
+  .pane-head {
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .pane-body { flex: 1; padding: 1.25rem; }
+
+  textarea#original-text {
+    width: 100%;
+    height: 100%;
+    min-height: 360px;
+    resize: vertical;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: var(--font-doc);
+    font-size: var(--text-lg);
+    line-height: 1.65;
+    padding: 0;
+  }
+  textarea#original-text:focus { outline: none; }
+
+  .output-text {
+    font-family: var(--font-doc);
+    font-size: var(--text-lg);
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .placeholder {
+    color: var(--text-tertiary);
+    font-family: var(--font-ui);
+    font-size: var(--text-md);
+  }
+
+  .results {
+    margin-top: 1.25rem;
+    padding: 1.1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .results.empty { color: var(--text-tertiary); font-size: var(--text-md); }
+  .results .spacer { flex: 1; }
+
+  .removed-count { font-size: var(--text-md); color: var(--text-secondary); }
+  .removed-count strong { color: var(--text); font-size: var(--text-xl); }
+
+  .kind-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+  .error-note { color: var(--danger); font-size: var(--text-md); }
+
+  .mock-flag {
+    font-size: var(--text-xs);
+    color: var(--neutral-badge);
+    border: 1px solid var(--neutral-border);
+    background: var(--neutral-bg);
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-sm);
+  }
+
+  @media (max-width: 900px) {
+    .panes { grid-template-columns: 1fr; }
+    .tagline { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+<div id="site-nav"></div>
+<div class="page">
+  <header class="top">
+    <p class="tagline">Train on your firm's O-1 petitions without training on your clients.</p>
+    <button class="theme-toggle" id="theme-toggle" type="button">Light mode</button>
+  </header>
+
+  <div class="toolbar">
+    <div>
+      <label for="sample-select">Load sample</label>
+      <select id="sample-select">
+        <option value="">Choose an excerpt…</option>
+      </select>
+    </div>
+    <div class="spacer"></div>
+    <span id="mock-flag" class="mock-flag" hidden>mock mode</span>
+    <button class="primary" id="deidentify-btn" type="button" data-present-run>De-identify</button>
+  </div>
+
+  <div class="panes">
+    <div class="pane">
+      <div class="pane-head">Original</div>
+      <div class="pane-body">
+        <textarea id="original-text" placeholder="Paste or load an O-1 petition excerpt…" spellcheck="false"></textarea>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-head">De-identified</div>
+      <div class="pane-body">
+        <div class="output-text" id="output-text"><span class="placeholder">Run De-identify to see the cleaned draft here.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="results empty" id="results">
+    <span>No result yet.</span>
+  </div>
+</div>
+
+<script src="assets/nav.js" defer></script>
+<script>
+(function () {
+  "use strict";
+
+  var KIND_LABELS = {
+    name: "name",
+    org: "organization",
+    amount: "amount",
+    a_number: "A-number",
+    receipt: "receipt number",
+    email: "email",
+    date: "date",
+    quasi_identifier: "quasi-identifier"
+  };
+
+  var themeToggle = document.getElementById("theme-toggle");
+  var root = document.documentElement;
+
+  function applyTheme(theme) {
+    root.setAttribute("data-theme", theme);
+    themeToggle.textContent = theme === "dark" ? "Light mode" : "Dark mode";
+    try { localStorage.setItem("wall-demo-theme", theme); } catch (e) {}
+  }
+
+  (function initTheme() {
+    var saved = null;
+    try { saved = localStorage.getItem("wall-demo-theme"); } catch (e) {}
+    applyTheme(saved === "light" ? "light" : "dark");
+  })();
+
+  themeToggle.addEventListener("click", function () {
+    var current = root.getAttribute("data-theme");
+    applyTheme(current === "dark" ? "light" : "dark");
+  });
+
+  var params = new URLSearchParams(window.location.search);
+  var mockMode = params.get("mock") === "1";
+  if (mockMode) {
+    document.getElementById("mock-flag").hidden = false;
+  }
+
+  var sampleSelect = document.getElementById("sample-select");
+  var originalText = document.getElementById("original-text");
+  var outputText = document.getElementById("output-text");
+  var resultsEl = document.getElementById("results");
+  var deidentifyBtn = document.getElementById("deidentify-btn");
+  var samples = [];
+  var lastResult = null;
+
+  fetch("samples.json")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      samples = data;
+      data.forEach(function (sample, i) {
+        var opt = document.createElement("option");
+        opt.value = String(i);
+        opt.textContent = sample.label;
+        sampleSelect.appendChild(opt);
+      });
+    })
+    .catch(function () {
+      var opt = document.createElement("option");
+      opt.disabled = true;
+      opt.textContent = "samples.json failed to load";
+      sampleSelect.appendChild(opt);
+    });
+
+  sampleSelect.addEventListener("change", function () {
+    if (sampleSelect.value === "") return;
+    var sample = samples[Number(sampleSelect.value)];
+    originalText.value = sample.text;
+    resetOutput();
+  });
+
+  function resetOutput() {
+    outputText.innerHTML = '<span class="placeholder">Run De-identify to see the cleaned draft here.</span>';
+    resultsEl.className = "results empty";
+    resultsEl.innerHTML = "<span>No result yet.</span>";
+    lastResult = null;
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function renderOutput(text, spans) {
+    var sorted = spans.slice().sort(function (a, b) { return a.start - b.start; });
+    var out = [];
+    var cursor = 0;
+    sorted.forEach(function (span) {
+      if (span.start > cursor) {
+        out.push(escapeHtml(text.slice(cursor, span.start)));
+      }
+      var label = KIND_LABELS[span.kind] || span.kind;
+      var kindVar = "var(--kind-" + span.kind + ", var(--kind-default))";
+      out.push(
+        '<mark class="span" style="--kind-color:' + kindVar + '" title="' + escapeHtml(label) + '">' +
+        escapeHtml(span.replacement) +
+        "</mark>"
+      );
+      cursor = Math.max(cursor, span.end);
+    });
+    if (cursor < text.length) {
+      out.push(escapeHtml(text.slice(cursor)));
+    }
+    outputText.innerHTML = out.join("") || '<span class="placeholder">No identifiers found in this draft.</span>';
+  }
+
+  function renderResults(response) {
+    var byKind = {};
+    response.spans.forEach(function (span) {
+      byKind[span.kind] = (byKind[span.kind] || 0) + 1;
+    });
+
+    var chips = Object.keys(byKind).map(function (kind) {
+      var label = KIND_LABELS[kind] || kind;
+      var kindVar = "var(--kind-" + kind + ", var(--kind-default))";
+      return '<span class="kind-chip" style="--kind-color:' + kindVar + '">' +
+        escapeHtml(label) + " · " + byKind[kind] + "</span>";
+    }).join("");
+
+    var badgeHtml;
+    if (!response.residual) {
+      badgeHtml = '<span class="badge unavailable">Judge unavailable</span>';
+    } else if (response.residual.verdict === "clean") {
+      badgeHtml = '<span class="badge clean">No residual identifiers found (judge: ' +
+        escapeHtml(response.judge || "unknown") + ")</span>";
+    } else {
+      badgeHtml = '<span class="badge leak">Residual identifier: ' +
+        escapeHtml(response.residual.evidence || "unspecified") + "</span>";
+    }
+
+    resultsEl.className = "results";
+    resultsEl.innerHTML =
+      '<span class="removed-count"><strong>' + response.removed + "</strong> removed</span>" +
+      '<div class="kind-chips">' + chips + "</div>" +
+      '<div class="spacer"></div>' +
+      badgeHtml +
+      '<button class="secondary" id="download-btn" type="button">Download training JSONL</button>';
+
+    document.getElementById("download-btn").addEventListener("click", function () {
+      downloadJsonl(response.text);
+    });
+  }
+
+  function renderError(message) {
+    resultsEl.className = "results";
+    resultsEl.innerHTML = '<span class="error-note">' + escapeHtml(message) + "</span>";
+  }
+
+  function downloadJsonl(text) {
+    var line = JSON.stringify({ text: text }) + "\n";
+    var blob = new Blob([line], { type: "application/jsonl" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "training.jsonl";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function mockDeidentify(text) {
+    var spans = [];
+    var patterns = [
+      { re: /\$[0-9][0-9,.]*(?:\s(?:million|thousand))?/g, kind: "amount" },
+      { re: /[A-Za-z][A-Za-z.]*@[A-Za-z0-9.-]+/g, kind: "email" },
+      { re: /\b[A-Z]{3}-\d{2}-\d{3}-\d{5}\b/g, kind: "receipt" },
+      { re: /\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b|\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b/g, kind: "date" },
+      { re: /\b(?:[A-Z][a-z]+\s+(?:Inc\.|Foundation|Theatre|Company|Bioscience(?:\s+Inc\.)?))\b/g, kind: "org" },
+      { re: /\b(?:Mr\.|Ms\.|Dr\.)\s+[A-Z][a-z]+\b|\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, kind: "name" }
+    ];
+    var claimed = [];
+    function overlaps(s, e) {
+      return claimed.some(function (c) { return s < c.end && e > c.start; });
+    }
+    patterns.forEach(function (p) {
+      var m;
+      p.re.lastIndex = 0;
+      while ((m = p.re.exec(text)) !== null) {
+        var s = m.index, e = m.index + m[0].length;
+        if (!overlaps(s, e)) {
+          claimed.push({ start: s, end: e });
+          spans.push({ start: s, end: e, kind: p.kind, replacement: "[" + p.kind.toUpperCase() + "]" });
+        }
+      }
+    });
+    spans.sort(function (a, b) { return a.start - b.start; });
+    var cleaned = [];
+    var cursor = 0;
+    spans.forEach(function (s) {
+      cleaned.push(text.slice(cursor, s.start));
+      cleaned.push(s.replacement);
+      cursor = s.end;
+    });
+    cleaned.push(text.slice(cursor));
+    var cleanedText = cleaned.join("");
+
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        resolve({
+          text: cleanedText,
+          spans: spans,
+          removed: spans.length,
+          residual: { verdict: "clean", matter: null, evidence: null },
+          judge: "mock_judge"
+        });
+      }, 300);
+    });
+  }
+
+  function runDeidentify() {
+    var text = originalText.value.trim();
+    if (!text) return;
+    deidentifyBtn.disabled = true;
+    deidentifyBtn.textContent = "De-identifying…";
+
+    var call = mockMode
+      ? mockDeidentify(text)
+      : fetch("/deidentify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: text, practice: "immigration", matter_id: null })
+        }).then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        });
+
+    call
+      .then(function (response) {
+        lastResult = response;
+        renderOutput(text, response.spans || []);
+        renderResults(response);
+      })
+      .catch(function (err) {
+        renderError("De-identify failed (" + err.message + "). This endpoint lands with c2-deid; use ?mock=1 to preview the UI until then.");
+      })
+      .finally(function () {
+        deidentifyBtn.disabled = false;
+        deidentifyBtn.textContent = "De-identify";
+      });
+  }
+
+  deidentifyBtn.addEventListener("click", runDeidentify);
+})();
+</script>
+</body>
+</html>
