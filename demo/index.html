@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Review workspace</title>
 <link rel="stylesheet" href="/demo/assets/theme.css">
+<script>
+  // ?matter=<id> or ?sample=<id> picks the matter; ?first=1 (from onboarding step 4) opens one sample petition.
+  (function () {
+    var q = new URLSearchParams(location.search), m = q.get("matter") || q.get("sample");
+    if (!m && q.get("first") === "1") m = "o1-achterberg";
+    if (m) try { localStorage.setItem("wall.matter", m); } catch (e) {}
+  })();
+</script>
 <script src="/demo/assets/nav.js" defer></script>
 <style>
   .review-head { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 18px; }
@@ -90,6 +98,22 @@
   .train-note a { font-weight: 600; }
   .error { font-size: var(--fs-13); color: var(--risk); }
 
+  /* first-run hint: after GitHub Primer's Banner (primer/react packages/react/src/Banner/Banner.tsx):
+     icon | title + description + actions | dismiss */
+  .hint { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px 16px; margin-bottom: 18px; background: var(--blue-soft); border: 1px solid color-mix(in srgb, var(--blue) 28%, transparent); border-radius: var(--r-panel); }
+  .hint[hidden] { display: none; }
+  .hint-icon { width: 20px; height: 20px; color: var(--blue); margin-top: 1px; }
+  .hint h2 { font-size: var(--fs-15); }
+  .hint p { font-size: var(--fs-13); color: var(--text-2); margin-top: 2px; max-width: 78ch; }
+  .hint ol { margin: 8px 0 0; padding-left: 18px; font-size: var(--fs-13); color: var(--text-2); display: flex; gap: 22px; }
+  .hint li.done { color: var(--cleared); text-decoration: line-through; }
+  .hint-dismiss { background: none; border: 0; color: var(--text-2); cursor: pointer; font: inherit; font-size: var(--fs-13); padding: 4px 6px; border-radius: 4px; }
+  .hint-dismiss:hover { background: var(--surface); color: var(--text); }
+  .next-step { display: flex; align-items: center; gap: 16px; margin-top: 28px; padding: 16px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); }
+  .next-step p { color: var(--text-2); font-size: var(--fs-13); }
+  .next-step strong { display: block; color: var(--text); font-size: var(--fs-15); }
+  .next-step .btn { margin-left: auto; }
+  .btn:active:not([disabled]) { transform: translateY(1px); }
   @media (max-width: 1360px) {
     .workspace { grid-template-columns: 184px minmax(0, 1fr) 300px; gap: 0 18px; }
     .rail .binder-tabs { margin-right: -18px; }
@@ -109,9 +133,19 @@
       <p id="petition-sub">Reading the binder from the matter file.</p>
     </div>
     <div class="actions">
-      <button class="btn btn-primary" id="run" type="button" disabled>De-identify exhibit</button>
+      <button class="btn btn-primary" id="run" type="button" data-present-run disabled>De-identify exhibit</button>
     </div>
   </div>
+
+  <section class="hint" id="hint" aria-labelledby="hint-title" tabindex="-1" hidden>
+    <svg class="hint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
+    <div>
+      <h2 id="hint-title">Your first petition: a fictional sample</h2>
+      <p>Exhibit A is open. De-identify it to watch each identifier become a typed placeholder; the judge then checks whether what is left could still point to the beneficiary.</p>
+      <ol><li id="h-1">De-identify the exhibit</li><li id="h-2">Read the judge's verdict</li><li id="h-3">Add it to the training set</li></ol>
+    </div>
+    <button type="button" class="hint-dismiss" id="hint-dismiss" aria-label="Dismiss the first-run hint">Dismiss</button>
+  </section>
 
   <div class="workspace">
     <div class="rail">
@@ -145,6 +179,11 @@
       </div>
     </aside>
   </div>
+
+  <section class="next-step" aria-label="Next step">
+    <div><strong>Next: build the training set</strong><p>Reviewed exhibits join the O-1 training set on Datasets, where every document on file is de-identified and exported as JSONL.</p></div>
+    <a class="btn btn-secondary" href="/demo/datasets.html">Open Datasets</a>
+  </section>
 </main>
 
 <script>
@@ -194,10 +233,22 @@
     var cls = /\((O-1[AB])/.exec(m.documents["criteria-evidence.md"] || "");
     $("petition-title").textContent = (cls ? cls[1] + " petition" : "O-1 petition") + " for " + who;
     $("petition-sub").textContent = "Petitioner " + m.client.replace(/\.$/, "") + ". " + plural(state.exhibits.length, "exhibit", "exhibits") + " in the binder; review each before it joins the training set.";
-    select(0);
+    var firstIdx = 0;
+    if (FIRST) state.exhibits.forEach(function (x, i) { if (x.file === "recommendation-letter.md") firstIdx = i; });
+    select(firstIdx);
     if (/[?&]run\b/.test(location.search) && !autoRan) { autoRan = true; setTimeout(function () { $("run").click(); }, 300); }
   }
   var autoRan = false;
+  var FIRST = /[?&]first=1\b/.test(location.search);
+  function hintStep(n) { var li = $("h-" + n); if (li) li.classList.add("done"); }
+  if (FIRST) {
+    $("hint").hidden = false;
+    $("hint-dismiss").addEventListener("click", function () {
+      $("hint").hidden = true;
+      history.replaceState(null, "", location.pathname);
+      $("run").focus();
+    });
+  }
 
   function renderTabs() {
     var tabs = $("tabs");
@@ -359,7 +410,8 @@
     var set = readStore(TRAIN_KEY, []);
     var have = set.some(function (x) { return x.id === key(ex); });
     var leak = r.residual && r.residual.verdict === "leak";
-    if (have) return '<h3>Training set</h3><p class="train-note">This exhibit is in the training set. <a href="/demo/datasets.html">Open Datasets</a></p>';
+    if (have) return '<h3>Training set</h3><p class="train-note" style="margin:0 0 10px">This exhibit is in the training set' + (leak ? ", held back until a reviewer clears the flag." : ".") + '</p>' +
+      '<a class="btn btn-primary" style="width:100%" href="/demo/datasets.html?added=' + encodeURIComponent(key(ex)) + '">Open Datasets</a>';
     return '<h3>Training set</h3><button type="button" class="btn ' + (leak ? "btn-secondary" : "btn-primary") + '" id="add-train" style="width:100%">' +
       (leak ? "Add to training set, flagged for review" : "Add to training set") + "</button>" +
       '<p class="train-note">' + (leak ? "Flagged exhibits stay out of training until a reviewer clears them." : "Only the clean text is stored, never the original.") + "</p>";
@@ -379,6 +431,8 @@
     writeStore(TRAIN_KEY, set);
     $("train-section").innerHTML = trainHTML(ex, r);
     $("train-section").querySelector(".train-note").insertAdjacentHTML("afterbegin", "Added. ");
+    hintStep(3);
+    var go = $("train-section").querySelector("a.btn"); if (go) go.focus();
   }
 
   function focusIdent(i) {
@@ -474,12 +528,13 @@
       void card.offsetWidth;
       card.classList.add("landed");
       t.hidden = false;
+      hintStep(1); hintStep(2);
       done();
     }
     if (reduceMotion || !idents.length) { setView("clean"); land(); return; }
     setView("original");
     sheet.classList.add("animating");
-    var FIND = 55, FOLD = 120;
+    var FIND = Math.min(55, 1100 / idents.length), FOLD = Math.min(120, 2400 / idents.length);
     idents.forEach(function (n, i) { setTimeout(function () { n.classList.add("found"); }, i * FIND); });
     var foldStart = idents.length * FIND + 650;
     idents.forEach(function (n, i) {
