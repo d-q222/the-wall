@@ -68,7 +68,7 @@ def judge(req: JudgeRequest, *, client: anthropic.Anthropic | None = None) -> Ju
     for _attempt in range(2):
         response = client.messages.create(
             model=model,
-            max_tokens=256,
+            max_tokens=1024,
             system=SYSTEM_PROMPT,
             messages=messages,
         )
