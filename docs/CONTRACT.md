@@ -12,7 +12,7 @@ No agent invents an endpoint. Contract changes go through the coordinator and la
 | POST /judge | current, protected[], draft | verdict, matter, evidence | `wall/judge.py` (B2) |
 | results/results.json (shared: `$WALL_RESULTS`, default `~/the-wall/results/results.json`, gitignored) | `wall.results.record()` | {detector: {eval_set: {caught, leaks, false_alarms, clean, n}}} | eval runners |
 
-Run the API: `uv run uvicorn wall.server:app --port 8787`
+Run the API: `uv run uvicorn wall.server:app --port 8788` (8787 is taken on the demo machine by an unrelated proxy). Clients read the base URL from env `WALL_API_URL`, default `http://localhost:8788`.
 
 Eval set names in results.json: `standard` (judge_eval.jsonl), `hard` (judge_eval_hard.jsonl),
 `demo` (demo_leak_cases.jsonl), `blind` (blind.jsonl).
@@ -33,6 +33,20 @@ Need a dependency? Add it with `uv add` and say so in your handoff; the coordina
 | B1 guard | `b1-guard` | `wall/guard.py`, `evals/run_guard.py`, `tests/test_guard.py` | Reproduces 79/97 (standard) and 0/102 (hard) baselines |
 | B2 river | `b2-river` | `wall/judge.py`, `river/`, `evals/run_judges.py`, `tests/test_judge.py` | Three-judge rows in results.json (prompt judge first) |
 | B3 scrub | `b3-scrub` | `wall/scrub.py`, `memorable/`, `tests/test_scrub.py` | Scrubbed Delmarva procedure has 0 client facts; memorable ingest accepts it |
+
+### O-1 de-identification demo (added 14:58; pivot ruled by Daniel: narrow demo, O-1 framing, small immigration firms, River stays)
+
+| Agent | Branch | Owns | Done when |
+|---|---|---|---|
+| C1 corpus | `c1-o1-corpus` | `fixtures/matters/o1-*/` | 3 synthetic O-1 beneficiaries with matter.json + petition documents |
+| C2 pipeline | `c2-deid` | `wall/deid.py`, `deid/`, `tests/test_deid.py` | POST /deidentify and `deid/run.py in.jsonl out.jsonl` produce cleaned text + judge-verified residual report |
+| C3 PII | `c3-pii` | `wall/pii.py`, `tests/test_pii.py` | `wall.pii.find()` catches generic + immigration identifiers with tests |
+| C4 demo UI | `c4-demo-ui` | `demo/` | Before/after O-1 page at /demo calling /deidentify |
+| C5 O-1 eval | `c5-o1-eval` | `evals/o1/` | Synthetic O-1 leak set scored for regex, carryover, prompt judge (+ River when ready) as eval set `o1_demo` |
+| C6 pitch | `c6-pitch` | `docs/pitch/` | 2-minute script, slides, say/don't-say and Q&A for the O-1 framing |
+
+Interfaces: `wall.pii.find(text) -> list[Span(start, end, kind)]`; `POST /deidentify` (DeidentifyRequest -> DeidentifyResponse in `wall/contract.py`).
+`o1_demo` numbers are self-written: never the headline. The headline stays the held-out hard set.
 
 ## Cross-branch handoffs
 
