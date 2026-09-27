@@ -43,6 +43,8 @@
   var ONB_STEPS = ["firm", "policy", "matters", "petition"];
   var FIRM = "Okafor & Lind Immigration";
   var MATTER_KEY = "wall.matter";
+  // A link like /demo/?matter=o1-umeh (from Matters) picks the matter on arrival.
+  try { var linkedMatter = new URLSearchParams(location.search).get("matter"); if (linkedMatter) localStorage.setItem(MATTER_KEY, linkedMatter); } catch (e) {}
   var THEME_KEY = "wall.theme";
   var ONB_KEY = "wall.onboarding";
 
