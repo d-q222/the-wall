@@ -74,7 +74,11 @@
   .verdict.leak h4 { color: var(--risk); }
   .verdict.clean h4 { color: var(--cleared); }
   .verdict p { font-size: var(--fs-13); color: var(--text-2); margin-top: 6px; }
-  .verdict blockquote { margin: 10px 0 0; padding: 8px 0 8px 12px; border-left: 3px solid var(--risk); font-family: var(--font-doc); font-size: var(--fs-15); line-height: 1.5; color: var(--text); }
+  .verdict.leak p, .verdict.leak .by { color: color-mix(in srgb, var(--risk) 55%, var(--text)); }
+  .verdict.clean p, .verdict.clean .by { color: color-mix(in srgb, var(--cleared) 55%, var(--text)); }
+  .verdict blockquote { margin: 10px 0 0; padding: 10px 12px; border-radius: 4px; background: var(--paper); font-family: var(--font-doc); font-style: italic; font-size: var(--fs-15); line-height: 1.55; color: #1B2436; }
+  .verdict blockquote::before { content: "\201C"; }
+  .verdict blockquote::after { content: "\201D"; }
   .verdict .by { margin-top: 10px; font-size: var(--fs-13); color: var(--text-3); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .landing { opacity: 0; transform: translateY(8px); }
   .landed { opacity: 1; transform: none; transition: opacity .35s ease, transform .45s cubic-bezier(.2,.7,.2,1); }

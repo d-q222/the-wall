@@ -86,6 +86,9 @@ h4 { font-size: var(--fs-15); }
 p { margin: 0; }
 a { color: var(--blue); text-underline-offset: 2px; }
 a:hover { color: var(--blue-hover); }
+::selection { background: var(--found); color: var(--ink); }
+html { scrollbar-color: var(--line-strong) transparent; caret-color: var(--blue); accent-color: var(--blue); }
+.sidebar { scrollbar-color: var(--side-line) transparent; }
 :focus-visible { outline: none; box-shadow: var(--focus); border-radius: var(--r-chip); }
 .num { font-variant-numeric: tabular-nums; }
 .muted { color: var(--text-2); }
