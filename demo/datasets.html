@@ -86,7 +86,8 @@
     padding: 10px 16px; border-bottom: 1px solid var(--ds-line); background: var(--ds-canvas);
   }
   .ds-table th.num, .ds-table td.num { text-align: right; }
-  .ds-table td { padding: 11px 16px; border-bottom: 1px solid var(--ds-line-soft); vertical-align: top; position: relative; }
+  .ds-table td { padding: 11px 16px; border-bottom: 1px solid var(--ds-line-soft); vertical-align: top; }
+  .ds-table tr.doc { position: relative; }
   .ds-table tr.doc { cursor: pointer; }
   .ds-table tr.doc:hover td { background: color-mix(in srgb, var(--ds-blue-soft) 45%, transparent); }
   .ds-table tr.doc.open td { background: var(--ds-blue-soft); }
@@ -120,9 +121,9 @@
   @keyframes pulse { 50% { opacity: .35; } }
   .removed { font-size: 17px; font-weight: 600; }
   .muted { color: var(--ds-ink-3); }
-  .verdict { font-size: 13px; max-width: 34ch; }
+  .verdict { font-size: 13px; }
   .verdict .who { color: var(--ds-ink-3); display: block; }
-  .verdict q { color: var(--ds-risk); font-family: "Source Serif 4", Georgia, serif; font-size: 14px; }
+  .verdict q { color: var(--ds-risk); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
   /* Expanded preview: the de-identified document as a paper sheet */
   tr.detail td { background: var(--ds-canvas); padding: 18px 24px 22px; }
@@ -178,10 +179,10 @@
     <table class="ds-table">
       <thead>
         <tr>
-          <th style="width:30%">Document</th>
-          <th style="width:17%">Beneficiary</th>
+          <th style="width:25%">Document</th>
+          <th style="width:14%">Beneficiary</th>
           <th style="width:15%">Status</th>
-          <th class="num" style="width:10%">Identifiers removed</th>
+          <th class="num" style="width:9%">Identifiers<br>removed</th>
           <th>Judge verdict</th>
         </tr>
       </thead>
@@ -203,6 +204,10 @@
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function readJSON(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; } }
   function writeJSON(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+
+  function judgeName(id) {
+    return { prompt_judge: "Claude prompt judge", river_judge: "River fine-tuned judge", base_judge: "Base Qwen judge" }[id] || id;
+  }
 
   function labelFor(filename) {
     var base = filename.replace(/\.md$/, "").replace(/-/g, " ");
@@ -278,9 +283,8 @@
     if (d.state !== "done") return '<span class="muted">—</span>';
     var r = d.result.residual;
     if (!r) return '<span class="muted">Judge unavailable</span>';
-    var who = '<span class="who">' + esc(d.result.judge || "judge") + "</span>";
-    if (r.verdict === "leak") return '<div class="verdict">' + who + "Still identifying: <q>" + esc(r.evidence || "") + "</q></div>";
-    return '<div class="verdict">' + who + "No residual identifiers</div>";
+    if (r.verdict === "leak") return '<div class="verdict"><span class="who">Still identifying</span><q title="' + esc(r.evidence || "") + '">' + esc(r.evidence || "") + "</q></div>";
+    return '<div class="verdict">No residual identifiers</div>';
   }
 
   function renderSheet(d) {
@@ -347,7 +351,7 @@
     $("s-flags").textContent = flags;
     $("s-flags").className = "v" + (flags ? " risk" : "");
     var j = Object.keys(judges);
-    if (j.length) $("s-judge").textContent = j.join(", ");
+    if (j.length) { $("s-judge").textContent = j.map(judgeName).join(", "); $("s-judge").title = j.join(", "); }
     $("export").disabled = done.length === 0;
     $("foot").textContent = done.length ? (done.length + " documents ready to export" + (replayed ? ", " + replayed + " replayed from the last live run" : "")) : "";
   }
