@@ -81,7 +81,7 @@
       </section>
 
       <section class="panel">
-        <div class="panel-head"><h3>Corrections pending</h3><span class="badge badge-found" id="pending-badge">0 pending</span></div>
+        <div class="panel-head"><h3>Attorney corrections</h3><span class="badge badge-found" id="pending-badge">0 pending</span></div>
         <div id="corrections"><div class="panel-body"><span class="skeleton"></span><span class="skeleton" style="width:70%"></span></div></div>
       </section>
     </div>
@@ -144,7 +144,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function pct(x) { return x == null ? "–" : Math.round(x * 100) + "%"; }
   function when(ts) { if (!ts) return ""; var d = new Date(ts * 1000); return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
-  function shortCkpt(p) { if (!p) return "Base model (no fine-tune yet)"; var parts = p.split("/"); return parts.slice(-3).join("/"); }
+  function shortCkpt(p) { if (!p) return "Base model (no fine-tune yet)"; var m = /^river:\/\/([0-9a-f]{8})[^/]*\/(?:.*\/)?([^/]+)$/.exec(p); return m ? "River checkpoint " + m[1] + ", " + m[2] : p; }
 
   function snippet(passage, span) {
     var i = passage.indexOf(span);
@@ -230,28 +230,35 @@
 
   function loadScores() {
     fetch("/results/results.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (all) {
+      var ORDER = ["deid_rules", "deid_rules_with_facts", "prompt_judge", "river_deid_base", "river_deid", "river_deid_retrained"];
+      var names = { deid_rules: "Rules only", deid_rules_with_facts: "Rules plus matter facts", prompt_judge: "Claude prompt",
+        river_deid_base: "River, untrained base", river_deid: "River, trained on firm data", river_deid_retrained: "River, after corrections" };
       var rows = [];
       Object.keys(all || {}).forEach(function (det) {
         var r = all[det] && all[det].o1_deid_heldout;
         if (r) rows.push({ det: det, r: r, recall: r.leaks ? r.caught / r.leaks : null });
       });
+      rows.sort(function (x, y) { var i = ORDER.indexOf(x.det), j = ORDER.indexOf(y.det); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j); });
       if (!rows.length) {
         $("metrics").innerHTML = '<div class="empty"><h3>No held-out score yet</h3><p>The before and after comparison appears once the de-identifier is scored on the held-out O-1 beneficiaries.</p></div>';
         return;
       }
-      var names = { regex: "Regex", carryover: "Known facts", prompt_judge: "Claude prompt", river_deid: "River, before corrections", river_deid_retrained: "River, after corrections" };
-      var base = null;
+      var base = rows.filter(function (x) { return x.det === "river_deid_base"; })[0];
       $("metrics").innerHTML = '<div class="metrics">' + rows.map(function (x) {
         var delta = "";
-        if (/river/.test(x.det) && base != null && x.recall != null && x.recall > base) delta = '<div class="delta">+' + Math.round((x.recall - base) * 100) + " pts</div>";
-        if (/river/.test(x.det) && base == null) base = x.recall;
+        if (base && /^river_deid(_retrained)?$/.test(x.det) && x.recall != null && base.recall != null) {
+          var d = Math.round((x.recall - base.recall) * 100);
+          delta = '<div class="delta"' + (d < 0 ? ' style="color:var(--risk)"' : "") + ">" + (d >= 0 ? "+" : "\u2212") + Math.abs(d) + " pts vs untrained</div>";
+        }
         return '<div class="metric"><div class="v">' + pct(x.recall) + '</div><div class="d">' + esc(names[x.det] || x.det) + "</div>" +
-          '<div class="d num">' + x.r.caught + " of " + x.r.leaks + " identifiers, " + x.r.false_alarms + " false alarms</div>" + delta + "</div>";
+          '<div class="d num">' + x.r.caught + " of " + x.r.leaks + " identifiers caught</div>" +
+          '<div class="d num">' + x.r.false_alarms + " over-redactions in " + x.r.clean + " clean spans</div>" + delta + "</div>";
       }).join("") + "</div>";
-      var best = rows.filter(function (x) { return /river/.test(x.det); }).pop() || rows[rows.length - 1];
+      var river = rows.filter(function (x) { return /^river_deid/.test(x.det); });
+      var best = river[river.length - 1] || rows[rows.length - 1];
       $("n-score").textContent = pct(best.recall);
-      $("s-score").textContent = (names[best.det] || best.det) + ", n=" + best.r.n;
-      $("step-score").classList.toggle("gain", rows.length > 1);
+      $("s-score").textContent = (names[best.det] || best.det) + ", " + best.r.caught + " of " + best.r.leaks;
+      $("step-score").classList.toggle("gain", !!(base && best !== base && best.recall > base.recall));
     });
   }
 
