@@ -54,6 +54,28 @@ class JudgeResponse(BaseModel):
     evidence: str | None = None
 
 
+# POST /deidentify  (C2 pipeline; O-1 demo)
+class DeidSpan(BaseModel):
+    start: int  # offsets into the ORIGINAL text
+    end: int
+    kind: str  # e.g. name, org, amount, a_number, receipt, email, date, quasi_identifier
+    replacement: str
+
+
+class DeidentifyRequest(BaseModel):
+    text: str
+    practice: str = "immigration"
+    matter_id: str | None = None  # known matter facts improve recall when given
+
+
+class DeidentifyResponse(BaseModel):
+    text: str  # de-identified text
+    spans: list[DeidSpan] = []
+    removed: int
+    residual: JudgeResponse | None = None  # judge verdict on the de-identified text
+    judge: str | None = None  # which judge produced `residual` (river_judge, prompt_judge)
+
+
 # results/results.json, written by eval runners via wall.results.record():
 # {detector: {eval_set: {"caught", "leaks", "false_alarms", "clean", "n"}}}
 class EvalResult(BaseModel):

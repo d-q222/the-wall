@@ -34,6 +34,20 @@ Need a dependency? Add it with `uv add` and say so in your handoff; the coordina
 | B2 river | `b2-river` | `wall/judge.py`, `river/`, `evals/run_judges.py`, `tests/test_judge.py` | Three-judge rows in results.json (prompt judge first) |
 | B3 scrub | `b3-scrub` | `wall/scrub.py`, `memorable/`, `tests/test_scrub.py` | Scrubbed Delmarva procedure has 0 client facts; memorable ingest accepts it |
 
+### O-1 de-identification demo (added 14:58; pivot ruled by Daniel: narrow demo, O-1 framing, small immigration firms, River stays)
+
+| Agent | Branch | Owns | Done when |
+|---|---|---|---|
+| C1 corpus | `c1-o1-corpus` | `fixtures/matters/o1-*/` | 3 synthetic O-1 beneficiaries with matter.json + petition documents |
+| C2 pipeline | `c2-deid` | `wall/deid.py`, `deid/`, `tests/test_deid.py` | POST /deidentify and `deid/run.py in.jsonl out.jsonl` produce cleaned text + judge-verified residual report |
+| C3 PII | `c3-pii` | `wall/pii.py`, `tests/test_pii.py` | `wall.pii.find()` catches generic + immigration identifiers with tests |
+| C4 demo UI | `c4-demo-ui` | `demo/` | Before/after O-1 page at /demo calling /deidentify |
+| C5 O-1 eval | `c5-o1-eval` | `evals/o1/` | Synthetic O-1 leak set scored for regex, carryover, prompt judge (+ River when ready) as eval set `o1_demo` |
+| C6 pitch | `c6-pitch` | `docs/pitch/` | 2-minute script, slides, say/don't-say and Q&A for the O-1 framing |
+
+Interfaces: `wall.pii.find(text) -> list[Span(start, end, kind)]`; `POST /deidentify` (DeidentifyRequest -> DeidentifyResponse in `wall/contract.py`).
+`o1_demo` numbers are self-written: never the headline. The headline stays the held-out hard set.
+
 ## Cross-branch handoffs
 
 - **GBrain (live)**: server `http://localhost:3131/mcp`; one credentials file per matter at

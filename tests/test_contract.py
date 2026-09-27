@@ -7,11 +7,11 @@ from wall.server import app
 
 def test_routes_exist():
     paths = {r.path for r in app.routes}
-    assert {"/check", "/scrub", "/judge"} <= paths
+    assert {"/check", "/scrub", "/judge", "/deidentify"} <= paths
 
 
 def test_fixtures_load():
-    assert set(matters()) == {"delmarva", "chen", "reyes"}
+    assert {"delmarva", "chen", "reyes"} <= set(matters())
     assert all(m["practice"] in policy() for m in matters().values())
 
 
