@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from wall import audit, feedback, sponsors, blindapi, compound, deid, guard, judge, policyapi, results, scrub, walldemo
@@ -22,6 +23,12 @@ from wall.contract import (
 app = FastAPI(title="Ethical Wall Brain")
 app.include_router(feedback.router)  # K2: /demo/api/feedback, /demo/api/retrain
 app.include_router(sponsors.router)  # S2: Built-on screen live proofs
+
+
+@app.get("/", include_in_schema=False)
+def root() -> RedirectResponse:
+    """The landing page is the front door; every flow starts at welcome."""
+    return RedirectResponse("/demo/welcome.html")
 
 
 @app.post("/check")

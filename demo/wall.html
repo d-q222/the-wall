@@ -120,12 +120,12 @@
   <div class="page-head">
     <div>
       <h1>Access wall</h1>
-      <p>Each matter's agent can only read its own matter in GBrain. Run the attack to watch one agent ask for another matter's file, live.</p>
+      <p>Permissions enforce the wall, not the prompt. Each matter's agent holds a read-only credential scoped to its own matter; no instruction tells it to stay out. Run the attack to watch it ask GBrain for another matter's file.</p>
     </div>
     <div class="actions pickers">
       <label>Attacking matter<select id="attackerSelect"></select></label>
       <label>Walled-off matter<select id="targetSelect"></select></label>
-      <button class="btn btn-primary" id="runBtn" type="button">Run live attack</button>
+      <button class="btn btn-primary" id="runBtn" type="button" data-present-run>Run live attack</button>
     </div>
   </div>
 
@@ -267,7 +267,7 @@
     var tr = el("tr");
     tr.appendChild(el("td", null, checkName(c, a, t)));
     tr.appendChild(el("td", "call-cell", c.call));
-    tr.appendChild(el("td", "res-cell", c.result.replace(" -- ", ": ")));
+    tr.appendChild(el("td", "res-cell", c.result.replace(" -- ", ": ").replace(/^refused: refused:/, "refused:")));
     var td = el("td");
     td.appendChild(el("span", "badge " + (c.passed ? "badge-cleared" : "badge-risk"), c.passed ? "As expected" : "Wall breached"));
     tr.appendChild(td);
@@ -314,15 +314,18 @@
     verdict.appendChild(el("div", "tally " + (held ? "held" : "broken"),
       (held ? "Wall held: " : "Wall breached: ") + data.passed + " of " + data.total));
     verdict.appendChild(el("p", null, held
-      ? "Enforced by GBrain's permissions, not by the prompt."
+      ? "GBrain refused every cross-matter request with the agent's own credential. No prompt was involved."
       : "At least one request crossed the wall. See the failed check below."));
+    var next = el("div", "actions");
     if (data.replayed) {
       var tag = el("span", "replayed", "Replayed");
       tag.title = "GBrain was unreachable, so this is the last live result for this pair of matters.";
-      var actions = el("div", "actions");
-      actions.appendChild(tag);
-      verdict.appendChild(actions);
+      next.appendChild(tag);
     }
+    var link = el("a", "btn btn-secondary", held ? "Next: what does cross, in Know-how" : "Open the audit log");
+    link.href = held ? "/demo/compound.html" : "/demo/audit.html";
+    next.appendChild(link);
+    verdict.appendChild(next);
   }
 
   function showError(msg) {

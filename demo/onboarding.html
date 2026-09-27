@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set up your firm</title>
+<link rel="stylesheet" href="/demo/assets/theme.css">
+<script src="/demo/assets/nav.js" defer></script>
+<style>
+  /* Layout and stepper follow Cal.com: apps/web/modules/getting-started/[[...step]]/onboarding-view.tsx
+     (narrow column, title + subtitle, then Steps, then one card; the step lives in the URL) and
+     packages/ui/components/form/step/Steps.tsx ("Step X of N" + segment bars; only reached steps are clickable). */
+  .onb { max-width: 600px; margin: 0 auto; padding: 56px 24px 64px; }
+  .onb-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; font-size: var(--fs-13); }
+  .onb-top a { color: var(--text-2); }
+  .onb h1 { font-size: var(--fs-28); letter-spacing: -0.01em; }
+  .onb .sub { color: var(--text-2); margin-top: 6px; }
+  .steps { margin: 24px 0 16px; }
+  .steps p { font-size: 12px; font-weight: 500; color: var(--text-3); margin-bottom: 8px; }
+  .steps ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .steps button { width: 100%; padding: 0; border: 0; background: none; cursor: pointer; display: flex; flex-direction: column; gap: 6px; font: inherit; font-size: 12px; color: var(--text-3); text-align: left; }
+  .steps button::before { content: ""; height: 4px; width: 100%; border-radius: 1px; background: var(--line); }
+  .steps button.reached::before { background: var(--blue); }
+  .steps button[aria-current="step"] { color: var(--text); font-weight: 600; }
+  .steps button[disabled] { cursor: default; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 24px; margin-top: 28px; }
+  .field { display: grid; gap: 6px; margin-bottom: 16px; }
+  .field label { font-weight: 600; font-size: var(--fs-13); }
+  .field .help { font-size: var(--fs-13); color: var(--text-3); }
+  .field input, .field select { width: 100%; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .actions { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .cols h3 { font-size: var(--fs-15); margin-bottom: 8px; }
+  .cols ul { margin: 0; padding-left: 18px; color: var(--text-2); }
+  .cols li { margin: 3px 0; }
+  .mlist { margin: 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 6px; }
+  .mlist li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; }
+  .mlist li + li { border-top: 1px solid var(--line); }
+  .mlist .id { color: var(--text-3); font-size: var(--fs-13); }
+  .mlist .badge { margin-left: auto; }
+  .err { color: var(--risk); font-size: var(--fs-13); }
+</style>
+</head>
+<body data-shell="none">
+<main class="onb" id="main" tabindex="-1">
+  <div class="onb-top">
+    <a href="/demo/welcome.html">Back to overview</a>
+    <span class="meta">No passwords or credentials are asked for here.</span>
+  </div>
+  <h1 id="title">Tell us about your firm</h1>
+  <p class="sub" id="subtitle"></p>
+  <div class="steps">
+    <p id="step-label">Step 1 of 4</p>
+    <ol id="steps"></ol>
+  </div>
+  <section class="card" id="card" aria-live="polite"></section>
+</main>
+<script>
+(function () {
+  "use strict";
+  var KEY = "wall.onboarding";
+  var STEPS = [
+    { id: "firm", label: "Firm", title: "Tell us about your firm", sub: "This names the workspace. Everything here is fictional demo data." },
+    { id: "policy", label: "Practice policy", title: "What may compound", sub: "Read from your practice policy. Procedures carry across matters; client facts never do." },
+    { id: "matters", label: "Matters and walls", title: "Each matter gets its own wall", sub: "Every immigration matter is an isolated source that only its own agent can read." },
+    { id: "petition", label: "First petition", title: "Review your first petition", sub: "Pick a matter. Review opens with its cover letter ready to de-identify." }
+  ];
+  function load() { try { return JSON.parse(localStorage.getItem(KEY) || "null") || {}; } catch (e) { return {}; } }
+  function save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} }
+  var state = load();
+  state.firm = state.firm || { name: "Okafor & Lind Immigration", practice: "immigration", attorneys: "4" };
+  state.completed = state.completed || 0;
+  var matters = null;
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function idx() {
+    var h = location.hash.slice(1);
+    for (var k = 0; k < STEPS.length; k++) if (STEPS[k].id === h) return k;
+    return Math.min(3, Math.max(0, (state.step || 1) - 1));
+  }
+
+  function renderSteps(i) {
+    var ol = document.getElementById("steps");
+    ol.innerHTML = "";
+    STEPS.forEach(function (s, k) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = s.label;
+      if (k <= Math.max(i, state.completed)) b.className = "reached"; else b.disabled = true;
+      if (k === i) b.setAttribute("aria-current", "step");
+      b.addEventListener("click", function () { location.hash = s.id; });
+      var li = document.createElement("li"); li.appendChild(b); ol.appendChild(li);
+    });
+    document.getElementById("step-label").textContent = "Step " + (i + 1) + " of 4";
+    document.getElementById("title").textContent = STEPS[i].title;
+    document.getElementById("subtitle").textContent = STEPS[i].sub;
+    document.title = STEPS[i].title + " | Set up your firm";
+  }
+
+  function next(i) {
+    state.completed = Math.max(state.completed, i + 1);
+    state.step = Math.min(4, i + 2);
+    save(state);
+    location.hash = STEPS[Math.min(3, i + 1)].id;
+  }
+
+  function actions(i, primary) {
+    return '<div class="actions"><button class="btn btn-primary" id="next" type="submit">' + primary + "</button>" +
+      (i > 0 ? '<a class="btn btn-ghost" href="#' + STEPS[i - 1].id + '">Back</a>' : "") + "</div>";
+  }
+
+  function getMatters() {
+    if (matters) return Promise.resolve(matters);
+    return fetch("/demo/api/matters").then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (ms) {
+      matters = ms.filter(function (m) { return m.practice === "immigration"; });
+      return matters;
+    });
+  }
+  function error(card) {
+    card.innerHTML = '<p class="err">Couldn’t reach the API. Start the server, then try again.</p><div class="actions"><button class="btn btn-secondary" id="retry" type="button">Try again</button></div>';
+    card.querySelector("#retry").addEventListener("click", render);
+    card.querySelector("#retry").focus();
+  }
+  function focusFirst(card) { var f = card.querySelector("input, select, #next"); if (f) f.focus(); }
+  function onSubmit(card, fn) { card.querySelector("#f").addEventListener("submit", function (e) { e.preventDefault(); fn(); }); }
+
+  var views = {
+    firm: function (card, i) {
+      card.innerHTML = '<form id="f">' +
+        '<div class="field"><label for="firm-name">Firm name</label><input type="text" id="firm-name" required value="' + esc(state.firm.name) + '"><span class="help">Shown in the sidebar and on every audit entry.</span></div>' +
+        '<div class="row2"><div class="field"><label for="practice">Practice area</label><select id="practice"><option value="immigration">Immigration (O-1)</option></select></div>' +
+        '<div class="field"><label for="attorneys">Attorneys</label><input type="text" inputmode="numeric" id="attorneys" value="' + esc(state.firm.attorneys) + '"></div></div>' +
+        '<p class="err" id="err" hidden>Enter the firm name.</p>' + actions(i, "Continue") + "</form>";
+      onSubmit(card, function () {
+        var n = card.querySelector("#firm-name").value.trim();
+        if (!n) { card.querySelector("#err").hidden = false; card.querySelector("#firm-name").focus(); return; }
+        state.firm = { name: n, practice: "immigration", attorneys: card.querySelector("#attorneys").value.trim() };
+        next(i);
+      });
+      focusFirst(card);
+    },
+    policy: function (card, i) {
+      card.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton" style="width:60%"></div>';
+      fetch("/demo/api/policy").then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (p) {
+        var im = p.immigration || { may_compound: [], never_compounds: [] };
+        var li = function (a) { return a.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join(""); };
+        card.innerHTML = '<form id="f"><div class="cols"><div><h3>May compound</h3><ul>' + li(im.may_compound) + '</ul></div>' +
+          '<div><h3>Never compounds</h3><ul>' + li(im.never_compounds) + '</ul></div></div>' +
+          '<p class="meta" style="margin:16px 0">You can change this later on the <a href="/demo/policy.html">Policy</a> screen.</p>' + actions(i, "Use this policy") + "</form>";
+        onSubmit(card, function () { next(i); });
+        focusFirst(card);
+      }).catch(function () { error(card); });
+    },
+    matters: function (card, i) {
+      card.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+      getMatters().then(function (ms) {
+        var rows = ms.map(function (m) {
+          return "<li><div><div>" + esc(m.client) + '</div><div class="id">' + esc(m.id) + ", " + m.documents.length + ' documents</div></div><span class="badge badge-cleared">Own wall</span></li>';
+        }).join("");
+        card.innerHTML = '<form id="f">' + (ms.length ? '<ul class="mlist">' + rows + "</ul>" : '<div class="empty"><h3>No immigration matters yet</h3><p>Add a matter fixture, then come back.</p></div>') +
+          '<p class="meta" style="margin:16px 0">See the wall hold on <a href="/demo/wall.html">Access wall</a>.</p>' + actions(i, "Continue") + "</form>";
+        onSubmit(card, function () { next(i); });
+        focusFirst(card);
+      }).catch(function () { error(card); });
+    },
+    petition: function (card, i) {
+      getMatters().then(function (ms) {
+        var opts = ms.map(function (m) { return '<option value="' + esc(m.id) + '"' + (m.id === (state.matter || "o1-achterberg") ? " selected" : "") + ">" + esc(m.client) + " (" + esc(m.id) + ")</option>"; }).join("");
+        card.innerHTML = '<form id="f"><div class="field"><label for="matter">Matter</label><select id="matter">' + opts + '</select><span class="help">Review opens on this matter’s cover letter.</span></div>' +
+          actions(i, "Open in Review") + "</form>";
+        onSubmit(card, function () {
+          var m = card.querySelector("#matter").value;
+          state.matter = m; state.completed = 4; state.step = 4; state.done = true;
+          save(state);
+          location.href = "/demo/?matter=" + encodeURIComponent(m);
+        });
+        focusFirst(card);
+      }).catch(function () { error(card); });
+    }
+  };
+
+  function render() {
+    var i = idx();
+    if (i > state.completed) { i = Math.min(3, state.completed); history.replaceState(null, "", "#" + STEPS[i].id); }
+    state.step = Math.max(state.step || 1, i + 1);
+    save(state);
+    renderSteps(i);
+    views[STEPS[i].id](document.getElementById("card"), i);
+  }
+  window.addEventListener("hashchange", render);
+  render();
+})();
+</script>
+</body>
+</html>

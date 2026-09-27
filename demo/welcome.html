@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Wall for Okafor &amp; Lind Immigration</title>
+<meta name="description" content="Train on your firm's O-1 petitions without training on your clients.">
+<link rel="stylesheet" href="/demo/assets/theme.css">
+<script src="/demo/assets/nav.js" defer></script>
+<style>
+  .w { max-width: 1160px; margin: 0 auto; padding: 0 40px; }
+  .w-nav { display: flex; align-items: center; gap: 12px; height: 64px; }
+  .w-nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text); text-decoration: none; }
+  .w-nav .mark { width: 28px; height: 28px; border-radius: var(--r-chip); background: var(--ink); color: var(--paper); display: grid; place-items: center; font-family: var(--font-doc); font-size: 11px; font-weight: 600; }
+  :root[data-theme="dark"] .w-nav .mark { background: var(--paper); color: var(--ink); }
+  .w-nav .right { margin-left: auto; display: flex; gap: 8px; }
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; align-items: center; padding: 56px 0 64px; }
+  .hero h1 { font-size: var(--fs-40); letter-spacing: -0.02em; line-height: 1.12; }
+  .hero p.lede { font-size: var(--fs-17); color: var(--text-2); margin: 16px 0 28px; max-width: 46ch; }
+  .hero .ctas { display: flex; gap: 10px; }
+  .btn-lg { height: 44px; padding: 0 20px; font-size: var(--fs-17); }
+  /* The one bold moment: a real excerpt from fixture o1-achterberg, identifiers typed out */
+  .excerpt { font-size: 16px; padding: 36px 40px 32px; }
+  .excerpt .meta { font-family: var(--font-ui); margin-bottom: 14px; display: flex; justify-content: space-between; }
+  .excerpt .residual { padding: 0 2px; }
+  .proof { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: grid; grid-template-columns: repeat(3, 1fr); }
+  .proof div { padding: 24px 28px 24px 0; }
+  .proof div + div { padding-left: 28px; border-left: 1px solid var(--line); }
+  .proof strong { display: block; font-size: var(--fs-28); font-weight: 600; letter-spacing: -0.01em; }
+  .proof span { color: var(--text-2); font-size: var(--fs-13); display: block; max-width: 34ch; }
+  .how { display: grid; grid-template-columns: 1fr 2fr; gap: 56px; padding: 64px 0; }
+  .how ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; counter-reset: s; }
+  .how li { display: grid; grid-template-columns: 32px 1fr; gap: 14px; counter-increment: s; }
+  .how li::before { content: counter(s); width: 28px; height: 28px; border-radius: var(--r-chip); background: var(--surface); border: 1px solid var(--line); display: grid; place-items: center; font-weight: 700; font-size: var(--fs-13); }
+  .how li p { color: var(--text-2); margin-top: 2px; }
+  .foot { border-top: 1px solid var(--line); padding: 20px 0 40px; color: var(--text-3); font-size: var(--fs-13); display: flex; gap: 24px; }
+</style>
+</head>
+<body data-shell="none">
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="w">
+  <header class="w-nav">
+    <a class="brand" href="/demo/welcome.html"><span class="mark" aria-hidden="true">O&amp;L</span>The Wall</a>
+    <nav class="right" aria-label="Site">
+      <a class="btn btn-ghost" href="/demo/present.html">Watch the 2-minute story</a>
+      <a class="btn btn-secondary" href="/demo/">Open the workspace</a>
+    </nav>
+  </header>
+  <main id="main" tabindex="-1">
+    <section class="hero">
+      <div>
+        <h1>Train on your firm’s O-1 petitions, not on your clients.</h1>
+        <p class="lede">Identifiers become typed placeholders, a judge checks what is left, and each matter stays behind its own wall.</p>
+        <div class="ctas">
+          <a class="btn btn-primary btn-lg" id="cta" href="/demo/onboarding.html">Set up your firm</a>
+        </div>
+      </div>
+      <figure class="sheet excerpt" aria-label="Excerpt from a synthetic O-1 cover letter after de-identification">
+        <div class="meta"><span>Cover letter, matter o1-achterberg</span><span>Synthetic</span></div>
+        <p><span class="chip">[ORG_1]</span> petitions for O-1A classification on behalf of <span class="chip">[NAME_1]</span>, Principal Research Scientist, <span class="chip">[A_NUMBER]</span>, USCIS receipt <span class="chip">[RECEIPT]</span>.</p>
+        <p>The enclosed exhibits establish sustained national and international acclaim. She is <span class="residual">the only researcher to win the prize twice</span>. Her compensation, <span class="chip">[AMOUNT]</span>, reflects that standing.</p>
+        <p class="meta" style="margin:0"><span>The judge flags the underlined phrase: it still points to one person.</span></p>
+      </figure>
+    </section>
+
+    <section class="proof" aria-label="Measured results">
+      <div><strong>102 of 102</strong><span>paraphrased leaks caught by the River-tuned judge on the held-out hard set, 0 of 98 false alarms (n = 200). Regex caught 0.</span></div>
+      <div><strong>100 of 100</strong><span>leaks caught on the independent set written by teammates blind to training data, with 12 of 100 false alarms (n = 200).</span></div>
+      <div><strong>6 of 6</strong><span>prompt-injection attempts to cross matters refused at the scoped client (self-written red team, n = 6).</span></div>
+    </section>
+
+    <section class="how">
+      <div>
+        <h2>How it works</h2>
+        <p class="muted" style="margin-top:8px">Compound the how. Wall the what.</p>
+      </div>
+      <ol>
+        <li><div><h3>Set the practice policy</h3><p>Petition structure, criteria checklists and legal argument may compound. Beneficiary identity, employer, salary and awards never do.</p></div></li>
+        <li><div><h3>Review each exhibit</h3><p>De-identify an exhibit, read the judge’s verdict with its evidence, and add only cleared exhibits to the training set.</p></div></li>
+        <li><div><h3>Export and retrain</h3><p>Export the set as JSONL, then let attorney corrections retrain the firm’s own model on River.</p></div></li>
+      </ol>
+    </section>
+  </main>
+  <footer class="foot">
+    <span>Reduces a measured cross-client leak risk. Consent duties under ABA Formal Opinion 512 remain.</span>
+    <a href="/scoreboard/">Evaluation details</a>
+  </footer>
+</div>
+<script>
+  // Returning visitors resume setup, or go straight to the workspace once it is finished.
+  try {
+    var s = JSON.parse(localStorage.getItem("wall.onboarding") || "null");
+    var cta = document.getElementById("cta");
+    if (s && s.done === true) { cta.textContent = "Open the workspace"; cta.href = "/demo/"; }
+    else if (s && s.step > 1) { cta.textContent = "Resume setup"; }
+  } catch (e) {}
+</script>
+</body>
+</html>

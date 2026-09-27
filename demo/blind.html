@@ -1,13 +1,30 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blind-set entry — Ethical Wall Brain</title>
+<title>Blind-set entry - The Wall</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/theme.css">
+<style>
+  /* Aliases: this page was written against an older token set; map it onto theme.css. */
+  :root, :root[data-theme="dark"] {
+    --text-display: var(--fs-28); --text-md: var(--fs-15); --text-sm: var(--fs-13); --text-xs: 12px; --text-xl: var(--fs-21);
+    --text-secondary: var(--text-2); --text-tertiary: var(--text-3);
+    --border: var(--line); --border-strong: var(--line-strong); --surface-raised: var(--surface); --neutral-bg: var(--surface-2);
+    --accent: var(--blue); --danger: var(--risk); --success: var(--cleared); --success-bg: var(--cleared-soft); --success-border: transparent;
+    --radius-sm: var(--r-chip); --radius-md: 6px;
+  }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); }
+  button.secondary { font: inherit; font-size: var(--fs-13); font-weight: 600; height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer; background: var(--surface); color: var(--text); border: 1px solid var(--line-strong); }
+  button.secondary:hover { background: var(--surface-2); }
+  button.primary { font: inherit; font-weight: 600; height: 36px; padding: 0 14px; border-radius: 6px; cursor: pointer; background: var(--blue); color: var(--on-blue); border: 0; }
+  button.primary:hover { background: var(--blue-hover); }
+  .entry-head h1 { font-family: var(--font-ui); }
+  .next-step { margin-top: 20px; font-size: var(--fs-15); color: var(--text-2); }
+</style>
 <style>
   .entry-head {
     display: flex;
@@ -204,9 +221,8 @@
   @media (prefers-reduced-motion: reduce) { .progress-bar span { transition: none; } }
 </style>
 </head>
-<body>
-<div id="site-nav"></div>
-<div class="page">
+<body data-crumb="Blind-set entry">
+<main class="app-main">
   <div class="entry-head">
     <div>
       <h1>Blind-set entry</h1>
@@ -264,7 +280,8 @@
       <p class="form-note" id="note" role="status"></p>
     </section>
   </div>
-</div>
+  <p class="next-step">When the set is scored, the numbers appear on <a href="/scoreboard/">Evaluation</a> under the Blind set.</p>
+</main>
 <script src="assets/nav.js" defer></script>
 <script>
 (function () {
@@ -274,13 +291,6 @@
   var currentEl = $("current"), draftEl = $("draft"), noteEl = $("note");
   var protList = $("protected-list");
 
-  function theme() {
-    /* DESIGN v2: light is the default and the demo mode. */
-    try {
-      return localStorage.getItem("ewb-theme") || "light";
-    } catch (e) { return "light"; }
-  }
-  document.documentElement.setAttribute("data-theme", theme());
 
   function addProtected(value) {
     var wrap = document.createElement("div");

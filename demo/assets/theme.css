@@ -301,3 +301,37 @@ select:focus-visible, input:focus-visible, textarea:focus-visible { border-color
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
+
+/* ---------- shell polish (ui-shell-flow) ---------- */
+h1, h2, h3 { text-wrap: balance; }
+.btn, .sidebar-link, .sidebar-present, .sidebar-theme, .segmented button, .binder-tab { transition: background-color .18s ease, color .18s ease, border-color .18s ease, transform .08s ease; }
+.btn:active:not([disabled]) { transform: translateY(1px); }
+.skip-link { position: absolute; left: 12px; top: -48px; z-index: 60; background: var(--surface); color: var(--blue); padding: 8px 12px; border-radius: 6px; font-weight: 600; }
+.skip-link:focus { top: 12px; }
+.app-main:focus { outline: none; }
+a.sidebar-brand { text-decoration: none; border-radius: 6px; }
+.sidebar-firm { font-size: 14px; }
+.sidebar-nav { gap: 0; overflow-y: auto; }
+.sidebar-list { display: flex; flex-direction: column; gap: 1px; }
+.sidebar-group { margin: 12px 10px 4px; }
+.sidebar-nav .sidebar-group:first-child { margin-top: 2px; }
+.sidebar-link { padding: 6px 10px; }
+/* Present is a quiet outline so the page keeps its one bold moment */
+.sidebar-present { background: transparent; color: var(--side-text-strong); border: 1px solid var(--side-line); padding: 7px 12px; }
+.sidebar-present:hover { background: var(--side-hover); color: var(--side-text-strong); }
+.sidebar-theme svg { width: 15px; height: 15px; }
+/* Finish setup nudge; step bars follow Cal.com packages/ui/components/form/step/Steps.tsx */
+.sidebar-setup-wrap { position: relative; }
+.sidebar-setup { display: flex; flex-direction: column; gap: 8px; padding: 10px 34px 10px 10px; border-radius: 6px; text-decoration: none; background: var(--side-hover); color: var(--side-text-strong); }
+.sidebar-setup:hover { background: var(--side-active); color: var(--side-text-strong); }
+.setup-text { display: flex; flex-direction: column; }
+.setup-title { font-weight: 600; font-size: 14px; }
+.setup-meta { font-size: 12px; color: var(--side-text); }
+.setup-bars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.setup-bars i { height: 3px; border-radius: 1px; background: var(--side-line); }
+.setup-bars i.on { background: var(--found); }
+.sidebar-setup-hide { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; display: grid; place-items: center; border: 0; background: none; color: var(--side-text); border-radius: 4px; cursor: pointer; }
+.sidebar-setup-hide:hover { background: var(--side-hover); color: var(--side-text-strong); }
+.sidebar-setup-hide svg { width: 14px; height: 14px; }
+/* matter switcher: compact select with its own chevron */
+.matter-switch select { height: 32px; font-size: 14px; padding-right: 30px; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236E7890' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M7 10l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; background-size: 16px; cursor: pointer; }
