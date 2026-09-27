@@ -55,6 +55,19 @@ Need a dependency? Add it with `uv add` and say so in your handoff; the coordina
 
 C4 (front-end) also owns `scoreboard/` from 15:05.
 
+### Web demo (15:10; Daniel: "the demo is the most important part; it doesn't need to work perfectly, it has to be amazing")
+
+One product, served at http://localhost:8788/demo/. C4 owns the design system (`demo/assets/`) and the app shell + de-identify page (`demo/index.html`); every other page imports `demo/assets/theme.css` and uses the shared nav.
+
+| Lane | Owns | Page |
+|---|---|---|
+| C4 front-end | `demo/index.html`, `demo/assets/`, `demo/samples.json`, `scoreboard/` | Shell + O-1 de-identify workspace |
+| F1 wall page | `demo/wall.html`, `wall/walldemo.py` | Live wall attack, two rooms side by side (POST /demo/api/wall) |
+| F2 compound page | `demo/compound.html`, `wall/compound.py` | Procedure learned on one matter improves another, facts don't cross (POST /demo/api/compound) |
+| F3 presenter | `demo/present.html` | Full-screen guided 2-minute story mode through all beats |
+
+Demo-safe rule: every backend demo function caches its last successful result under `.runtime/demo_cache/<name>.json` and, if the live call fails, returns the cached one with `"replayed": true`; the UI shows a small "replayed" tag. Never fake a result that was never produced live.
+
 Interfaces: `wall.pii.find(text) -> list[Span(start, end, kind)]`; `POST /deidentify` (DeidentifyRequest -> DeidentifyResponse in `wall/contract.py`).
 `o1_demo` numbers are self-written: never the headline. The headline stays the held-out hard set.
 
