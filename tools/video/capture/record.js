@@ -110,6 +110,8 @@ const BEATS = {
     mark('rows processing (speed-ramp candidate)');
     await p.waitForFunction(() => !document.querySelector('#run').disabled, null, { timeout: 180000, polling: 500 }).catch(() => {});
     mark('all rows complete');
+    const failed = await p.getByText('Failed, run again').count();
+    if (failed) throw new Error(`${failed} rows failed live`);
     await sleep(2500);
     await moveTo(p, p.locator('#export'));
     mark('hover export');
