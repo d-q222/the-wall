@@ -42,10 +42,16 @@
   }
   :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
-  /* Presenting hides the shared nav; "h" brings chrome back. */
-  body.presenting > nav,
-  body.presenting > header.site-nav,
-  body.presenting [data-shared-nav] { display: none !important; }
+  /* Shared nav (c4 nav.js) tucks above the top edge while presenting and
+     slides down on hover or keyboard focus. */
+  #site-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 7;
+    transform: translateY(calc(-100% + 6px));
+    transition: transform 200ms ease;
+  }
+  #site-nav:hover, #site-nav:focus-within { transform: none; }
 
   .deck { position: fixed; inset: 0; }
 
@@ -326,7 +332,8 @@
   }
 </style>
 </head>
-<body class="presenting">
+<body>
+<div id="site-nav"></div>
 
 <main class="deck" id="deck" aria-live="polite">
 
@@ -399,7 +406,7 @@
   <div class="meta"><span id="beat-no">1 / 6</span><span id="beat-clock">0:00</span><span id="clock">0:00 / 2:00</span></div>
 </div>
 
-<script src="/demo/assets/nav.js" defer onerror="this.remove()"></script>
+<script src="/demo/assets/nav.js" defer></script>
 <script>
 (function () {
   "use strict";
@@ -435,7 +442,7 @@
 
   function hideInnerNav(doc) {
     var st = doc.createElement("style");
-    st.textContent = "body > nav, body > header.site-nav, [data-shared-nav] { display: none !important; }";
+    st.textContent = "#site-nav, nav.wall-nav, body > nav.top { display: none !important; }";
     doc.head && doc.head.appendChild(st);
   }
 
