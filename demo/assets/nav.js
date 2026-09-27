@@ -161,6 +161,7 @@
     if (extra) topbar.querySelector(".topbar-right").insertBefore(extra, topbar.querySelector(".topbar-right").firstChild);
     var body = el("div", { class: "shell-body" }, [topbar]);
     var shell = el("div", { class: "shell" }, [buildSidebar(cur), body]);
+    document.body.classList.add("has-shell");
     main.parentNode.insertBefore(shell, main);
     body.appendChild(main);
   }

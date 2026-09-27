@@ -93,6 +93,7 @@ a:hover { color: var(--blue-hover); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ---------- app shell ---------- */
+body.has-shell { margin: 0 !important; padding: 0 !important; max-width: none !important; background: var(--canvas); }
 .shell { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); min-height: 100vh; }
 .sidebar {
   position: sticky; top: 0; height: 100vh;
