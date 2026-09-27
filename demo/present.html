@@ -32,6 +32,9 @@
   }
   h1 { font:600 clamp(40px, 5.2vw, 76px)/1.08 "Source Serif 4", Georgia, serif; margin:0 0 3vh; max-width:18ch; }
   p.lead { font-size:clamp(20px, 1.8vw, 28px); line-height:1.45; color:var(--muted); margin:0; max-width:46ch; }
+  .bg { max-width:880px; margin:0 0 3vh; padding:2.2vh 26px; border-left:4px solid var(--blue); background:#fff; border-radius:0 8px 8px 0; font-size:clamp(19px, 1.6vw, 25px); line-height:1.45; }
+  .bg p { margin:0 0 1.2vh; } .bg p:last-child { margin:0; }
+  .bg .bg-label { font-weight:700; color:var(--blue); font-size:clamp(16px, 1.25vw, 19px); }
   .rows { display:grid; gap:2.2vh; margin-top:4vh; max-width:1100px; }
   .row { display:grid; grid-template-columns:230px 1fr; gap:28px; align-items:baseline; font-size:clamp(20px, 1.7vw, 26px); }
   .row b { font-weight:700; }
@@ -59,7 +62,12 @@
 
 <section class="slide on">
   <h1>Lawyers can't let AI learn from old cases.</h1>
-  <p class="lead">Every file belongs to a client. The rules say one client's private details must never end up in another client's work. So today, lawyers use AI that forgets everything.</p>
+  <div class="bg">
+    <p class="bg-label">Why: ABA Formal Opinion 512 (2024)</p>
+    <p>The American Bar Association warns that an AI tool that learns from one client's files can reveal them in another client's work, even inside the same firm.</p>
+    <p>Using a tool like that needs each client's informed consent, and fine print in the engagement letter isn't enough.</p>
+  </div>
+  <p class="lead">So today, most firms use AI that forgets everything.</p>
 </section>
 
 <section class="slide">

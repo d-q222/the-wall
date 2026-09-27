@@ -3,7 +3,7 @@
 Open http://localhost:8788/demo/present.html. Arrow keys move. Press `f` for full screen in the browser.
 
 1. **Lawyers can't let AI learn from old cases.**
-   "Every file belongs to a client. A client's private details must never end up in another client's work. So today, lawyers use AI that forgets everything."
+   "Here's why. The American Bar Association's Formal Opinion 512 warns that an AI tool that learns from one client's files can reveal them in another client's work, even inside the same firm. Using one needs each client's informed consent, and fine print in the engagement letter isn't enough. So today, most firms use AI that forgets everything."
 
 2. **Each client's files stay behind a wall.** Click **Try to break the wall**.
    "This AI helper works for one client. Watch it try to see another client's files." (Wait for the rows.) "Blocked. Nothing found. Every time. The wall held five out of five, live."
