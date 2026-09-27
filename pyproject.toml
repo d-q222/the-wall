@@ -3,7 +3,13 @@ name = "the-wall"
 version = "0.1.0"
 description = "Ethical Wall Brain: compound the how, wall the what."
 requires-python = ">=3.11"
-dependencies = ["fastapi", "uvicorn", "pydantic", "httpx"]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "httpx",
+    "anthropic>=1.8.0",
+]
 
 [dependency-groups]
 dev = ["pytest"]
