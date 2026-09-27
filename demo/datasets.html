@@ -79,12 +79,12 @@
   .doc-name .caret { width: 12px; color: var(--ds-ink-3); font-size: 11px; transition: transform .15s; }
   tr.open .doc-name .caret { transform: rotate(90deg); }
   .doc-sub { color: var(--ds-ink-3); font-size: 13px; padding-left: 20px; }
-  .src-tag { font-size: 12px; font-weight: 500; color: var(--ds-blue); border: 1px solid var(--ds-line); border-radius: 4px; padding: 0 5px; margin-left: 4px; }
+  .src-tag { font-size: 12px; font-weight: 500; color: var(--ds-blue); border: 1px solid var(--ds-line); border-radius: 4px; padding: 0 5px; margin-top: 3px; display: inline-block; white-space: nowrap; }
   .ph {
     font: 600 13px/1.6 "Public Sans", sans-serif; color: var(--ds-ink); background: var(--ds-blue-soft);
     border: 1px solid color-mix(in srgb, var(--ds-blue) 30%, transparent); border-radius: 4px; padding: 0 5px; white-space: nowrap;
   }
-  .benef-raw { font-weight: 500; }
+  .benef-raw { font-weight: 500; white-space: nowrap; }
   .status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; }
   .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ds-line); }
   .status.idle { color: var(--ds-ink-3); font-weight: 500; }
@@ -163,9 +163,9 @@
     <table class="ds-table">
       <thead>
         <tr>
-          <th style="width:25%">Document</th>
-          <th style="width:14%">Beneficiary</th>
-          <th style="width:15%">Status</th>
+          <th style="width:24%">Document</th>
+          <th style="width:16%">Beneficiary</th>
+          <th style="width:14%">Status</th>
           <th class="num" style="width:9%">Identifiers<br>removed</th>
           <th>Judge verdict</th>
         </tr>
@@ -213,19 +213,20 @@
   }
 
   function trainingSetFromReview() {
-    // Written by the Review screen. Tolerant of shape: [{id?, title?/name?, matter_id?, text|original, result?}]
+    // Written by the Review screen (demo/index.html): de-identified text plus its verdict, never the original.
     var items = readJSON("wall.trainingSet", []);
     if (!Array.isArray(items)) return [];
-    return items.map(function (it, i) {
-      var text = it.text || it.original || "";
-      var result = it.result || (it.deidentified && typeof it.deidentified === "object" ? it.deidentified : null);
+    return items.filter(function (it) { return it && it.text; }).map(function (it, i) {
       return {
-        id: "review:" + (it.id || i), label: it.title || it.name || it.document || ("Review document " + (i + 1)),
-        petitioner: it.client || it.matter_id || "", matter_id: it.matter_id || it.matter || null,
-        beneficiary: it.beneficiary || null, text: text, source: "review",
-        state: result ? "done" : "idle", result: result
+        id: it.id || ("review:" + i), label: it.title || it.document || ("Review exhibit " + (i + 1)),
+        petitioner: it.client || "", matter_id: it.matter_id || null, beneficiary: null, text: it.text,
+        source: "review", state: "done",
+        result: {
+          text: it.text, spans: [], removed: it.removed || 0, kinds: it.kinds || {}, judge: it.judge || null,
+          replayed: !!it.replayed, residual: it.verdict ? { verdict: it.verdict, evidence: it.evidence || "" } : null
+        }
       };
-    }).filter(function (d) { return d.text; });
+    });
   }
 
   function load() {
@@ -243,7 +244,11 @@
           });
         });
       });
-      docs = docs.concat(trainingSetFromReview());
+      trainingSetFromReview().forEach(function (r) {
+        var same = docs.filter(function (d) { return d.id === r.id; })[0];
+        if (same) { same.source = "review"; same.state = "done"; same.result = r.result; }
+        else docs.push(r);
+      });
       $("run").disabled = docs.length === 0;
       render();
       if (/[?&]run=1/.test(location.search)) runAll();
@@ -283,6 +288,9 @@
   }
 
   function renderSheet(d) {
+    if (!(d.result.spans || []).length)   // Review items arrive already de-identified: chip the placeholders
+      return esc(d.result.text).replace(/\[[A-Z]+(?:_[A-Z0-9]+)*\]/g, '<span class="ph">$&</span>')
+        .replace(/([^\n])\n(?!\n)/g, "$1 ").replace(/^# (.*)$/m, '<strong class="sheet-h">$1</strong>').replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
     var t = d.text, out = "", pos = 0;
     var spans = (d.result.spans || []).slice().sort(function (a, b) { return a.start - b.start; });
     spans.forEach(function (s) {
@@ -304,13 +312,14 @@
     docs.forEach(function (d) {
       var ph = beneficiaryPlaceholder(d);
       var benef = ph ? '<span class="ph">' + esc(ph) + "</span>"
+        : d.state === "done" ? '<span class="muted">Removed</span>'
         : (d.beneficiary ? '<span class="benef-raw">' + esc(d.beneficiary) + "</span>" : '<span class="muted">—</span>');
       var cls = "doc" + (d.state === "running" ? " running" : "") + (d.justDone ? " done" : "") + (openId === d.id ? " open" : "");
       html += '<tr class="' + cls + '" data-id="' + esc(d.id) + '" tabindex="0" aria-expanded="' + (openId === d.id) + '"' +
         (d.state === "running" ? ' style="--delay:-' + ((Date.now() - d.startedAt) / 1000).toFixed(2) + 's"' : "") + ">" +
         '<td><div class="doc-name"><span class="caret" aria-hidden="true">&#9656;</span>' + esc(d.label) +
-        (d.source === "review" ? '<span class="src-tag">Added from Review</span>' : "") + "</div>" +
-        '<div class="doc-sub">' + esc(d.petitioner) + "</div></td>" +
+        "</div>" + '<div class="doc-sub">' + esc(d.petitioner) + "</div>" +
+        (d.source === "review" ? '<div class="doc-sub"><span class="src-tag">Added from Review</span></div>' : "") + "</td>" +
         "<td>" + benef + "</td>" +
         "<td>" + statusCell(d) + "</td>" +
         '<td class="num">' + (d.state === "done" ? '<span class="removed">' + d.result.removed + "</span>" : '<span class="muted">—</span>') + "</td>" +
@@ -337,6 +346,7 @@
     done.forEach(function (d) {
       removed += d.result.removed || 0;
       (d.result.spans || []).forEach(function (s) { kinds[s.kind] = (kinds[s.kind] || 0) + 1; });
+      if (!(d.result.spans || []).length) Object.keys(d.result.kinds || {}).forEach(function (k) { kinds[k] = (kinds[k] || 0) + d.result.kinds[k]; });
       if (isOpenFlag(d)) flags++;
       if (judgeFlags(d).length) redacted++;
       if (d.result.judge) judges[d.result.judge] = true;
@@ -351,8 +361,11 @@
     $("s-flags").className = "v" + (flags ? " risk" : "");
     var j = Object.keys(judges);
     if (j.length) { $("s-judge").textContent = j.map(judgeName).join(", "); $("s-judge").title = j.join(", "); }
-    $("export").disabled = done.length === 0;
-    $("foot").textContent = done.length ? (done.length + " documents ready to export" + (replayed ? ", " + replayed + " replayed from the last live run" : "")) : "";
+    var ready = exportable().length, held = done.length - ready;
+    $("export").disabled = ready === 0;
+    $("foot").textContent = done.length ? (ready + (ready === 1 ? " document" : " documents") + " ready to export" +
+      (held ? ", " + held + " held back until a reviewer clears the residual flag" : "") +
+      (replayed ? ", " + replayed + " replayed from the last live run" : "")) : "";
   }
 
   function deidentify(d) {
@@ -389,8 +402,13 @@
     });
   }
 
+  // Residual-flagged documents stay out of training until a reviewer clears them (same rule as Review).
+  function exportable() {
+    return docs.filter(function (d) { return d.state === "done" && !isOpenFlag(d); });
+  }
+
   function exportJSONL() {
-    var lines = docs.filter(function (d) { return d.state === "done"; }).map(function (d) { return JSON.stringify({ text: d.result.text }); });
+    var lines = exportable().map(function (d) { return JSON.stringify({ text: d.result.text }); });
     var blob = new Blob([lines.join("\n") + "\n"], { type: "application/jsonl" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob); a.download = "o1-training-set.jsonl";
