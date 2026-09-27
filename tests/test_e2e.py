@@ -1,9 +1,7 @@
 """End-to-end smoke tests over HTTP against a FastAPI TestClient (no real network).
 
-/judge and /deidentify are owned by other branches (B2, C2) and are stubs
-(NotImplementedError) until those land on main. Until then those two tests skip
-with a clear reason. Once implemented, they run for real with the anthropic SDK
-mocked -- no live LLM call, no cost, no network.
+/judge (B2) and /deidentify (C2) run for real with the anthropic SDK mocked --
+no live LLM call, no cost, no network.
 """
 
 from __future__ import annotations
@@ -30,15 +28,10 @@ def mock_anthropic(monkeypatch):
     construction returns a fake client whose `.messages.create(...)` answers with a
     minimal, valid JSON verdict -- no network call, no API key needed, no cost.
     """
-    try:
-        import anthropic
-    except ImportError:
-        # Not installed yet on this branch (added via `uv add` by whichever lane
-        # needs it) -- nothing to patch. The stub check below still applies.
-        return None
+    import anthropic
 
     fake_message = MagicMock()
-    fake_message.content = [MagicMock(text=json.dumps({"verdict": "clean", "matter": None, "evidence": None}))]
+    fake_message.content = [MagicMock(type="text", text=json.dumps({"verdict": "clean", "matter": None, "evidence": None}))]
     fake_client = MagicMock()
     fake_client.messages.create.return_value = fake_message
 
@@ -92,29 +85,21 @@ def test_scrub_leaves_zero_fact_strings():
 
 
 # ---------------------------------------------------------------------------
-# /judge (B2 river) and /deidentify (C2 pipeline) -- stubs until those branches land
+# /judge (B2 river) and /deidentify (C2 pipeline) -- anthropic SDK mocked
 # ---------------------------------------------------------------------------
 
 
-def test_judge_skips_while_stub_else_runs_mocked(mock_anthropic):
+def test_judge_runs_mocked(mock_anthropic):
     body = {"current": "chen", "protected": ["delmarva"], "draft": "Please remit payment within 14 days."}
-    try:
-        resp = client.post("/judge", json=body)
-    except NotImplementedError as e:
-        pytest.skip(f"/judge is still a stub (B2 not landed yet): {e}")
-        return
+    resp = client.post("/judge", json=body)
     assert resp.status_code == 200
     data = resp.json()
     assert data["verdict"] in ("clean", "leak")
 
 
-def test_deidentify_skips_while_stub_else_runs_mocked(mock_anthropic):
+def test_deidentify_runs_mocked(mock_anthropic):
     body = {"text": "Please remit payment within 14 days.", "practice": "immigration"}
-    try:
-        resp = client.post("/deidentify", json=body)
-    except NotImplementedError as e:
-        pytest.skip(f"/deidentify is still a stub (C2 not landed yet): {e}")
-        return
+    resp = client.post("/deidentify", json=body)
     assert resp.status_code == 200
     data = resp.json()
     assert "text" in data
