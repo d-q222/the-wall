@@ -44,3 +44,13 @@ def test_spans_caches_live_success_and_replays_on_failure(tmp_path, monkeypatch)
     assert river_deid.spans(TEXT) == [{**live[0], "replayed": True}]
     with pytest.raises(RuntimeError):
         river_deid.spans("never seen before")
+
+
+def test_training_data_never_reads_the_blind_set_or_held_out_matters():
+    from pathlib import Path
+
+    from river.deid import make_data
+
+    source = Path(make_data.__file__).read_text()
+    assert "blind" not in source and "the-wall/data" not in source
+    assert make_data.TRAIN_MATTERS == ["o1-achterberg", "o1-umeh"]
