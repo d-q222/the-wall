@@ -30,7 +30,8 @@ page.on("request", () => inflight++);
 page.on("requestfinished", () => inflight--);
 page.on("requestfailed", () => inflight--);
 page.on("pageerror", (e) => errors.push(String(e)));
-page.on("response", (r) => { if (r.status() >= 500) errors.push(`${r.status()} ${r.url()}`); });
+page.on("console", (m) => { if (m.type() === "error" && !m.text().startsWith("Failed to load resource")) errors.push(`console: ${m.text().slice(0, 200)}`); });
+page.on("response", (r) => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
 
 const resp = await page.goto(URL, { waitUntil: "networkidle" });
 if (!resp || !resp.ok()) throw new Error(`presenter not reachable: ${URL} -> ${resp && resp.status()}`);
