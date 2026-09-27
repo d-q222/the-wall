@@ -74,7 +74,7 @@
   function isDark() {
     var t = document.documentElement.getAttribute("data-theme");
     if (t) return t === "dark";
-    return window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches;
+    return false;
   }
 
   function buildSidebar(cur) {

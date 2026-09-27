@@ -1,412 +1,491 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<!doctype html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>De-identify — Ethical Wall Brain</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/theme.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review workspace</title>
+<link rel="stylesheet" href="/demo/assets/theme.css">
+<script src="/demo/assets/nav.js" defer></script>
 <style>
-  header.top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 2rem;
-    margin-bottom: 1.75rem;
+  .review-head { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 18px; }
+  .review-head h1 { font-size: var(--fs-28); }
+  .review-head p { color: var(--text-2); margin-top: 4px; }
+  .review-head .actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+  .workspace { display: grid; grid-template-columns: 208px minmax(0, 1fr) 340px; gap: 0 24px; align-items: start; }
+  .rail { position: sticky; top: calc(var(--top-h) + 24px); padding-top: 52px; }
+  .rail .binder-tabs { margin-right: -24px; }
+  .rail-note { font-size: var(--fs-13); color: var(--text-3); margin: 14px 12px 0 2px; }
+
+  .desk { min-width: 0; }
+  .desk-bar { display: flex; align-items: center; gap: 12px; height: 40px; margin-bottom: 12px; }
+  .desk-bar .status { font-size: var(--fs-13); color: var(--text-2); margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line-strong); border-top-color: var(--blue); animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .sheet { position: relative; margin: 0; min-height: 640px; max-width: none; padding: 52px 60px 60px; }
+  .sheet-label { position: absolute; top: 20px; right: 24px; font-family: var(--font-ui); font-size: var(--fs-13); color: #6E7890; }
+  .sheet-label strong { color: #14213D; font-weight: 600; }
+  .sheet h1 { font-size: var(--fs-21); line-height: 1.35; margin: 0 0 20px; padding-bottom: 14px; border-bottom: 1px solid #D9DCE2; max-width: 60ch; }
+  .sheet strong { font-weight: 600; color: #14213D; }
+
+  /* identifier: original text + typed chip; the view decides which shows */
+  .ident .orig { border-radius: 2px; transition: background-color .25s ease, box-shadow .25s ease, color .25s; }
+  .ident .chip { display: none; }
+  .sheet[data-view="redline"] .ident .orig { background: var(--found); color: #14213D; text-decoration: line-through; text-decoration-color: rgba(194, 65, 12, .75); text-decoration-thickness: 1.5px; box-shadow: 0 0 0 1px var(--found); }
+  .sheet[data-view="redline"] .ident .chip,
+  .sheet[data-view="clean"] .ident .chip { display: inline-flex; }
+  .sheet[data-view="redline"] .ident .chip { margin-left: 4px; }
+  .sheet[data-view="clean"] .ident .orig { display: none; }
+  .ident.flash .chip, .ident.flash .orig { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  /* the orchestrated motion */
+  .sheet.animating .ident .orig { display: inline-block; white-space: nowrap; overflow: hidden; vertical-align: top; }
+  .sheet.animating .ident.found .orig { background: var(--found); box-shadow: 0 0 0 2px var(--found); color: #14213D; }
+  .sheet.animating .ident .chip { display: inline-flex; overflow: hidden; max-width: 0; padding-left: 0; padding-right: 0; border-width: 0; opacity: 0; margin: 0; transition: max-width .38s cubic-bezier(.2,.7,.2,1), opacity .25s ease .08s, padding .38s; }
+  .sheet.animating .ident.collapsed .orig { max-width: 0 !important; opacity: 0; transition: max-width .38s cubic-bezier(.2,.7,.2,1), opacity .2s ease; }
+  .sheet.animating .ident.collapsed .chip { max-width: 16em; opacity: 1; padding-left: 6px; padding-right: 6px; border-width: 1px; margin: 0 1px; }
+
+  .residual-text { background: var(--risk-soft); color: #9A3412; text-decoration: underline wavy #C2410C; text-decoration-thickness: 1px; text-underline-offset: 4px; border-radius: 2px; }
+  .sheet[data-view="original"] .residual-text { background: none; color: inherit; text-decoration: none; }
+  .has-residual { position: relative; }
+  .sheet:not([data-view="original"]) .has-residual::before { content: ""; position: absolute; left: -24px; top: 6px; bottom: 6px; width: 3px; border-radius: 2px; background: #C2410C; }
+  .sheet .residual-hidden { background: none; text-decoration: none; color: inherit; }
+
+  /* inspector */
+  .inspector { position: sticky; top: calc(var(--top-h) + 24px); max-height: calc(100vh - var(--top-h) - 48px); overflow: auto; margin-top: 52px; }
+  .insp-title { display: flex; align-items: baseline; gap: 8px; }
+  .insp-title .count { margin-left: auto; font-size: var(--fs-13); color: var(--text-3); }
+  .kind-group + .kind-group { margin-top: 14px; }
+  .kind-head { display: flex; align-items: center; gap: 8px; font-size: var(--fs-13); font-weight: 600; color: var(--text-2); margin-bottom: 4px; }
+  .kind-head .n { margin-left: auto; color: var(--text-3); font-weight: 500; }
+  .ident-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; text-align: left; font: inherit; font-size: var(--fs-13); color: var(--text); background: none; border: 0; border-radius: 4px; padding: 5px 6px; margin: 0 -6px; width: calc(100% + 12px); cursor: pointer; }
+  .ident-row:hover { background: var(--surface-2); }
+  .ident-row .o { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ident-row .chip { font-size: 12px; }
+  .ident-row.pending { opacity: .35; }
+  .ident-row { transition: opacity .3s ease; }
+
+  .verdict { border-radius: 6px; padding: 14px; border: 1px solid var(--line); background: var(--surface-2); }
+  .verdict.leak { background: var(--risk-soft); border-color: color-mix(in srgb, var(--risk) 30%, transparent); }
+  .verdict.clean { background: var(--cleared-soft); border-color: color-mix(in srgb, var(--cleared) 30%, transparent); }
+  .verdict-top { display: flex; align-items: center; gap: 8px; }
+  .verdict h4 { font-size: var(--fs-15); }
+  .verdict.leak h4 { color: var(--risk); }
+  .verdict.clean h4 { color: var(--cleared); }
+  .verdict p { font-size: var(--fs-13); color: var(--text-2); margin-top: 6px; }
+  .verdict blockquote { margin: 10px 0 0; padding: 8px 0 8px 12px; border-left: 3px solid var(--risk); font-family: var(--font-doc); font-size: var(--fs-15); line-height: 1.5; color: var(--text); }
+  .verdict .by { margin-top: 10px; font-size: var(--fs-13); color: var(--text-3); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .landing { opacity: 0; transform: translateY(8px); }
+  .landed { opacity: 1; transform: none; transition: opacity .35s ease, transform .45s cubic-bezier(.2,.7,.2,1); }
+
+  .train-note { font-size: var(--fs-13); color: var(--text-2); margin-top: 8px; }
+  .train-note a { font-weight: 600; }
+  .error { font-size: var(--fs-13); color: var(--risk); }
+
+  @media (max-width: 1360px) {
+    .workspace { grid-template-columns: 184px minmax(0, 1fr) 300px; gap: 0 18px; }
+    .rail .binder-tabs { margin-right: -18px; }
+    .sheet { padding: 48px 44px 52px; }
   }
-
-  .tagline {
-    font-family: var(--font-doc);
-    font-weight: 600;
-    font-size: var(--text-display);
-    line-height: 1.25;
-    max-width: 42ch;
-    margin: 0;
-  }
-
-  .panes {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-  }
-
-  .pane {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    display: flex;
-    flex-direction: column;
-    min-height: 420px;
-  }
-
-  .pane-head {
-    padding: 0.9rem 1.25rem;
-    border-bottom: 1px solid var(--border);
-    font-size: var(--text-md);
-    font-weight: 600;
-    color: var(--text-secondary);
-  }
-
-  .pane-body { flex: 1; padding: 1.25rem; }
-
-  textarea#original-text {
-    width: 100%;
-    height: 100%;
-    min-height: 360px;
-    resize: vertical;
-    background: transparent;
-    border: none;
-    color: var(--text);
-    font-family: var(--font-doc);
-    font-size: var(--text-lg);
-    line-height: 1.65;
-    padding: 0;
-  }
-  textarea#original-text:focus { outline: none; }
-
-  .output-text {
-    font-family: var(--font-doc);
-    font-size: var(--text-lg);
-    line-height: 1.65;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-  }
-
-  .placeholder {
-    color: var(--text-tertiary);
-    font-family: var(--font-ui);
-    font-size: var(--text-md);
-  }
-
-  .results {
-    margin-top: 1.25rem;
-    padding: 1.1rem 1.25rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-4);
-  }
-  .results.empty { color: var(--text-tertiary); font-size: var(--text-md); }
-  .results .spacer { flex: 1; }
-
-  .removed-count { font-size: var(--text-md); color: var(--text-secondary); }
-  .removed-count strong { color: var(--text); font-size: var(--text-xl); }
-
-  .kind-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-
-  .error-note { color: var(--danger); font-size: var(--text-md); }
-
-  .mock-flag {
-    font-size: var(--text-xs);
-    color: var(--neutral-badge);
-    border: 1px solid var(--neutral-border);
-    background: var(--neutral-bg);
-    padding: 0.25rem 0.6rem;
-    border-radius: var(--radius-sm);
-  }
-
-  @media (max-width: 900px) {
-    .panes { grid-template-columns: 1fr; }
-    .tagline { font-size: 1.5rem; }
+  @media (prefers-reduced-motion: reduce) {
+    .landing { opacity: 1; transform: none; }
+    .spinner { animation: none; }
   }
 </style>
 </head>
-<body>
-<div id="site-nav"></div>
-<div class="page">
-  <header class="top">
-    <p class="tagline">Train on your firm's O-1 petitions without training on your clients.</p>
-    <button class="theme-toggle" id="theme-toggle" type="button">Light mode</button>
-  </header>
-
-  <div class="toolbar">
+<body data-crumb="Review" data-matter-switcher>
+<main class="app-main">
+  <div class="review-head">
     <div>
-      <label for="sample-select">Load sample</label>
-      <select id="sample-select">
-        <option value="">Choose an excerpt…</option>
-      </select>
+      <h1 id="petition-title">Loading petition</h1>
+      <p id="petition-sub">Reading the binder from the matter file.</p>
     </div>
-    <div class="spacer"></div>
-    <span id="mock-flag" class="mock-flag" hidden>mock mode</span>
-    <button class="primary" id="deidentify-btn" type="button" data-present-run>De-identify</button>
+    <div class="actions">
+      <button class="btn btn-primary" id="run" type="button" disabled>De-identify exhibit</button>
+    </div>
   </div>
 
-  <div class="panes">
-    <div class="pane">
-      <div class="pane-head">Original</div>
-      <div class="pane-body">
-        <textarea id="original-text" placeholder="Paste or load an O-1 petition excerpt…" spellcheck="false"></textarea>
+  <div class="workspace">
+    <div class="rail">
+      <div class="binder-tabs" role="tablist" aria-label="Exhibits" id="tabs"></div>
+      <p class="rail-note" id="rail-note"></p>
+    </div>
+
+    <section class="desk" aria-label="Document">
+      <div class="desk-bar">
+        <div class="segmented" role="group" aria-label="Document view" id="views">
+          <button type="button" data-view="original" aria-pressed="true">Original</button>
+          <button type="button" data-view="redline" aria-pressed="false" disabled>Redline</button>
+          <button type="button" data-view="clean" aria-pressed="false" disabled>Clean</button>
+        </div>
+        <div class="status" id="status" aria-live="polite"></div>
       </div>
-    </div>
-    <div class="pane">
-      <div class="pane-head">De-identified</div>
-      <div class="pane-body">
-        <div class="output-text" id="output-text"><span class="placeholder">Run De-identify to see the cleaned draft here.</span></div>
+      <article class="sheet" id="sheet" data-view="original">
+        <span class="skeleton" style="width:60%;height:18px"></span>
+        <span class="skeleton" style="width:92%"></span>
+        <span class="skeleton" style="width:88%"></span>
+        <span class="skeleton" style="width:95%"></span>
+      </article>
+    </section>
+
+    <aside class="inspector" aria-label="Inspector" id="inspector">
+      <div class="inspector-section">
+        <div class="empty" style="padding:24px 8px">
+          <h3>Not reviewed yet</h3>
+          <p>De-identify this exhibit to find names, organizations, amounts and distinctive details, then have the judge check what is left.</p>
+        </div>
       </div>
-    </div>
+    </aside>
   </div>
+</main>
 
-  <div class="results empty" id="results">
-    <span>No result yet.</span>
-  </div>
-</div>
-
-<script src="assets/nav.js" defer></script>
 <script>
 (function () {
   "use strict";
-
+  var EXHIBITS = [
+    { file: "cover-letter-excerpt.md", letter: "CL", title: "Cover letter", label: "Cover letter" },
+    { file: "recommendation-letter.md", letter: "A", title: "Recommendation", label: "Exhibit A" },
+    { file: "criteria-evidence.md", letter: "B", title: "Criteria evidence", label: "Exhibit B" }
+  ];
   var KIND_LABELS = {
-    name: "name",
-    org: "organization",
-    amount: "amount",
-    a_number: "A-number",
-    receipt: "receipt number",
-    email: "email",
-    date: "date",
-    quasi_identifier: "quasi-identifier"
+    name: "Names", org: "Organizations", amount: "Amounts", a_number: "A-numbers", receipt: "Receipt numbers",
+    email: "Email addresses", date: "Dates", phone: "Phone numbers", passport: "Passport numbers",
+    address: "Addresses", quasi_identifier: "Distinctive details", url: "Web addresses", ssn: "Social Security numbers"
   };
+  var JUDGES = { river_judge: "River judge (fine-tuned)", prompt_judge: "Prompt judge" };
+  var CACHE_KEY = "wall.deidCache";
+  var TRAIN_KEY = "wall.trainingSet";
+  var reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  var themeToggle = document.getElementById("theme-toggle");
-  var root = document.documentElement;
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { matter: null, exhibits: [], active: 0, results: {}, view: "original", running: false };
 
-  function applyTheme(theme) {
-    root.setAttribute("data-theme", theme);
-    themeToggle.textContent = theme === "dark" ? "Light mode" : "Dark mode";
-    try { localStorage.setItem("wall-demo-theme", theme); } catch (e) {}
-  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function readStore(key, fallback) { try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
+  function writeStore(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+  function kindLabel(k) { return KIND_LABELS[k] || (k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, " ")); }
+  function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
+  function key(ex) { return state.matter.id + "/" + ex.file; }
 
-  (function initTheme() {
-    var saved = null;
-    try { saved = localStorage.getItem("wall-demo-theme"); } catch (e) {}
-    applyTheme(saved === "light" ? "light" : "dark");
-  })();
-
-  themeToggle.addEventListener("click", function () {
-    var current = root.getAttribute("data-theme");
-    applyTheme(current === "dark" ? "light" : "dark");
+  // ---------- matter + exhibits ----------
+  window.addEventListener("wall:matter", function (e) {
+    var m = e.detail.matter;
+    if (!m) return;
+    loadMatter(m);
   });
 
-  var params = new URLSearchParams(window.location.search);
-  var mockMode = params.get("mock") === "1";
-  if (mockMode) {
-    document.getElementById("mock-flag").hidden = false;
+  function heading(text) { var m = /^#\s+(.+)$/m.exec(text); return m ? m[1].trim() : ""; }
+
+  function loadMatter(m) {
+    state.matter = m;
+    state.results = {};
+    state.exhibits = EXHIBITS.filter(function (x) { return m.documents && m.documents[x.file]; })
+      .map(function (x) { return Object.assign({ text: m.documents[x.file] }, x); });
+    var h = heading(m.documents["recommendation-letter.md"] || "") || heading(state.exhibits[0] ? state.exhibits[0].text : "");
+    var who = h.indexOf(" — ") > -1 ? h.split(" — ").pop() : h;
+    var cls = /\((O-1[AB])/.exec(m.documents["criteria-evidence.md"] || "");
+    $("petition-title").textContent = (cls ? cls[1] + " petition" : "O-1 petition") + " for " + who;
+    $("petition-sub").textContent = "Petitioner " + m.client.replace(/\.$/, "") + ". " + plural(state.exhibits.length, "exhibit", "exhibits") + " in the binder; review each before it joins the training set.";
+    select(0);
+    if (/[?&]run\b/.test(location.search) && !autoRan) { autoRan = true; setTimeout(function () { $("run").click(); }, 300); }
   }
+  var autoRan = false;
 
-  var sampleSelect = document.getElementById("sample-select");
-  var originalText = document.getElementById("original-text");
-  var outputText = document.getElementById("output-text");
-  var resultsEl = document.getElementById("results");
-  var deidentifyBtn = document.getElementById("deidentify-btn");
-  var samples = [];
-  var lastResult = null;
-
-  fetch("samples.json")
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      samples = data;
-      data.forEach(function (sample, i) {
-        var opt = document.createElement("option");
-        opt.value = String(i);
-        opt.textContent = sample.label;
-        sampleSelect.appendChild(opt);
-      });
-    })
-    .catch(function () {
-      var opt = document.createElement("option");
-      opt.disabled = true;
-      opt.textContent = "samples.json failed to load";
-      sampleSelect.appendChild(opt);
+  function renderTabs() {
+    var tabs = $("tabs");
+    tabs.innerHTML = "";
+    state.exhibits.forEach(function (ex, i) {
+      var r = state.results[key(ex)];
+      var meta = r ? plural(r.removed, "identifier removed", "identifiers removed") : "Not reviewed";
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "binder-tab";
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", i === state.active ? "true" : "false");
+      b.innerHTML = '<span class="tab-letter">' + ex.letter + '</span><span><span class="tab-title">' + esc(ex.label === ex.title ? ex.title : ex.label) +
+        '</span><br><span class="tab-meta">' + esc(ex.label === ex.title ? meta : ex.title) + '</span>' +
+        (ex.label !== ex.title ? '<br><span class="tab-meta">' + esc(meta) + '</span>' : "") + "</span>";
+      b.addEventListener("click", function () { if (!state.running) select(i); });
+      tabs.appendChild(b);
     });
-
-  sampleSelect.addEventListener("change", function () {
-    if (sampleSelect.value === "") return;
-    var sample = samples[Number(sampleSelect.value)];
-    originalText.value = sample.text;
-    resetOutput();
-  });
-
-  function resetOutput() {
-    outputText.innerHTML = '<span class="placeholder">Run De-identify to see the cleaned draft here.</span>';
-    resultsEl.className = "results empty";
-    resultsEl.innerHTML = "<span>No result yet.</span>";
-    lastResult = null;
+    var done = state.exhibits.filter(function (ex) { return state.results[key(ex)]; }).length;
+    $("rail-note").textContent = done + " of " + state.exhibits.length + " exhibits reviewed";
   }
 
-  function escapeHtml(s) {
-    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function select(i) {
+    state.active = i;
+    var ex = state.exhibits[i];
+    var r = ex && state.results[key(ex)];
+    renderTabs();
+    $("run").disabled = !ex;
+    $("run").textContent = r ? "Run de-identification again" : "De-identify exhibit";
+    $("status").innerHTML = "";
+    setViewsEnabled(!!r);
+    renderSheet(ex, r);
+    setView(r ? "clean" : "original");
+    renderInspector(ex, r, false);
   }
 
-  function renderOutput(text, spans) {
-    var sorted = spans.slice().sort(function (a, b) { return a.start - b.start; });
-    var out = [];
-    var cursor = 0;
-    sorted.forEach(function (span) {
-      if (span.start > cursor) {
-        out.push(escapeHtml(text.slice(cursor, span.start)));
-      }
-      var label = KIND_LABELS[span.kind] || span.kind;
-      var kindVar = "var(--kind-" + span.kind + ", var(--kind-default))";
-      out.push(
-        '<mark class="span" style="--kind-color:' + kindVar + '" title="' + escapeHtml(label) + '">' +
-        escapeHtml(span.replacement) +
-        "</mark>"
-      );
-      cursor = Math.max(cursor, span.end);
-    });
-    if (cursor < text.length) {
-      out.push(escapeHtml(text.slice(cursor)));
-    }
-    outputText.innerHTML = out.join("") || '<span class="placeholder">No identifiers found in this draft.</span>';
+  // ---------- document rendering with offsets ----------
+  function evidenceRange(text, evidence, spans) {
+    if (!evidence) return null;
+    var parts = evidence.trim().split(/(\[[A-Z][A-Z_]*_\d+\])/);
+    var src = parts.map(function (p, i) {
+      if (i % 2) return "[\\s\\S]+?";
+      return p.replace(/\*\*/g, "").split(/\s+/).filter(Boolean).map(function (w) { return w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("(?:\\s|\\*\\*)+");
+    }).filter(Boolean).join("(?:\\s|\\*\\*)*");
+    try {
+      var m = new RegExp(src).exec(text);
+      if (m) return { start: m.index, end: m.index + m[0].length };
+    } catch (e) {}
+    return null;
   }
 
-  function renderResults(response) {
-    var byKind = {};
-    response.spans.forEach(function (span) {
-      byKind[span.kind] = (byKind[span.kind] || 0) + 1;
-    });
+  function renderSheet(ex, r) {
+    var sheet = $("sheet");
+    if (!ex) { sheet.innerHTML = '<div class="empty"><h3>No exhibits in this matter</h3><p>Pick another matter from the switcher.</p></div>'; return; }
+    var text = ex.text;
+    var spans = r ? r.spans.slice().sort(function (a, b) { return a.start - b.start; }) : [];
+    var clean = [];
+    var last = -1;
+    spans.forEach(function (s) { if (s.start >= last) { clean.push(s); last = s.end; } });
+    var ev = r && r.residual && r.residual.verdict === "leak" ? evidenceRange(text, r.residual.evidence, clean) : null;
 
-    var chips = Object.keys(byKind).map(function (kind) {
-      var label = KIND_LABELS[kind] || kind;
-      var kindVar = "var(--kind-" + kind + ", var(--kind-default))";
-      return '<span class="kind-chip" style="--kind-color:' + kindVar + '">' +
-        escapeHtml(label) + " · " + byKind[kind] + "</span>";
-    }).join("");
-
-    var badgeHtml;
-    if (!response.residual) {
-      badgeHtml = '<span class="badge unavailable">Judge unavailable</span>';
-    } else if (response.residual.verdict === "clean") {
-      badgeHtml = '<span class="badge clean">No residual identifiers found (judge: ' +
-        escapeHtml(response.judge || "unknown") + ")</span>";
-    } else {
-      badgeHtml = '<span class="badge leak">Residual identifier: ' +
-        escapeHtml(response.residual.evidence || "unspecified") + "</span>";
-    }
-
-    var replayedHtml = response.replayed
-      ? '<span class="mock-flag">replayed</span>'
-      : "";
-
-    resultsEl.className = "results";
-    resultsEl.innerHTML =
-      '<span class="removed-count"><strong>' + response.removed + "</strong> removed</span>" +
-      '<div class="kind-chips">' + chips + "</div>" +
-      replayedHtml +
-      '<div class="spacer"></div>' +
-      badgeHtml +
-      '<button class="secondary" id="download-btn" type="button">Download training JSONL</button>';
-
-    document.getElementById("download-btn").addEventListener("click", function () {
-      downloadJsonl(response.text);
-    });
-  }
-
-  function renderError(message) {
-    resultsEl.className = "results";
-    resultsEl.innerHTML = '<span class="error-note">' + escapeHtml(message) + "</span>";
-  }
-
-  function downloadJsonl(text) {
-    var line = JSON.stringify({ text: text }) + "\n";
-    var blob = new Blob([line], { type: "application/jsonl" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = "training.jsonl";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  function mockDeidentify(text) {
-    var spans = [];
-    var patterns = [
-      { re: /\$[0-9][0-9,.]*(?:\s(?:million|thousand))?/g, kind: "amount" },
-      { re: /[A-Za-z][A-Za-z.]*@[A-Za-z0-9.-]+/g, kind: "email" },
-      { re: /\b[A-Z]{3}-\d{2}-\d{3}-\d{5}\b/g, kind: "receipt" },
-      { re: /\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b|\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\b/g, kind: "date" },
-      { re: /\b(?:[A-Z][a-z]+\s+(?:Inc\.|Foundation|Theatre|Company|Bioscience(?:\s+Inc\.)?))\b/g, kind: "org" },
-      { re: /\b(?:Mr\.|Ms\.|Dr\.)\s+[A-Z][a-z]+\b|\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, kind: "name" }
-    ];
-    var claimed = [];
-    function overlaps(s, e) {
-      return claimed.some(function (c) { return s < c.end && e > c.start; });
-    }
-    patterns.forEach(function (p) {
-      var m;
-      p.re.lastIndex = 0;
-      while ((m = p.re.exec(text)) !== null) {
-        var s = m.index, e = m.index + m[0].length;
-        if (!overlaps(s, e)) {
-          claimed.push({ start: s, end: e });
-          spans.push({ start: s, end: e, kind: p.kind, replacement: "[" + p.kind.toUpperCase() + "]" });
+    var html = '<div class="sheet-label"><strong>' + esc(ex.label) + "</strong>" + (ex.label !== ex.title ? ", " + esc(ex.title.toLowerCase()) : "") + "</div>";
+    var re = /\n{2,}/g, bs = 0, m, blocks = [];
+    while ((m = re.exec(text))) { blocks.push([bs, m.index]); bs = m.index + m[0].length; }
+    blocks.push([bs, text.length]);
+    var si = 0, idx = 0, skipUntil = 0;
+    blocks.forEach(function (b) {
+      var start = Math.max(b[0], skipUntil), end = b[1];
+      if (start >= end) return;
+      var tag = "p";
+      var hm = /^(#{1,3})\s+/.exec(text.slice(start, end));
+      if (hm) { tag = "h" + hm[1].length; start += hm[0].length; }
+      var out = "", bold = false, i = start;
+      var inEv = !!(ev && ev.start < start && ev.end > start);
+      if (inEv) out += '<span class="residual-text">';
+      var blockHasEv = ev && ev.start < end && ev.end > start;
+      while (i < end) {
+        if (ev && i === ev.start) { out += '<span class="residual-text">'; inEv = true; }
+        var sp = clean[si];
+        while (sp && sp.start < i) { si++; sp = clean[si]; }
+        if (sp && sp.start === i) {
+          var orig = text.slice(sp.start, sp.end).replace(/\*\*/g, "").replace(/\s+/g, " ");
+          out += '<span class="ident" data-i="' + idx + '" data-kind="' + esc(sp.kind) + '"><span class="orig">' + esc(orig) +
+            '</span><span class="chip' + (sp.kind === "quasi_identifier" ? " quasi" : "") + '" title="' + esc(kindLabel(sp.kind)) + ": " + esc(orig) + '">' + esc(sp.replacement) + "</span></span>";
+          sp._i = idx; idx++; si++;
+          if (sp.end > end) { skipUntil = sp.end; i = end; } else i = sp.end;
+        } else if (text.charAt(i) === "*" && text.charAt(i + 1) === "*") {
+          out += bold ? "</strong>" : "<strong>"; bold = !bold; i += 2;
+        } else {
+          var ch = text.charAt(i);
+          out += ch === "\n" ? " " : esc(ch);
+          i++;
         }
+        if (inEv && i >= ev.end) { out += "</span>"; inEv = false; }
       }
+      if (inEv) { out += "</span>"; inEv = false; }
+      if (bold) out += "</strong>";
+      html += "<" + tag + (blockHasEv ? ' class="has-residual"' : "") + ">" + out + "</" + tag + ">";
     });
-    spans.sort(function (a, b) { return a.start - b.start; });
-    var cleaned = [];
-    var cursor = 0;
-    spans.forEach(function (s) {
-      cleaned.push(text.slice(cursor, s.start));
-      cleaned.push(s.replacement);
-      cursor = s.end;
-    });
-    cleaned.push(text.slice(cursor));
-    var cleanedText = cleaned.join("");
-
-    return new Promise(function (resolve) {
-      setTimeout(function () {
-        resolve({
-          text: cleanedText,
-          spans: spans,
-          removed: spans.length,
-          residual: { verdict: "clean", matter: null, evidence: null },
-          judge: "mock_judge"
-        });
-      }, 300);
-    });
+    sheet.innerHTML = html;
+    state.spans = clean;
   }
 
-  function runDeidentify() {
-    var text = originalText.value.trim();
-    if (!text) return;
-    deidentifyBtn.disabled = true;
-    deidentifyBtn.textContent = "De-identifying…";
-
-    var call = mockMode
-      ? mockDeidentify(text)
-      : fetch("/deidentify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: text, practice: "immigration", matter_id: null })
-        }).then(function (r) {
-          if (!r.ok) throw new Error("HTTP " + r.status);
-          return r.json();
-        });
-
-    call
-      .then(function (response) {
-        lastResult = response;
-        renderOutput(text, response.spans || []);
-        renderResults(response);
-      })
-      .catch(function (err) {
-        renderError("De-identify failed (" + err.message + "). This endpoint lands with c2-deid; use ?mock=1 to preview the UI until then.");
-      })
-      .finally(function () {
-        deidentifyBtn.disabled = false;
-        deidentifyBtn.textContent = "De-identify";
+  // ---------- inspector ----------
+  function renderInspector(ex, r, pending) {
+    var insp = $("inspector");
+    if (!r) {
+      insp.innerHTML = '<div class="inspector-section"><div class="empty" style="padding:24px 8px"><h3>Not reviewed yet</h3>' +
+        "<p>De-identify this exhibit to find names, organizations, amounts and distinctive details, then have the judge check what is left.</p></div></div>";
+      return;
+    }
+    var groups = {}, order = [];
+    state.spans.forEach(function (s) {
+      if (!groups[s.kind]) { groups[s.kind] = []; order.push(s.kind); }
+      groups[s.kind].push(s);
+    });
+    var html = '<div class="inspector-section"><div class="insp-title"><h3>Identifiers found</h3><span class="count">' +
+      plural(r.removed, "removed", "removed") + " in " + plural(order.length, "kind", "kinds") + "</span></div>";
+    if (!order.length) html += '<p class="meta">No identifiers were found in this exhibit.</p>';
+    order.forEach(function (k) {
+      html += '<div class="kind-group"><div class="kind-head">' + esc(kindLabel(k)) + '<span class="n">' + groups[k].length + "</span></div>";
+      groups[k].forEach(function (s) {
+        var orig = ex.text.slice(s.start, s.end).replace(/\*\*/g, "").replace(/\s+/g, " ");
+        html += '<button type="button" class="ident-row' + (pending ? " pending" : "") + '" data-i="' + s._i + '"><span class="o">' + esc(orig) +
+          '</span><span class="chip">' + esc(s.replacement) + "</span></button>";
       });
+      html += "</div>";
+    });
+    html += "</div>";
+    html += '<div class="inspector-section' + (pending ? " landing" : "") + '" id="verdict-section"><h3>Judge verdict</h3>' + verdictHTML(r) + "</div>";
+    html += '<div class="inspector-section' + (pending ? " landing" : "") + '" id="train-section">' + trainHTML(ex, r) + "</div>";
+    insp.innerHTML = html;
+    insp.querySelectorAll(".ident-row").forEach(function (row) {
+      row.addEventListener("click", function () { focusIdent(row.getAttribute("data-i")); });
+    });
+    var add = $("add-train");
+    if (add) add.addEventListener("click", function () { addToTraining(ex, r); });
   }
 
-  deidentifyBtn.addEventListener("click", runDeidentify);
+  function verdictHTML(r) {
+    var v = r.residual;
+    var judge = JUDGES[r.judge] || r.judge || "Judge";
+    var tag = r.replayed ? ' <span class="replayed" title="The live call failed; showing the last live result for this exhibit">Replayed</span>' : "";
+    if (!v) return '<div class="verdict"><div class="verdict-top"><h4>Judge unavailable</h4>' + tag + '</div><p>The identifiers were removed, but no judge checked the result. Run de-identification again to get a verdict.</p></div>';
+    if (v.verdict === "leak") {
+      return '<div class="verdict leak"><div class="verdict-top"><h4>Residual identifier found</h4>' + tag + "</div>" +
+        "<p>The cleaned text still points to a real person or company. The passage is underlined on the sheet.</p>" +
+        (v.evidence ? "<blockquote>" + esc(v.evidence) + "</blockquote>" : "") +
+        '<div class="by">Checked by ' + esc(judge) + "</div></div>";
+    }
+    return '<div class="verdict clean"><div class="verdict-top"><h4>No residual identifiers</h4>' + tag + "</div>" +
+      "<p>The judge could not tie the cleaned text back to the client or anyone named in the matter.</p>" +
+      '<div class="by">Checked by ' + esc(judge) + "</div></div>";
+  }
+
+  function trainHTML(ex, r) {
+    var set = readStore(TRAIN_KEY, []);
+    var have = set.some(function (x) { return x.id === key(ex); });
+    var leak = r.residual && r.residual.verdict === "leak";
+    if (have) return '<h3>Training set</h3><p class="train-note">This exhibit is in the training set. <a href="/demo/datasets.html">Open Datasets</a></p>';
+    return '<h3>Training set</h3><button type="button" class="btn ' + (leak ? "btn-secondary" : "btn-primary") + '" id="add-train" style="width:100%">' +
+      (leak ? "Add to training set, flagged for review" : "Add to training set") + "</button>" +
+      '<p class="train-note">' + (leak ? "Flagged exhibits stay out of training until a reviewer clears them." : "Only the clean text is stored, never the original.") + "</p>";
+  }
+
+  function addToTraining(ex, r) {
+    var set = readStore(TRAIN_KEY, []).filter(function (x) { return x.id !== key(ex); });
+    var kinds = {};
+    state.spans.forEach(function (s) { kinds[s.kind] = (kinds[s.kind] || 0) + 1; });
+    set.push({
+      id: key(ex), matter_id: state.matter.id, client: state.matter.client, document: ex.file, title: ex.label + ": " + ex.title,
+      practice: state.matter.practice, text: r.text, removed: r.removed, kinds: kinds,
+      verdict: r.residual ? r.residual.verdict : null, evidence: r.residual ? r.residual.evidence : null,
+      judge: r.judge || null, flagged: !!(r.residual && r.residual.verdict === "leak"), replayed: !!r.replayed,
+      added_at: new Date().toISOString()
+    });
+    writeStore(TRAIN_KEY, set);
+    $("train-section").innerHTML = trainHTML(ex, r);
+    $("train-section").querySelector(".train-note").insertAdjacentHTML("afterbegin", "Added. ");
+  }
+
+  function focusIdent(i) {
+    var n = $("sheet").querySelector('.ident[data-i="' + i + '"]');
+    if (!n) return;
+    n.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
+    n.classList.add("flash");
+    setTimeout(function () { n.classList.remove("flash"); }, 1200);
+  }
+
+  // ---------- views ----------
+  function setViewsEnabled(on) {
+    $("views").querySelectorAll("button").forEach(function (b) { if (b.dataset.view !== "original") b.disabled = !on; });
+  }
+  function setView(v) {
+    state.view = v;
+    $("sheet").setAttribute("data-view", v);
+    $("views").querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.view === v ? "true" : "false"); });
+  }
+  $("views").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (b && !b.disabled && !state.running) setView(b.dataset.view);
+  });
+
+  // ---------- run ----------
+  function callDeid(ex) {
+    var cache = readStore(CACHE_KEY, {});
+    return fetch("/deidentify", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: ex.text, practice: state.matter.practice || "immigration", matter_id: state.matter.id })
+    }).then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }).then(function (r) {
+      if (!r.replayed) { cache[key(ex)] = r; writeStore(CACHE_KEY, cache); }
+      return r;
+    }).catch(function (err) {
+      var c = cache[key(ex)];
+      if (c) return Object.assign({}, c, { replayed: true });
+      throw err;
+    });
+  }
+
+  $("run").addEventListener("click", function () {
+    var ex = state.exhibits[state.active];
+    if (!ex || state.running) return;
+    state.running = true;
+    var btn = $("run");
+    btn.disabled = true;
+    btn.textContent = "De-identifying";
+    delete state.results[key(ex)];
+    renderSheet(ex, null);
+    setView("original");
+    setViewsEnabled(false);
+    renderInspector(ex, null);
+    var insp = $("inspector");
+    insp.innerHTML = '<div class="inspector-section"><h3>Identifiers found</h3><span class="skeleton" style="width:40%"></span><span class="skeleton" style="width:85%"></span><span class="skeleton" style="width:70%"></span><span class="skeleton" style="width:78%"></span></div>' +
+      '<div class="inspector-section"><h3>Judge verdict</h3><span class="skeleton" style="width:90%;height:48px"></span></div>';
+    $("status").innerHTML = '<span class="spinner" aria-hidden="true"></span>Finding identifiers, then asking the judge';
+    var t0 = performance.now();
+    callDeid(ex).then(function (r) {
+      state.results[key(ex)] = r;
+      var secs = ((performance.now() - t0) / 1000).toFixed(1);
+      renderSheet(ex, r);
+      renderInspector(ex, r, !reduceMotion);
+      renderTabs();
+      setViewsEnabled(true);
+      $("status").textContent = (r.replayed ? "Replayed last live result" : "Live result in " + secs + " s");
+      play(function () {
+        state.running = false;
+        btn.disabled = false;
+        btn.textContent = "Run de-identification again";
+      });
+    }).catch(function (err) {
+      state.running = false;
+      btn.disabled = false;
+      btn.textContent = "Try de-identifying again";
+      $("status").innerHTML = '<span class="error">The de-identification service did not respond (' + esc(err.message) + "). Check the API is running, then try again.</span>";
+      renderInspector(ex, null);
+    });
+  });
+
+  function play(done) {
+    var sheet = $("sheet");
+    var idents = Array.prototype.slice.call(sheet.querySelectorAll(".ident"));
+    var rows = $("inspector");
+    function land() {
+      ["verdict-section", "train-section"].forEach(function (id, k) {
+        var n = $(id);
+        if (n) setTimeout(function () { n.classList.add("landed"); }, k * 180);
+      });
+      done();
+    }
+    if (reduceMotion || !idents.length) { setView("clean"); land(); return; }
+    setView("original");
+    sheet.classList.add("animating");
+    var FIND = 55, FOLD = 120;
+    idents.forEach(function (n, i) { setTimeout(function () { n.classList.add("found"); }, i * FIND); });
+    var foldStart = idents.length * FIND + 650;
+    idents.forEach(function (n, i) {
+      setTimeout(function () {
+        var o = n.querySelector(".orig");
+        o.style.maxWidth = o.scrollWidth + "px";
+        void o.offsetWidth;
+        n.classList.add("collapsed");
+        var row = rows.querySelector('.ident-row[data-i="' + n.getAttribute("data-i") + '"]');
+        if (row) row.classList.remove("pending");
+      }, foldStart + i * FOLD);
+    });
+    setTimeout(function () {
+      sheet.classList.remove("animating");
+      idents.forEach(function (n) { n.classList.remove("found", "collapsed"); n.querySelector(".orig").style.maxWidth = ""; });
+      setView("clean");
+      land();
+    }, foldStart + idents.length * FOLD + 450);
+  }
 })();
 </script>
 </body>
