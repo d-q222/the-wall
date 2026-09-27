@@ -19,6 +19,7 @@ def tmp_runtime(tmp_path, monkeypatch):
     monkeypatch.setattr(retrain, "LOG", tmp_path / "river-retrain" / "train.log")
     monkeypatch.setattr(retrain, "K3_DATA", tmp_path / "k3" / "train.jsonl")
     monkeypatch.setattr(retrain, "K3_STATE", tmp_path / "k3" / "state.json")
+    monkeypatch.setattr(retrain, "BLIND", tmp_path / "blind.jsonl")
     return tmp_path
 
 
@@ -106,3 +107,12 @@ def test_failed_retrain_keeps_last_good_checkpoint(monkeypatch):
     assert retrain.launch()["checkpoint"] == "river://ours/final"
     retrain._write_state(status="failed")
     assert retrain.start_checkpoint() == "river://ours/final"
+
+
+def test_build_set_refuses_blind_set_overlap(tmp_runtime):
+    draft = "A passage from the blind set that nobody may ever train on, long enough to match."
+    (tmp_runtime / "blind.jsonl").write_text(json.dumps({"current": "x", "protected": [], "draft": draft, "label": "leak"}) + "\n")
+    feedback.record(_missed(passage=draft + " Adaeze", span_text="Adaeze"))
+    with pytest.raises(ValueError, match="blind"):
+        retrain.build_set()
+    assert not retrain.TRAIN.exists()
