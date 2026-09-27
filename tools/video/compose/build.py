@@ -5,6 +5,7 @@ Writes demo/index.html + demo/assets/{audio,clips}; --render also writes the MP4
 """
 import html
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -153,8 +154,13 @@ def media_html(sc, clips, start, dur):
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(clips[n], dst)
         wide = " narrow" if sc["kind"] == "score" else ""
+        hold = dst.with_suffix(".last.png")  # clips are shorter than scenes: hold on the final frame
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-sseof", "-0.3", "-i", str(dst), "-frames:v", "1",
+                        "-update", "1", str(hold)], check=True)
+        vdur = round(min(dur, probe(dst)), 2)
+        sc["hold"] = f"assets/clips/{hold.name}"
         return (f'<video id="m-{sc["id"]}" class="clip vframe{wide}" src="assets/clips/{dst.name}" muted playsinline '
-                f'data-start="{start}" data-duration="{dur}"></video>'), "video"
+                f'data-start="{start}" data-duration="{vdur}"></video>'), "video"
     return (f'<img id="m-{sc["id"]}" class="clip frame-media kb" src="assets/shots/{sc["shot"]}.png" '
             f'data-start="{start}" data-duration="{dur}" alt="">'), "shot"
 
@@ -210,11 +216,13 @@ def build():
             panel = score_panel(sc) if sc["kind"] == "score" else ""
             body.append(f'<section id="{sid}" class="clip scene shotscene" data-start="{st}" data-duration="{d}">'
                         f'<div class="label"><span class="n">{i - 1}</span>{sc["label"]}</div>'
-                        + (f'<div class="frame {wide}">{media}</div>' if how == "shot" else "") + f'{panel}</section>')
+                        + (f'<div class="frame {wide}">{media}</div>' if how == "shot" else
+                           f'<div class="frame {wide}"><img class="frame-media" src="{sc["hold"]}" alt=""></div>')
+                        + f'{panel}</section>')
             if how == "video":  # HyperFrames: a timed <video> must not sit inside a timed wrapper
                 body.append(media)
             js.append(f'tl.from("#{sid} .label", {{opacity:0, x:-24, duration:0.6, ease:"power2.out"}}, {st + 0.1});')
-            fr = f"#{sid} .frame" if how == "shot" else f"#m-{sc['id']}"
+            fr = f"#{sid} .frame" if how == "shot" else f"#{sid} .frame, #m-{sc['id']}"
             js.append(f'tl.from("{fr}", {{opacity:0, y:24, duration:0.8, ease:"power3.out"}}, {st});')
             if how == "shot":
                 js.append(f'tl.fromTo("#m-{sc["id"]}", {{scale:1.0}}, {{scale:1.07, duration:{d}, ease:"none"}}, {st});')
@@ -237,7 +245,9 @@ def build():
 
 def render():
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["npx", "hyperframes", "render", "-f", "30", "-q", "high", "-o", str(OUT)], cwd=PROJ, check=True)
+    env = {**os.environ, "HYPERFRAMES_BROWSER_PATH": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"}
+    subprocess.run(["npx", "hyperframes", "render", "-f", "30", "-q", "standard", "-w", "8", "-o", str(OUT)],
+                   cwd=PROJ, check=True, env=env)
     print(f"rendered {OUT} {probe(OUT):.1f}s")
 
 
