@@ -9,7 +9,7 @@ cd "$REPO_ROOT"
 ENV_FILE="/Users/dqi26/the-wall/.env"
 DATA_DIR="/Users/dqi26/the-wall/data"
 RESULTS_FILE="${WALL_RESULTS:-$HOME/the-wall/results/results.json}"
-API_PORT=8788
+API_PORT="${API_PORT:-8788}"  # override for dev ports, e.g. API_PORT=8805
 
 fail=0
 GREEN=$'\033[32m'; RED=$'\033[31m'; YELLOW=$'\033[33m'; BOLD=$'\033[1m'; RESET=$'\033[0m'

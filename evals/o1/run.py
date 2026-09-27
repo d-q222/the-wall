@@ -8,7 +8,7 @@ held-out hard set scored by evals/run_guard.py.
 from __future__ import annotations
 
 import argparse
-import subprocess
+import json
 import sys
 from pathlib import Path
 
@@ -18,60 +18,30 @@ for p in (ROOT, EVALS_DIR):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-from run_guard import EvalRow, evaluate, load_rows  # noqa: E402 (main-owned parser/scorer)
+from run_guard import evaluate, load_rows  # noqa: E402 (main-owned parser/scorer)
 
 from wall import results  # noqa: E402
-from wall.contract import EvalResult, JudgeRequest  # noqa: E402
-from wall.judge import judge as prompt_judge  # noqa: E402
+from wall.contract import EvalResult  # noqa: E402
 
 CASES = Path(__file__).resolve().parent / "o1_cases.jsonl"
 EVAL_SET = "o1_demo"
 
 
-def evaluate_prompt_judge(rows: list[EvalRow]) -> EvalResult | None:
-    """Score wall.judge.judge() on every row. Returns None if it is still the B2 stub."""
-    caught = leaks = false_alarms = clean = 0
-    for row in rows:
-        if row.label == "LEAK":
-            leaks += 1
-        else:
-            clean += 1
-        try:
-            resp = prompt_judge(
-                JudgeRequest(
-                    current=row.current.text,
-                    protected=[b.text for b in row.protected.values()],
-                    draft=row.draft,
-                )
-            )
-        except NotImplementedError:
+def evaluate_judge(judge: str) -> tuple[EvalResult, int] | None:
+    """Score a B2 judge ("prompt" or "river") on o1_cases.jsonl via evals/run_judges.py's
+    own loaders, cache and scorer. Returns (result, errors), or None if it can't run."""
+    import run_judges as rj  # imported lazily: pulls in river_client
+
+    cases = [rj._flat_row_to_case(json.loads(line)) for line in CASES.read_text().splitlines() if line.strip()]
+    cache_path = rj._cache_path(judge, EVAL_SET)
+    if judge == "prompt":
+        verdicts = rj.run_prompt(cases, cache_path)
+    else:
+        if not rj.STATE_PATH.exists():
+            print(f"[{EVAL_SET}] river_judge: skipped ({rj.STATE_PATH} not found; no River checkpoint here)")
             return None
-        if resp.verdict == "leak":
-            if row.label == "LEAK":
-                caught += 1
-            else:
-                false_alarms += 1
-    return EvalResult(caught=caught, leaks=leaks, false_alarms=false_alarms, clean=clean, n=leaks + clean)
-
-
-def run_river() -> None:
-    """Best-effort passthrough to evals/run_judges.py (B2, lands with b2-river).
-
-    Its CLI is not yet defined on this branch; the coordinator re-runs this once
-    b2-river merges and adjusts the call below if the signature differs.
-    """
-    script = EVALS_DIR / "run_judges.py"
-    if not script.exists():
-        print(f"[{EVAL_SET}] --judge river: {script} not found (b2-river not merged yet); skipped")
-        return
-    proc = subprocess.run(
-        [sys.executable, str(script), str(CASES), "--eval-set", EVAL_SET],
-        capture_output=True,
-        text=True,
-    )
-    print(proc.stdout, end="")
-    if proc.returncode != 0:
-        print(f"[{EVAL_SET}] --judge river: run_judges.py exited {proc.returncode}: {proc.stderr.strip()}")
+        verdicts = rj.run_sampled(cases, cache_path, checkpoint=rj._load_river_checkpoint(), max_tokens=400)
+    return rj._score(cases, verdicts)
 
 
 def main() -> None:
@@ -79,7 +49,7 @@ def main() -> None:
     parser.add_argument(
         "--judge",
         choices=["river"],
-        help="also shell out to evals/run_judges.py for the river-tuned judge, if present",
+        help="also score the River-tuned judge (needs .runtime/river/state.json from river/train.py)",
     )
     args = parser.parse_args()
 
@@ -102,18 +72,17 @@ def main() -> None:
             f"{result.false_alarms}/{result.clean} false alarms (n={result.n})"
         )
 
-    judge_result = evaluate_prompt_judge(rows)
-    if judge_result is None:
-        print(f"[{EVAL_SET}] prompt_judge: skipped (wall.judge raised NotImplementedError; b2-river not merged yet)")
-    else:
-        results.record("prompt_judge", EVAL_SET, judge_result)
+    for judge in ["prompt"] + (["river"] if args.judge == "river" else []):
+        scored = evaluate_judge(judge)
+        if scored is None:
+            continue
+        result, errors = scored
+        detector = f"{judge}_judge"
+        results.record(detector, EVAL_SET, result)
         print(
-            f"[{EVAL_SET}] prompt_judge: caught {judge_result.caught}/{judge_result.leaks} leaks, "
-            f"{judge_result.false_alarms}/{judge_result.clean} false alarms (n={judge_result.n})"
+            f"[{EVAL_SET}] {detector}: caught {result.caught}/{result.leaks} leaks, "
+            f"{result.false_alarms}/{result.clean} false alarms (n={result.n}, errors={errors})"
         )
-
-    if args.judge == "river":
-        run_river()
 
 
 if __name__ == "__main__":

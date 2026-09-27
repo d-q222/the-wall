@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matters — Okafor &amp; Lind Immigration</title>
+<meta name="description" content="Firm overview: every matter, its documents, wall status, and the practice policy that applies.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<!--
+  g4-matters owns this file. Visual language follows docs/DESIGN.md v2 exactly
+  (paper/canvas/ink/form-blue/found/risk/cleared tokens, Public Sans UI +
+  Source Serif 4 document text). The v2 shared shell (demo/assets/nav.js +
+  theme.css) has not landed yet — this page renders the v2 shell inline and
+  will adopt the shared assets when c4 publishes them.
+-->
+<style>
+  :root {
+    --paper: #FBFBF9;
+    --canvas: #E6E9ED;
+    --ink: #14213D;
+    --ink-soft: #3D4A6B;
+    --ink-mute: #68748F;
+    --line: #CFD4DE;
+    --line-soft: #DEE2EA;
+    --form-blue: #1F4E9E;
+    --form-blue-dark: #173C7A;
+    --found: #FFE58A;
+    --risk: #C2410C;
+    --risk-bg: #FBE9DE;
+    --cleared: #1E7B4F;
+    --cleared-bg: #DFF0E6;
+    --neutral-bg: #EDEFF3;
+    --sidebar: #14213D;
+    --sidebar-text: #EDF0F6;
+    --sidebar-mute: #9AA3BC;
+    --font-ui: "Public Sans", -apple-system, "Segoe UI", sans-serif;
+    --font-doc: "Source Serif 4", Georgia, "Times New Roman", serif;
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --paper: #1B2334;
+    --canvas: #101624;
+    --ink: #E9ECF3;
+    --ink-soft: #B9C1D4;
+    --ink-mute: #8B94AB;
+    --line: #2E3850;
+    --line-soft: #242C42;
+    --form-blue: #7FA6E8;
+    --form-blue-dark: #9DBBEF;
+    --found: #8A7415;
+    --risk: #E8845A;
+    --risk-bg: #3A241A;
+    --cleared: #5FB98C;
+    --cleared-bg: #163527;
+    --neutral-bg: #232B40;
+    --sidebar: #0B1120;
+    --sidebar-text: #E9ECF3;
+    --sidebar-mute: #8B94AB;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink);
+    background: var(--canvas);
+  }
+  .app { display: flex; min-height: 100vh; }
+
+  /* -- sidebar (v2 app shell) -- */
+  .sidebar {
+    width: 248px;
+    flex: 0 0 248px;
+    background: var(--sidebar);
+    color: var(--sidebar-text);
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem 0 1rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .firm {
+    font-family: var(--font-doc);
+    font-weight: 600;
+    font-size: 17px;
+    line-height: 1.3;
+    padding: 0 1.25rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  }
+  :root[data-theme="dark"] .firm { border-bottom-color: var(--line); }
+  .firm small {
+    display: block;
+    font-family: var(--font-ui);
+    font-weight: 400;
+    font-size: 12.5px;
+    color: var(--sidebar-mute);
+    margin-top: 0.15rem;
+  }
+  .snav { display: flex; flex-direction: column; padding: 0.75rem 0.6rem; gap: 1px; }
+  .snav a {
+    color: var(--sidebar-text);
+    text-decoration: none;
+    font-size: 14.5px;
+    padding: 0.45rem 0.65rem;
+    border-radius: 4px;
+  }
+  .snav a:hover { background: rgba(255, 255, 255, 0.08); }
+  .snav a[aria-current="page"] { background: rgba(255, 255, 255, 0.14); font-weight: 600; }
+  .sidebar .spacer { flex: 1; }
+  .present-btn {
+    margin: 0 1.25rem;
+    display: block;
+    text-align: center;
+    background: var(--found);
+    color: #14213D;
+    font-weight: 600;
+    font-size: 14.5px;
+    padding: 0.55rem 0;
+    border-radius: 4px;
+    text-decoration: none;
+  }
+  .present-btn:hover { filter: brightness(0.96); }
+
+  /* -- main column -- */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topbar {
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    padding: 0.6rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .crumb { font-size: 13.5px; color: var(--ink-mute); }
+  .crumb strong { color: var(--ink); font-weight: 600; }
+  .topbar .grow { flex: 1; }
+  .topbar label { font-size: 13.5px; color: var(--ink-mute); }
+  select, button { font-family: var(--font-ui); font-size: 14px; }
+  select {
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.35rem 0.5rem;
+    max-width: 22rem;
+  }
+  .theme-toggle {
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.35rem 0.7rem;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { border-color: var(--form-blue); color: var(--form-blue); }
+
+  .content { padding: 1.5rem; max-width: 1100px; width: 100%; margin: 0 auto; }
+  .pagehead h1 {
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1.2;
+    margin: 0 0 0.25rem;
+  }
+  .pagehead .summary { color: var(--ink-soft); margin: 0 0 0.25rem; font-size: 15px; }
+  .pagehead .summary .n { font-feature-settings: "tnum"; font-weight: 600; color: var(--ink); }
+  .wallcheck {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    margin: 0 0 1rem;
+  }
+  .wallcheck .ok { color: var(--cleared); font-weight: 600; }
+  .wallcheck .bad { color: var(--risk); font-weight: 600; }
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    background: var(--neutral-bg);
+    color: var(--ink-soft);
+    vertical-align: 1px;
+    margin-left: 0.4rem;
+  }
+
+  /* -- table panel -- */
+  .panel {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  table.matters { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  table.matters th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink-mute);
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  table.matters td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+  }
+  table.matters tbody tr:last-child td { border-bottom: none; }
+  table.matters tbody tr { cursor: pointer; }
+  table.matters tbody tr:hover { background: rgba(31, 78, 158, 0.05); }
+  :root[data-theme="dark"] table.matters tbody tr:hover { background: rgba(127, 166, 232, 0.08); }
+  table.matters tbody tr[aria-selected="true"] { background: rgba(31, 78, 158, 0.09); }
+  table.matters .num { font-feature-settings: "tnum"; }
+  .client-cell strong { display: block; font-weight: 600; }
+  .client-cell .mid { font-size: 12.5px; color: var(--ink-mute); }
+  .badge {
+    display: inline-block;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 0.15rem 0.55rem;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .badge.walled { background: var(--cleared-bg); color: var(--cleared); }
+  .badge.unwalled { background: var(--neutral-bg); color: var(--ink-soft); }
+  .muted { color: var(--ink-mute); }
+  .error-line { padding: 1.25rem 1rem; color: var(--risk); }
+  .loading-line { padding: 1.25rem 1rem; color: var(--ink-mute); }
+
+  :focus-visible { outline: 2px solid var(--form-blue); outline-offset: 2px; }
+  tbody tr:focus-visible { outline: 2px solid var(--form-blue); outline-offset: -2px; }
+
+  /* -- detail drawer -- */
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 33, 61, 0.32);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(430px, 94vw);
+    height: 100vh;
+    background: var(--paper);
+    border-left: 1px solid var(--line);
+    transform: translateX(100%);
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+  }
+  .drawer.open { transform: none; }
+  .drawer-head {
+    padding: 1.1rem 1.25rem 0.9rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .drawer-head .kicker { font-size: 12.5px; color: var(--ink-mute); margin: 0 0 0.15rem; }
+  .drawer-head h2 {
+    font-family: var(--font-doc);
+    font-weight: 600;
+    font-size: 21px;
+    line-height: 1.25;
+    margin: 0 0 0.35rem;
+    padding-right: 2rem;
+  }
+  .drawer-head .meta { font-size: 13.5px; color: var(--ink-soft); margin: 0; }
+  .drawer-close {
+    position: absolute;
+    top: 0.9rem;
+    right: 1rem;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--ink-soft);
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+  }
+  .drawer-close:hover { border-color: var(--form-blue); color: var(--form-blue); }
+  .drawer-body { overflow-y: auto; padding: 1.1rem 1.25rem; flex: 1; }
+  .drawer-body section { margin-bottom: 1.4rem; }
+  .drawer-body h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-mute);
+    margin: 0 0 0.5rem;
+  }
+  .doc { border: 1px solid var(--line-soft); border-radius: 2px; margin-bottom: 0.5rem; }
+  .doc > button {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    background: transparent;
+    border: none;
+    padding: 0.55rem 0.75rem;
+    cursor: pointer;
+    color: var(--ink);
+    text-align: left;
+  }
+  .doc > button:hover .doc-name { color: var(--form-blue); }
+  .doc-name { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+  .doc-words { font-size: 12.5px; color: var(--ink-mute); font-feature-settings: "tnum"; white-space: nowrap; }
+  .doc-excerpt {
+    display: none;
+    font-family: var(--font-doc);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    padding: 0 0.75rem 0.7rem;
+    white-space: pre-wrap;
+  }
+  .doc.open .doc-excerpt { display: block; }
+  .policy-group { margin-bottom: 0.7rem; }
+  .policy-group p { font-size: 13.5px; margin: 0 0 0.35rem; color: var(--ink-soft); }
+  .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .chips li {
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 0.15rem 0.55rem;
+    border-radius: 4px;
+  }
+  .chips.may li { background: var(--cleared-bg); color: var(--cleared); }
+  .chips.never li { background: var(--risk-bg); color: var(--risk); }
+  .drawer-foot {
+    border-top: 1px solid var(--line);
+    padding: 0.9rem 1.25rem;
+  }
+  .btn-primary {
+    display: block;
+    text-align: center;
+    background: var(--form-blue);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14.5px;
+    text-decoration: none;
+    padding: 0.6rem 0;
+    border-radius: 4px;
+  }
+  :root[data-theme="dark"] .btn-primary { color: #0B1120; }
+  .btn-primary:hover { background: var(--form-blue-dark); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+  @media (max-width: 860px) {
+    .sidebar { display: none; }
+    .content { padding: 1rem; }
+    table.matters .hide-narrow { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="Primary">
+    <div class="firm">Okafor &amp; Lind Immigration<small>Petition training-set workspace</small></div>
+    <nav class="snav">
+      <a href="/demo/">Review</a>
+      <a href="/demo/datasets.html">Datasets</a>
+      <a href="/demo/matters.html" aria-current="page">Matters</a>
+      <a href="/demo/wall.html">Access wall</a>
+      <a href="/demo/compound.html">Know-how</a>
+      <a href="/demo/policy.html">Policy</a>
+      <a href="/scoreboard/">Evaluation</a>
+      <a href="/demo/audit.html">Audit log</a>
+    </nav>
+    <div class="spacer"></div>
+    <a class="present-btn" href="/demo/present.html">Present</a>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <span class="crumb"><strong>Matters</strong> &nbsp;/&nbsp; Firm overview</span>
+      <span class="grow"></span>
+      <label for="matter-switch">Matter</label>
+      <select id="matter-switch" aria-label="Jump to a matter"></select>
+      <button class="theme-toggle" id="theme-toggle" type="button">Dark mode</button>
+    </header>
+    <main class="content">
+      <div class="pagehead">
+        <h1>Matters</h1>
+        <p class="summary" id="summary">Loading matters…</p>
+        <p class="wallcheck" id="wallcheck" aria-live="polite"></p>
+      </div>
+      <section class="panel" aria-label="Matter list">
+        <table class="matters" id="matters-table">
+          <thead>
+            <tr>
+              <th scope="col">Client</th>
+              <th scope="col">Practice area</th>
+              <th scope="col">Documents</th>
+              <th scope="col">Wall status</th>
+              <th scope="col" class="hide-narrow">Last activity</th>
+            </tr>
+          </thead>
+          <tbody id="matters-body">
+            <tr><td colspan="5" class="loading-line">Loading matters from the live API…</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden>
+  <div class="drawer-head">
+    <p class="kicker" id="drawer-kicker">Matter</p>
+    <h2 id="drawer-title"></h2>
+    <p class="meta" id="drawer-meta"></p>
+    <button class="drawer-close" id="drawer-close" type="button">Close</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+  <div class="drawer-foot" id="drawer-foot"></div>
+</aside>
+
+<script>
+(function () {
+  "use strict";
+
+  var WALLED = { delmarva: true, chen: true, reyes: true };
+  var PRACTICE_LABEL = {
+    litigation: "Litigation",
+    trusts_estates: "Trusts and estates",
+    immigration: "Immigration",
+    asylum: "Asylum"
+  };
+  /* Fixtures copy of fixtures/policy.json, used only when GET /demo/api/policy
+     is unavailable (the policy service is a stub until G2 lands). */
+  var FALLBACK_POLICY = {
+    litigation: {
+      may_compound: ["drafting procedures", "letter templates", "research"],
+      never_compounds: ["parties", "amounts", "strategy", "witness details"]
+    },
+    trusts_estates: {
+      may_compound: ["accounting checklists", "filing steps"],
+      never_compounds: ["family facts", "balances", "allegations"]
+    },
+    asylum: {
+      may_compound: ["checklists", "country-conditions research", "legal argument"],
+      never_compounds: ["any narrative text from a declaration"]
+    },
+    immigration: {
+      may_compound: ["petition structure", "criteria checklists", "legal argument", "exhibit organization"],
+      never_compounds: ["beneficiary identity", "employer", "salary", "awards and their years",
+        "publications and press", "recommender identities", "A-numbers, receipt and passport numbers"]
+    }
+  };
+
+  var mattersById = {};
+  var auditByMatter = {};
+  var livePolicy = null;
+  var policyIsLive = false;
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function words(text) {
+    var n = String(text).split(/\s+/).filter(Boolean).length;
+    return n.toLocaleString("en-US") + (n === 1 ? " word" : " words");
+  }
+  function practiceLabel(p) { return PRACTICE_LABEL[p] || p; }
+  function wallLabel(id) {
+    return WALLED[id] ? "Isolated source, scoped agent" : "Not yet walled";
+  }
+  function lastActivity(id) {
+    var ev = auditByMatter[id];
+    if (!ev) return "No recorded activity";
+    return ev;
+  }
+
+  function renderTable(list) {
+    var body = document.getElementById("matters-body");
+    var totalDocs = 0;
+    var walled = 0;
+    var html = "";
+    list.forEach(function (m) {
+      var docs = m.documents || {};
+      var names = Object.keys(docs);
+      totalDocs += names.length;
+      if (WALLED[m.id]) walled += 1;
+      var badge = WALLED[m.id]
+        ? '<span class="badge walled">Isolated source, scoped agent</span>'
+        : '<span class="badge unwalled">Not yet walled</span>';
+      html += '<tr tabindex="0" data-id="' + esc(m.id) + '" aria-selected="false">'
+        + '<td class="client-cell"><strong>' + esc(m.client) + '</strong>'
+        + '<span class="mid">' + esc(m.id) + '</span></td>'
+        + "<td>" + esc(practiceLabel(m.practice)) + "</td>"
+        + '<td class="num">' + names.length + "</td>"
+        + "<td>" + badge + "</td>"
+        + '<td class="muted hide-narrow">' + esc(lastActivity(m.id)) + "</td>"
+        + "</tr>";
+    });
+    body.innerHTML = html;
+    var summary = document.getElementById("summary");
+    summary.innerHTML = "Showing <span class=\"n\">" + list.length + "</span> matters, "
+      + "<span class=\"n\">" + totalDocs + "</span> documents, "
+      + "<span class=\"n\">" + walled + "</span> behind the wall.";
+    var sel = document.getElementById("matter-switch");
+    sel.innerHTML = '<option value="">Select a matter…</option>' + list.map(function (m) {
+      return '<option value="' + esc(m.id) + '">' + esc(m.client) + " (" + esc(m.id) + ")</option>";
+    }).join("");
+  }
+
+  function policyFor(practice) {
+    if (livePolicy && livePolicy[practice]) return livePolicy[practice];
+    return FALLBACK_POLICY[practice] || null;
+  }
+
+  function renderDrawer(m) {
+    var docs = m.documents || {};
+    var names = Object.keys(docs).sort();
+    document.getElementById("drawer-kicker").textContent =
+      "Matter " + m.id + ", " + practiceLabel(m.practice);
+    document.getElementById("drawer-title").textContent = m.client;
+    document.getElementById("drawer-meta").textContent =
+      names.length + (names.length === 1 ? " document" : " documents")
+      + ", " + wallLabel(m.id).toLowerCase() + ", " + lastActivity(m.id).toLowerCase();
+
+    var docsHtml = '<section aria-label="Documents"><h3>Documents</h3>';
+    if (!names.length) {
+      docsHtml += '<p class="muted">No documents filed on this matter yet.</p>';
+    }
+    names.forEach(function (name) {
+      var text = docs[name] || "";
+      var excerpt = text.length > 420 ? text.slice(0, 420) + "…" : text;
+      docsHtml += '<div class="doc"><button type="button" aria-expanded="false">'
+        + '<span class="doc-name">' + esc(name) + '</span>'
+        + '<span class="doc-words">' + esc(words(text)) + "</span></button>"
+        + '<div class="doc-excerpt">' + esc(excerpt) + "</div></div>";
+    });
+    docsHtml += "</section>";
+
+    var policy = policyFor(m.practice);
+    var polHtml = '<section aria-label="Practice policy"><h3>Practice policy: '
+      + esc(practiceLabel(m.practice))
+      + (policyIsLive ? "" : '<span class="tag">Fixtures copy</span>') + "</h3>";
+    if (!policy) {
+      polHtml += '<p class="muted">No policy published for this practice area yet.</p>';
+    } else {
+      polHtml += '<div class="policy-group"><p>May compound</p><ul class="chips may">'
+        + (policy.may_compound || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("")
+        + "</ul></div>"
+        + '<div class="policy-group"><p>Never compounds</p><ul class="chips never">'
+        + (policy.never_compounds || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("")
+        + "</ul></div>";
+    }
+    polHtml += "</section>";
+
+    document.getElementById("drawer-body").innerHTML = docsHtml + polHtml;
+    document.getElementById("drawer-foot").innerHTML =
+      '<a class="btn-primary" href="/demo/?matter=' + encodeURIComponent(m.id) + '">Open in Review</a>';
+
+    Array.prototype.forEach.call(
+      document.querySelectorAll("#drawer-body .doc > button"),
+      function (btn) {
+        btn.addEventListener("click", function () {
+          var box = btn.parentElement;
+          var open = box.classList.toggle("open");
+          btn.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+      }
+    );
+  }
+
+  var lastFocus = null;
+  function openDrawer(id) {
+    var m = mattersById[id];
+    if (!m) return;
+    lastFocus = document.activeElement;
+    renderDrawer(m);
+    Array.prototype.forEach.call(
+      document.querySelectorAll('#matters-body tr[data-id]'),
+      function (row) { row.setAttribute("aria-selected", row.getAttribute("data-id") === id ? "true" : "false"); }
+    );
+    var drawer = document.getElementById("drawer");
+    drawer.hidden = false;
+    requestAnimationFrame(function () {
+      drawer.classList.add("open");
+      document.getElementById("scrim").classList.add("open");
+    });
+    document.getElementById("drawer-close").focus();
+  }
+  function closeDrawer() {
+    var drawer = document.getElementById("drawer");
+    drawer.classList.remove("open");
+    document.getElementById("scrim").classList.remove("open");
+    Array.prototype.forEach.call(
+      document.querySelectorAll('#matters-body tr[data-id]'),
+      function (row) { row.setAttribute("aria-selected", "false"); }
+    );
+    window.setTimeout(function () { drawer.hidden = true; }, 160);
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  function checkWall() {
+    var el = document.getElementById("wallcheck");
+    el.textContent = "Checking the wall between chen and delmarva…";
+    fetch("/demo/api/wall?matter=chen&target=delmarva", { method: "POST" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (res) {
+        var ok = res.passed === res.total;
+        el.innerHTML = "Live wall check, chen × delmarva: "
+          + '<span class="' + (ok ? "ok" : "bad") + '">' + res.passed + " of " + res.total
+          + " checks hold</span>"
+          + (res.replayed ? '<span class="tag">Replayed</span>' : "");
+      })
+      .catch(function () {
+        el.innerHTML = '<span class="muted">Live wall check unavailable; statuses below are the filed wall grants.</span>';
+      });
+  }
+
+  function load() {
+    var mattersP = fetch("/demo/api/matters").then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+    var auditP = fetch("/demo/api/audit?limit=100").then(function (r) {
+      return r.ok ? r.json() : [];
+    }).catch(function () { return []; });
+    var policyP = fetch("/demo/api/policy").then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+
+    policyP.then(function (p) { livePolicy = p; policyIsLive = true; }).catch(function () {
+      livePolicy = null; policyIsLive = false;
+    }).then(function () {
+      return Promise.all([mattersP, auditP]);
+    }).then(function (parts) {
+      var list = parts[0] || [];
+      var audit = parts[1] || [];
+      list.sort(function (a, b) { return a.client.localeCompare(b.client); });
+      list.forEach(function (m) { mattersById[m.id] = m; });
+      audit.forEach(function (ev) {
+        var mid = ev.matter || ev.matter_id;
+        if (mid && !auditByMatter[mid]) {
+          auditByMatter[mid] = ev.summary || ev.action || ev.type || "Recorded activity";
+        }
+      });
+      renderTable(list);
+      checkWall();
+    }).catch(function (err) {
+      document.getElementById("matters-body").innerHTML =
+        '<tr><td colspan="5" class="error-line">Could not load matters from the API (' + esc(err.message)
+        + "). Is the server running?</td></tr>";
+      document.getElementById("summary").textContent = "Matters unavailable.";
+    });
+  }
+
+  document.getElementById("matters-body").addEventListener("click", function (e) {
+    var row = e.target.closest("tr[data-id]");
+    if (row) openDrawer(row.getAttribute("data-id"));
+  });
+  document.getElementById("matters-body").addEventListener("keydown", function (e) {
+    var row = e.target.closest("tr[data-id]");
+    if (row && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      openDrawer(row.getAttribute("data-id"));
+    }
+  });
+  document.getElementById("matter-switch").addEventListener("change", function (e) {
+    if (e.target.value) openDrawer(e.target.value);
+    e.target.value = "";
+  });
+  document.getElementById("drawer-close").addEventListener("click", closeDrawer);
+  document.getElementById("scrim").addEventListener("click", closeDrawer);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !document.getElementById("drawer").hidden) closeDrawer();
+  });
+
+  var toggle = document.getElementById("theme-toggle");
+  function setTheme(mode, persist) {
+    if (mode === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+      toggle.textContent = "Light mode";
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      toggle.textContent = "Dark mode";
+    }
+    if (persist) {
+      try { window.localStorage.setItem("matters-theme", mode); } catch (e) { /* ignore */ }
+    }
+  }
+  /* Light is the default and the demo mode; a stored choice wins. */
+  var storedTheme = null;
+  try { storedTheme = window.localStorage.getItem("matters-theme"); } catch (e) { /* ignore */ }
+  setTheme(storedTheme === "dark" ? "dark" : "light", false);
+  toggle.addEventListener("click", function () {
+    setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark", true);
+  });
+
+  load();
+  /* Deep link: ?matter=<id> opens that matter's drawer on load. */
+  try {
+    var initial = new URLSearchParams(window.location.search).get("matter");
+    if (initial) {
+      var tries = 0;
+      var timer = window.setInterval(function () {
+        tries += 1;
+        if (mattersById[initial] || tries > 40) {
+          window.clearInterval(timer);
+          if (mattersById[initial]) openDrawer(initial);
+        }
+      }, 250);
+    }
+  } catch (e) { /* ignore */ }
+})();
+</script>
+</body>
+</html>
