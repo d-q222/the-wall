@@ -21,7 +21,7 @@
     { id: "policy", label: "Policy", href: "/demo/policy.html", icon: "M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6zM9 12l2 2 4-4" },
     { id: "evaluation", label: "Evaluation", href: "/scoreboard/", icon: "M4 20V10M10 20V4M16 20v-7M22 20H2" },
     { id: "audit", label: "Audit log", href: "/demo/audit.html", icon: "M5 3h14v18H5zM9 8h6M9 12h6M9 16h4" },
-    { id: "stack", label: "Built on", href: "/demo/stack.html", icon: "M4 17l8 4 8-4M4 12l8 4 8-4M12 3l8 4-8 4-8-4z" }
+    { id: "stack", label: "Who helped", href: "/demo/stack.html", icon: "M4 17l8 4 8-4M4 12l8 4 8-4M12 3l8 4-8 4-8-4z" }
   ];
   var PRESENT = { label: "Present", href: "/demo/present.html" };
   var FIRM = "Okafor & Lind Immigration";
