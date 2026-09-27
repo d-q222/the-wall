@@ -38,7 +38,7 @@ uv run python walls/attack.py
 
 ## The numbers
 
-Headline is the **hard** held-out set (`judge_eval_hard.jsonl`, n=200: 102 paraphrased leaks with synonyms never seen in training, 98 clean drafts) — the set where naive pattern matching is known to score 0/102. The **independent** set (n=80, written by teammates who never opened the training data, across formats/paraphrase/adversarial/immigration cases) is the number to trust most. All figures are read live from `results/results.json`; blanks are eval sets not yet run.
+Headline is the **hard** held-out set (`judge_eval_hard.jsonl`, n=200: 102 paraphrased leaks with synonyms never seen in training, 98 clean drafts) — the set where naive pattern matching is known to score 0/102. The **independent** set (n=200, written by teammates who never opened the training data, across formats/paraphrase/adversarial/immigration cases) is the number to trust most. All figures are read live from `results/results.json`; blanks are eval sets not yet run.
 
 | Detector | Eval set | Leaks caught | False alarms | n |
 |---|---|---|---|---|
@@ -47,11 +47,11 @@ Headline is the **hard** held-out set (`judge_eval_hard.jsonl`, n=200: 102 parap
 | Prompt judge (frontier, no tuning) | hard | 59/102 | 7/98 | 200 |
 | Base Qwen (no tuning) | hard | 39/102 | 5/98 | 200 |
 | **River-tuned judge** | hard | **102/102** | **0/98** | 200 |
-| Regex fingerprint | independent (written by teammates blind to training data, most trusted) | 7/40 | 0/40 | 80 |
-| Carryover (6-gram) | independent | 3/40 | 0/40 | 80 |
-| Base Qwen (no tuning) | independent | 38/40 | 2/40 | 80 |
-| Prompt judge (frontier, no tuning) | independent | 40/40 | 3/40 | 80 |
-| **River-tuned judge** | independent | **40/40** | 6/40 | 80 |
+| Regex fingerprint | independent (written by teammates blind to training data, most trusted) | 38/100 | 1/100 | 200 |
+| Carryover (6-gram) | independent | 5/100 | 0/100 | 200 |
+| Base Qwen (no tuning) | independent | 97/100 | 2/100 | 200 |
+| Prompt judge (frontier, no tuning) | independent | 99/100 | 3/100 | 200 |
+| **River-tuned judge** | independent | **100/100** | 12/100 | 200 |
 | Regex fingerprint | `o1_demo` (self-written, never the headline) | 5/20 | 0/20 | 40 |
 | Carryover (6-gram) | `o1_demo` (self-written, never the headline) | 5/20 | 0/20 | 40 |
 | Regex / carryover | standard (`judge_eval.jsonl`, sanity check only) | — | — | — |
