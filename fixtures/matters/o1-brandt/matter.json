@@ -1,0 +1,18 @@
+{
+  "id": "o1-brandt",
+  "client": "Cryoline Quantum Systems, Inc.",
+  "practice": "immigration",
+  "facts": {
+    "names": ["Dr. Elias Brandt", "Dr. Farah Siddiqui-Okafor", "Piotr Nowakowski", "Naomi Castellanos-Reyes"],
+    "orgs": ["Cryoline Quantum Systems, Inc.", "Nordic Quantum Consortium", "Ferrostack Labs", "Quantum Systems Journal"],
+    "amounts": ["$245,000", "$6,800,000"],
+    "distinctive": [
+      "built the first error-corrected qubit array to hold coherence past the consortium's fault-tolerance threshold",
+      "the only engineer to receive the Lindqvist Hardware Medal twice",
+      "holds the consortium record for the longest continuous dilution-fridge run",
+      "A151-208-744",
+      "IOE0912345728",
+      "KR4028176"
+    ]
+  }
+}
