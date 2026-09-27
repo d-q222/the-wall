@@ -35,6 +35,10 @@ flowchart TD
 | Shared contract (request/response shapes) | `wall/contract.py` |
 | HTTP surface wiring every route above | `wall/server.py` |
 
+QM adds a room per matter on top of this path, with admin-gated promotion of a scrubbed skill from
+one room to the whole org, and an optional adapter (`qm/proxy.py`) that lets QM's own screening
+hook call the judge directly. Demo steps and what's verified: [`qm/README.md`](../qm/README.md).
+
 ## De-identification pipeline (O-1 demo)
 
 The O-1 path runs the same guard-then-scrub idea one layer earlier: it strips identifiers out of a
@@ -59,7 +63,7 @@ flowchart TD
 | Immigration practice policy (may/never compound) | `fixtures/policy.json` → `"immigration"` |
 | Judge: `/judge` runs the prompt frontier judge (`claude-sonnet-5` via the `anthropic` SDK) live; `evals/run_judges.py` also samples base Qwen and the River-tuned LoRA checkpoint off River, recording all three to `results/results.json` | `wall/judge.py`, `river/`, `evals/run_judges.py` |
 | O-1-specific eval set (self-written, never the headline) | `evals/` (set name `o1_demo` in `results/results.json`) |
-| Web demo: de-identify workspace, wall + compounding pages | `demo/`, `wall/walldemo.py`, `wall/compound.py` — ownership in `docs/CONTRACT.md` § "Web demo" |
+| Web demo: de-identify ("Review") workspace + shared shell, wall + compounding pages | `demo/index.html`, `demo/assets/`, `wall/walldemo.py`, `wall/compound.py` — ownership in `docs/CONTRACT.md` § "Web demo" |
 | Scoreboard (reads `results/results.json` only) | `scoreboard/`, `wall/results.py` |
 
 The contract for every shape above — `CheckRequest`/`CheckResponse`, `ScrubRequest`/`ScrubResponse`,

@@ -103,6 +103,36 @@ split name, paraphrased description.
 
 Net: exact copy-paste of a name, org, or a round dollar amount is well
 covered. Anything a person (or an LLM under injection) rephrases,
-abbreviates non-trivially, or splits up evades every layer here. That gap is
-exactly what the LLM judge (FR-7) exists to close -- see `results.json` for
-its held-out numbers, which are the real headline, not this table.
+abbreviates non-trivially, or splits up evades every deterministic layer
+here. That gap is exactly what the LLM judge (FR-7) exists to close.
+
+### 4th layer: the LLM judge (`wall.judge.judge`, live claude-sonnet-5)
+
+Added once `wall/judge.py` landed on main. Called with chen's facts as
+CURRENT and every other fixture matter's facts as PROTECTED, on the same 10
+drafts, plus 3 **clean controls** (chen-only drafts: chen's own facts, a
+generic scheduling line, and a deliberate near-miss that shares surface words
+with delmarva -- "storage unit near Salisbury" -- but no delmarva fact).
+Without controls, a judge that flags everything would look perfect.
+
+Two consecutive live runs, same inputs:
+
+| run | leak drafts caught (n=10) | missed | false alarms on controls (n=3) |
+|---|---|---|---|
+| 1 | 10/10 | -- | 1/3 (near-miss flagged) |
+| 2 | 9/10 | initials (M.P.) | 0/3 |
+
+What this shows, honestly:
+- The judge closes most of the deterministic gap: all 5 formats that evade
+  regex+carryover+scrub (worded/spelled amounts, initials, split name,
+  paraphrase) were caught in at least one run, 4 of 5 in both.
+- **It is not deterministic.** The same draft (initials "M.P.") was caught in
+  one run and missed in the next; the near-miss control was a false alarm in
+  one run and clean in the next. A single demo run is one sample, not a rate.
+- **It over-reads surface overlap.** A place name shared with another matter
+  (Salisbury) was enough to flag a clean draft once. At firm scale, shared
+  towns, banks, and courts across matters are normal, so false-alarm rate
+  matters as much as catch rate.
+- n=10 + 3, self-written by the same person who wrote the drafts. The held-out
+  numbers in `/results/results.json` and `/results/ci.json` are the headline;
+  this table only shows *which kinds* of leak each layer can and cannot see.

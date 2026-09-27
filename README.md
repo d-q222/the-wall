@@ -17,18 +17,23 @@ Full request path and de-identification pipeline: [`docs/ARCHITECTURE.md`](docs/
 ```sh
 uv sync
 uv run pytest -q
-uv run uvicorn wall.server:app --port 8788
+scripts/demo.sh
 ```
 
-Then open, on the same origin:
+`scripts/demo.sh` checks GBrain, starts the API on `:8788`, and serves everything from one origin (Ctrl-C stops just the API; GBrain is left running). Then open:
 
 | URL | What |
 |---|---|
-| `http://localhost:8788/demo/` | Web demo (O-1 de-identify workspace + wall/compounding/presenter pages) |
-| `http://localhost:8788/scoreboard/` | Leak-detection scoreboard, reads `results/results.json` live |
-| `http://localhost:8788/results/results.json` | Raw numbers behind the scoreboard |
+| `http://localhost:8788/demo/` | Review workspace — paste an O-1 draft, see it de-identified and judge-verified |
+| `http://localhost:8788/demo/wall.html` | Live wall attack ("Access wall"), two rooms side by side |
+| `http://localhost:8788/demo/compound.html` | A procedure learned on one matter improving another ("Know-how"), facts stripped |
+| `http://localhost:8788/demo/matters.html`, `/demo/policy.html`, `/demo/audit.html`, `/demo/datasets.html` | Firm overview, practice-policy editor, audit log, dataset browser |
+| `http://localhost:8788/demo/training.html` | Attorney-correction → River retrain loop ("Model"; direct link, not yet in the sidebar) |
+| `http://localhost:8788/demo/present.html` | Full-screen guided story mode through every beat |
+| `http://localhost:8788/scoreboard/` | Leak-detection scoreboard ("Evaluation"), reads `results/results.json` live |
+| `http://localhost:8788/results/results.json`, `/results/ci.json` | Raw numbers and 95% Wilson intervals behind the scoreboard |
 
-Live wall attack (own terminal, prints `permission_denied` for a cross-matter read):
+Live wall attack from a terminal (prints `permission_denied` for a cross-matter read):
 
 ```sh
 uv run python walls/attack.py
@@ -36,7 +41,7 @@ uv run python walls/attack.py
 
 ## The numbers
 
-Headline is the **hard** held-out set (`judge_eval_hard.jsonl`, n=200: 102 paraphrased leaks with synonyms never seen in training, 98 clean drafts) — the set where naive pattern matching is known to score 0/102. All numbers below are read live from `results/results.json`; blanks are eval sets not yet run.
+Headline is the **hard** held-out set (`judge_eval_hard.jsonl`, n=200: 102 paraphrased leaks with synonyms never seen in training, 98 clean drafts) — the set where naive pattern matching is known to score 0/102. The **independent** set (n=200, written by teammates who never opened the training data, across formats/paraphrase/adversarial/immigration cases) is the number to trust most. All figures are read live from `results/results.json`; blanks are eval sets not yet run.
 
 | Detector | Eval set | Leaks caught | False alarms | n |
 |---|---|---|---|---|
@@ -45,12 +50,21 @@ Headline is the **hard** held-out set (`judge_eval_hard.jsonl`, n=200: 102 parap
 | Prompt judge (frontier, no tuning) | hard | 59/102 | 7/98 | 200 |
 | Base Qwen (no tuning) | hard | 39/102 | 5/98 | 200 |
 | **River-tuned judge** | hard | **102/102** | **0/98** | 200 |
+| Regex fingerprint | independent (written by teammates blind to training data, most trusted) | 38/100 | 1/100 | 200 |
+| Carryover (6-gram) | independent | 5/100 | 0/100 | 200 |
+| Base Qwen (no tuning) | independent | 97/100 | 2/100 | 200 |
+| Prompt judge (frontier, no tuning) | independent | 99/100 | 3/100 | 200 |
+| **River-tuned judge** | independent | **100/100** | 12/100 | 200 |
 | Regex fingerprint | `o1_demo` (self-written, never the headline) | 5/20 | 0/20 | 40 |
 | Carryover (6-gram) | `o1_demo` (self-written, never the headline) | 5/20 | 0/20 | 40 |
 | Regex / carryover | standard (`judge_eval.jsonl`, sanity check only) | — | — | — |
-| All detectors | blind (hand-written in the room, most trusted) | — | — | — |
+| All detectors | blind (Daniel's hand-written set, `data/blind.jsonl`) | — | — | — |
 
 Cost (n=20, live `claude-sonnet-5` calls): prompt judge runs **$1.34 per 1,000 judgments**, p50 latency 1.6s. River judge cost is not yet measured — no deployment/pricing path confirmed as of this run. Method and caveats: [`evals/cost/README.md`](evals/cost/README.md).
+
+Adversarial testing (self-written, n reported per attack, never the headline): the wall held **6/6** against prompt-injection attempts that tried to talk a live LLM call into crossing matters — refused at the scoped GBrain client regardless of what the model said. The regex + scrub layers alone missed **5/10** hand-written evasion formats (worded amounts, initials, split names, paraphrase) — exactly the gap the judge exists to close. Full breakdown: [`redteam/README.md`](redteam/README.md).
+
+De-identifier bake-off (held-out O-1 beneficiaries never used in training, identifier-occurrence recall, n=123 identifier occurrences across 2,376 word tokens): rules-only `wall.pii` catches 88/123; adding the matter's own fact sheet (the ceiling case) catches 123/123 by construction; untuned Qwen sampled on River catches 117/123, at a higher over-redaction rate than either rules-based option. The River-tuned de-identifier is still training. Method: [`evals/deid/README.md`](evals/deid/README.md).
 
 ## Hosts
 
@@ -59,7 +73,7 @@ Cost (n=20, live `claude-sonnet-5` calls): prompt judge runs **$1.34 per 1,000 j
 | **GBrain** | The wall — one isolated source per matter, a scoped read-only OAuth client per matter agent | `walls/` |
 | **River** | Owned leak judge — base Qwen plus a LoRA checkpoint SFT-tuned on synthetic leak/clean examples with zero real client data | `river/`, `evals/run_judges.py` |
 | **Memorable** | Procedural memory — ingests a scrubbed session trace so a procedure (not a fact) becomes firm know-how | `memorable/` |
-| **QM** | Room-per-matter, scoped skill promotion — scoped out of this build; the wall and web demo carry that story instead | `docs/PRD.md` |
+| **QM** | Room per matter, admin-gated org-wide skill promotion, and a screening-proxy adapter to the judge | `qm/` |
 
 ## What this is not
 

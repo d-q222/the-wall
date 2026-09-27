@@ -10,6 +10,7 @@ Routes (mounted by the coordinator): POST/GET /demo/api/feedback, POST /demo/api
 
 import json
 import os
+import re
 import time
 from pathlib import Path
 from typing import Literal
@@ -20,12 +21,25 @@ from pydantic import BaseModel
 RUNTIME = Path(os.environ.get("WALL_RUNTIME", "/Users/dqi26/the-wall/.runtime"))
 FEEDBACK = RUNTIME / "feedback.jsonl"
 
-SYSTEM = (
-    "You de-identify legal documents for a small law firm. Given the practice area and a "
-    "passage, return JSON {\"spans\": [{\"text\": <exact identifier text>, \"replacement\": "
-    "<typed placeholder like [PERSON]>}]} listing every identifier that must be replaced "
-    "under that practice's policy, and nothing that may stay."
-)
+# Same row schema as k3-river-deid (wall/river_deid.py): system prompt from the practice
+# policy, user = the passage, assistant = {"spans": [{text, kind, replacement}]}.
+try:
+    from wall.river_deid import KINDS, system_prompt
+except ImportError:  # k3 not merged yet; mirror its kinds and a minimal prompt
+    KINDS = {"name": "[PERSON]", "org": "[ORG]", "amount": "[AMOUNT]", "award": "[AWARD]",
+             "year": "[YEAR]", "publication": "[PUBLICATION]", "id_number": "[ID_NUMBER]",
+             "location": "[LOCATION]", "quasi_identifier": "[QUASI_IDENTIFIER]"}
+
+    def system_prompt(practice: str = "immigration") -> str:
+        kinds = "\n".join(f"- {k} -> {v}" for k, v in KINDS.items())
+        return (
+            f"You de-identify passages from a law firm's {practice} matters.\n"
+            f"Kinds and replacements:\n{kinds}\n\n"
+            'Reply with JSON only: {"spans":[{"text":"<exact substring>","kind":"<kind>",'
+            '"replacement":"<replacement>"}]}. If nothing must be removed reply {"spans":[]}.'
+        )
+
+KIND_OF = {v: k for k, v in KINDS.items()}
 
 
 class Correction(BaseModel):
@@ -34,7 +48,8 @@ class Correction(BaseModel):
     passage: str
     kind: Literal["missed", "wrong"]
     span_text: str
-    replacement: str | None = None  # placeholder the missed span should get, e.g. "[PERSON]"
+    span_kind: str | None = None  # k3 kind for a missed span, e.g. "name"
+    replacement: str | None = None  # or its placeholder, e.g. "[PERSON]"
     note: str | None = None
     # The model's spans on this passage when the attorney reviewed it, if the UI has them;
     # lets the training target be the full corrected span list rather than one span.
@@ -58,22 +73,29 @@ def load() -> list[dict]:
     return [json.loads(line) for line in FEEDBACK.read_text().splitlines() if line.strip()]
 
 
+def _span(text: str, kind: str | None, replacement: str | None) -> dict:
+    # Placeholders may be numbered ("[PERSON_2]"); map back to the base kind.
+    base = re.sub(r"_\d+\]$", "]", replacement or "")
+    kind = kind if kind in KINDS else KIND_OF.get(replacement or "", KIND_OF.get(base, "quasi_identifier"))
+    return {"text": text, "kind": kind, "replacement": KINDS[kind]}
+
+
 def _target_spans(c: dict) -> list[dict]:
     spans = [
-        {"text": s["text"], "replacement": s.get("replacement") or "[REDACTED]"}
+        _span(s["text"], s.get("kind"), s.get("replacement"))
         for s in (c.get("spans") or [])
         if s.get("text") and s["text"] != c["span_text"]
     ]
     if c["kind"] == "missed":
-        spans.append({"text": c["span_text"], "replacement": c.get("replacement") or "[REDACTED]"})
+        spans.append(_span(c["span_text"], c.get("span_kind"), c.get("replacement")))
     return spans
 
 
 def to_training_example(c: dict) -> dict:
     return {
         "messages": [
-            {"role": "system", "content": SYSTEM},
-            {"role": "user", "content": f"Practice: {c['practice']}\n\nPassage:\n{c['passage']}"},
+            {"role": "system", "content": system_prompt(c["practice"])},
+            {"role": "user", "content": c["passage"]},
             {"role": "assistant", "content": json.dumps({"spans": _target_spans(c)})},
         ],
         "source": "attorney_feedback",

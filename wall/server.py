@@ -89,6 +89,7 @@ def blind_summary() -> dict:
 _demo = Path(os.environ.get("WALL_DEMO_DIR", Path(__file__).resolve().parent.parent / "demo"))
 _demo.mkdir(exist_ok=True)
 app.mount("/demo", StaticFiles(directory=_demo, html=True), name="demo")
-app.mount("/scoreboard", StaticFiles(directory=Path(__file__).resolve().parent.parent / "scoreboard", html=True), name="scoreboard")
+_scoreboard = Path(os.environ.get("WALL_SCOREBOARD_DIR", Path(__file__).resolve().parent.parent / "scoreboard"))
+app.mount("/scoreboard", StaticFiles(directory=_scoreboard, html=True), name="scoreboard")
 results.RESULTS.parent.mkdir(parents=True, exist_ok=True)
 app.mount("/results", StaticFiles(directory=results.RESULTS.parent), name="results")
