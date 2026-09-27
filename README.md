@@ -26,7 +26,7 @@ scripts/demo.sh
 |---|---|
 | `http://localhost:8788/demo/wall.html` | Live wall attack, two rooms side by side |
 | `http://localhost:8788/demo/compound.html` | A procedure learned on one matter improving another, facts stripped |
-| `http://localhost:8788/demo/policy.html`, `/demo/audit.html`, `/demo/training.html` | Practice-policy editor, audit log, attorney-correction/retrain loop |
+| `http://localhost:8788/demo/policy.html`, `/demo/audit.html`, `/demo/training.html`, `/demo/datasets.html` | Practice-policy editor, audit log, attorney-correction/retrain loop, dataset browser |
 | `http://localhost:8788/scoreboard/` | Leak-detection scoreboard, reads `results/results.json` live |
 | `http://localhost:8788/results/results.json` | Raw numbers behind the scoreboard |
 
