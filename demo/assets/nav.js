@@ -227,6 +227,11 @@
     if (!main.id) main.id = "main-content";
     if (!main.hasAttribute("tabindex")) main.setAttribute("tabindex", "-1");
     var skip = el("a", { class: "skip-link", href: "#" + main.id, text: "Skip to content" });
+    // Hidden until keyboard focus, even if theme.css is stale or late: inline styles, not the stylesheet.
+    var hide = "position:absolute;left:12px;top:-60px;z-index:60;";
+    skip.setAttribute("style", hide);
+    skip.addEventListener("focus", function () { skip.setAttribute("style", hide + "top:12px;"); });
+    skip.addEventListener("blur", function () { skip.setAttribute("style", hide); });
     var topbar = buildTopbar(cur);
     var extra = main.querySelector("[data-topbar-extra]");
     if (extra) topbar.querySelector(".topbar-right").insertBefore(extra, topbar.querySelector(".topbar-right").firstChild);

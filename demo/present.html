@@ -136,6 +136,7 @@ addEventListener('keydown', e => {
   if (['ArrowLeft', 'PageUp'].includes(e.key)) show(i - 1);
 });
 show(i, true);
+addEventListener('hashchange', () => { const n = parseInt(location.hash.slice(1), 10) || 0; if (n !== i) show(n); });
 
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 

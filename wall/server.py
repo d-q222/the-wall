@@ -21,6 +21,15 @@ from wall.contract import (
 )
 
 app = FastAPI(title="Ethical Wall Brain")
+
+
+@app.middleware("http")
+async def no_stale_assets(request, call_next):
+    """Browsers must revalidate demo pages, CSS and JS so old and new files never mix."""
+    response = await call_next(request)
+    if request.url.path.startswith(("/demo", "/scoreboard", "/results")):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
 app.include_router(feedback.router)  # K2: /demo/api/feedback, /demo/api/retrain
 app.include_router(sponsors.router)  # S2: Built-on screen live proofs
 
