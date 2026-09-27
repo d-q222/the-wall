@@ -146,16 +146,23 @@
   function mount() {
     if (document.querySelector(".shell")) return;
     var cur = currentScreen();
-    var main = document.querySelector("main") || el("main", { class: "app-main" });
+    var main = document.querySelector("main");
+    if (!main) {
+      // no <main>: adopt the page's content (everything but scripts) as the content area
+      main = el("main", { class: "app-main" });
+      Array.prototype.slice.call(document.body.childNodes).forEach(function (n) {
+        if (n.nodeName !== "SCRIPT") main.appendChild(n);
+      });
+      document.body.insertBefore(main, document.body.firstChild);
+    }
     if (!main.classList.contains("app-main")) main.classList.add("app-main");
     var topbar = buildTopbar(cur);
     var extra = main.querySelector("[data-topbar-extra]");
     if (extra) topbar.querySelector(".topbar-right").insertBefore(extra, topbar.querySelector(".topbar-right").firstChild);
     var body = el("div", { class: "shell-body" }, [topbar]);
     var shell = el("div", { class: "shell" }, [buildSidebar(cur), body]);
-    if (main.parentNode) main.parentNode.insertBefore(shell, main);
+    main.parentNode.insertBefore(shell, main);
     body.appendChild(main);
-    if (!document.body.contains(shell)) document.body.insertBefore(shell, document.body.firstChild);
   }
 
   window.WallShell = {
