@@ -9,3 +9,4 @@ data/*
 .runtime/
 *.token
 .env
+results/results.json

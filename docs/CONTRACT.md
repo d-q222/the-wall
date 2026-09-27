@@ -10,7 +10,7 @@ No agent invents an endpoint. Contract changes go through the coordinator and la
 | POST /check | matter_id, draft | verdict, hits[] of {detector, matter, evidence} | `wall/guard.py` (B1) |
 | POST /scrub | matter_id, practice, text | text, removed | `wall/scrub.py` (B3) |
 | POST /judge | current, protected[], draft | verdict, matter, evidence | `wall/judge.py` (B2) |
-| results/results.json | `wall.results.record()` | {detector: {eval_set: {caught, leaks, false_alarms, clean, n}}} | eval runners |
+| results/results.json (shared: `$WALL_RESULTS`, default `~/the-wall/results/results.json`, gitignored) | `wall.results.record()` | {detector: {eval_set: {caught, leaks, false_alarms, clean, n}}} | eval runners |
 
 Run the API: `uv run uvicorn wall.server:app --port 8787`
 
@@ -36,9 +36,11 @@ Need a dependency? Add it with `uv add` and say so in your handoff; the coordina
 
 ## Cross-branch handoffs
 
-- **A1 → A2**: A1 writes one credentials file per matter at `.runtime/clients/<matter_id>.json`
-  (`{"url": ..., "client_id": ..., "client_secret": ..., "source_id": ...}`) and documents recall
-  in `walls/README.md`. A2 reads only that file. Agents never run as local trusted callers.
+- **GBrain (live)**: server `http://localhost:3131/mcp`; one credentials file per matter at
+  `/Users/dqi26/.superset/projects/The-Wall/.runtime/clients/<matter_id>.json`
+  (`{"url", "client_id", "client_secret", "source_id"}`). The GBrain server is owned by a separate
+  session: never run gbrain CLI commands or restart it; ask the coordinator. Agents never run as local
+  trusted callers.
 - **A2 → B1**: A2 calls `POST /check` over HTTP; until B1 lands it tolerates a 500.
 - **B3 → B1**: scrub acceptance is "checks clean against every other matter" — B3 tests with its own
   fact list from `wall.matters`; the /check round-trip is verified at integration.

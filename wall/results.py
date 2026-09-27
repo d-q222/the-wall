@@ -2,11 +2,13 @@
 
 import fcntl
 import json
+import os
 from pathlib import Path
 
 from wall.contract import EvalResult
 
-RESULTS = Path(__file__).resolve().parent.parent / "results" / "results.json"
+# One shared file across worktrees so parallel eval runners write to the same scoreboard.
+RESULTS = Path(os.environ.get("WALL_RESULTS", Path.home() / "the-wall" / "results" / "results.json"))
 
 
 def record(detector: str, eval_set: str, result: EvalResult) -> None:
