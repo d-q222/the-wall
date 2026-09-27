@@ -66,6 +66,12 @@ The contract for every shape above — `CheckRequest`/`CheckResponse`, `ScrubReq
 `JudgeRequest`/`JudgeResponse`, `DeidentifyRequest`/`DeidentifyResponse`, `EvalResult` — is frozen in
 [`wall/contract.py`](../wall/contract.py); no lane changes it without the coordinator.
 
+`wall/deid.py` calls the judge module in-process (not over HTTP) and catches its
+`NotImplementedError` until `wall/judge.py` is wired, so `DeidentifyResponse.residual` and
+`.judge` are `null` today and populate automatically once the judge lands — no change needed on
+the caller side. Detection and replacement (`text`, `spans`, `removed`) are live now: verified
+against `POST /deidentify` on 2026-09-27.
+
 ## Two rules that shape both diagrams
 
 - **The guard subtracts the current matter's own facts first.** A name or amount that also belongs
