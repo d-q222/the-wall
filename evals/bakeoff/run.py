@@ -160,11 +160,13 @@ def main(skip: set[str]) -> None:
     max_over = float(os.environ.get("WALL_DEID_MAX_OVERREDACT", "0.10"))
     chosen = choose(results, max_over)
     out = {
-        "detectors": UNIONS.get(chosen, [chosen]),
+        # facts stays on as a floor: free, and 0 over-redacted tokens in every condition.
+        "detectors": list(dict.fromkeys(["facts", *UNIONS.get(chosen, [chosen])])),
         "chosen": chosen,
         "chosen_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "rule": f"max identifier recall s.t. over-redaction <= {max_over}; tie-break quasi recall, then latency; "
-                "scored with the facts detector blind to the paragraph's own fact sheet",
+                "scored with the facts detector blind to the paragraph's own fact sheet; "
+                "facts is always kept as a zero-cost, zero-over-redaction floor",
         "eval": f"k3 held-out {','.join(HELD_OUT)} ({len(rows)} paragraphs)",
         "river_tuned_checkpoint": tuned_cache_name() if "river_tuned" in spans else None,
         "metrics": results,
