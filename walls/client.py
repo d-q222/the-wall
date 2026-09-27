@@ -4,10 +4,35 @@ Credentials: /Users/dqi26/.superset/projects/The-Wall/.runtime/clients/<matter>.
 ({"url", "client_id", "client_secret", "source_id"}). Secrets are never printed.
 """
 import json
+import time
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 CLIENTS_DIR = "/Users/dqi26/.superset/projects/The-Wall/.runtime/clients"
+
+# GBrain rate-limits /token (HTTP 429 once many agents connect), so every process on
+# this machine shares one token per matter until shortly before its expiry.
+TOKEN_CACHE = Path.home() / "the-wall" / ".runtime" / "gbrain-tokens"
+
+
+def _token(matter: str, token_url: str, body: bytes) -> str:
+    path = TOKEN_CACHE / f"{matter}.json"
+    try:
+        cached = json.loads(path.read_text())
+        if cached["expires_at"] > time.time():
+            return cached["access_token"]
+    except (OSError, ValueError, KeyError):
+        pass
+    with urllib.request.urlopen(urllib.request.Request(token_url, body)) as r:
+        tok = json.load(r)
+    TOKEN_CACHE.mkdir(parents=True, exist_ok=True, mode=0o700)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps({"access_token": tok["access_token"],
+                               "expires_at": time.time() + tok.get("expires_in", 3600) - 60}))
+    tmp.chmod(0o600)
+    tmp.replace(path)
+    return tok["access_token"]
 
 
 class Client:
@@ -22,9 +47,7 @@ class Client:
             "client_secret": creds["client_secret"],
             "scope": "read",
         }).encode()
-        token_url = self.url.rsplit("/mcp", 1)[0] + "/token"
-        with urllib.request.urlopen(urllib.request.Request(token_url, body)) as r:
-            self._token = json.load(r)["access_token"]
+        self._token = _token(matter, self.url.rsplit("/mcp", 1)[0] + "/token", body)
         self._session = None
         self._n = 0
         self._rpc("initialize", {"protocolVersion": "2025-06-18", "capabilities": {},
