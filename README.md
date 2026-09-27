@@ -59,6 +59,8 @@ Headline is the **hard** held-out set (`judge_eval_hard.jsonl`, n=200: 102 parap
 
 Cost (n=20, live `claude-sonnet-5` calls): prompt judge runs **$1.34 per 1,000 judgments**, p50 latency 1.6s. River judge cost is not yet measured — no deployment/pricing path confirmed as of this run. Method and caveats: [`evals/cost/README.md`](evals/cost/README.md).
 
+Adversarial testing (self-written, n reported per attack, never the headline): the wall held **6/6** against prompt-injection attempts that tried to talk a live LLM call into crossing matters — refused at the scoped GBrain client regardless of what the model said. The regex + scrub layers alone missed **5/10** hand-written evasion formats (worded amounts, initials, split names, paraphrase) — exactly the gap the judge exists to close. Full breakdown: [`redteam/README.md`](redteam/README.md).
+
 ## Hosts
 
 | Host | Job in this product | Where |
@@ -66,7 +68,7 @@ Cost (n=20, live `claude-sonnet-5` calls): prompt judge runs **$1.34 per 1,000 j
 | **GBrain** | The wall — one isolated source per matter, a scoped read-only OAuth client per matter agent | `walls/` |
 | **River** | Owned leak judge — base Qwen plus a LoRA checkpoint SFT-tuned on synthetic leak/clean examples with zero real client data | `river/`, `evals/run_judges.py` |
 | **Memorable** | Procedural memory — ingests a scrubbed session trace so a procedure (not a fact) becomes firm know-how | `memorable/` |
-| **QM** | Room-per-matter, scoped skill promotion — scoped out of this build; the wall and web demo carry that story instead | `docs/PRD.md` |
+| **QM** | Room per matter, admin-gated org-wide skill promotion, and a screening-proxy adapter to the judge | `qm/` |
 
 ## What this is not
 
