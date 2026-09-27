@@ -1,0 +1,152 @@
+{
+  "regex": {
+    "standard": {
+      "caught": 79,
+      "leaks": 97,
+      "false_alarms": 1,
+      "clean": 103,
+      "n": 200
+    },
+    "hard": {
+      "caught": 0,
+      "leaks": 102,
+      "false_alarms": 98,
+      "clean": 98,
+      "n": 200
+    },
+    "demo": {
+      "caught": 8,
+      "leaks": 12,
+      "false_alarms": 2,
+      "clean": 8,
+      "n": 20
+    },
+    "blind": {
+      "caught": 3,
+      "leaks": 15,
+      "false_alarms": 2,
+      "clean": 15,
+      "n": 30
+    }
+  },
+  "carryover": {
+    "standard": {
+      "caught": 75,
+      "leaks": 97,
+      "false_alarms": 3,
+      "clean": 103,
+      "n": 200
+    },
+    "hard": {
+      "caught": 2,
+      "leaks": 102,
+      "false_alarms": 96,
+      "clean": 98,
+      "n": 200
+    },
+    "demo": {
+      "caught": 9,
+      "leaks": 12,
+      "false_alarms": 1,
+      "clean": 8,
+      "n": 20
+    },
+    "blind": {
+      "caught": 4,
+      "leaks": 15,
+      "false_alarms": 1,
+      "clean": 15,
+      "n": 30
+    }
+  },
+  "prompt_judge": {
+    "standard": {
+      "caught": 84,
+      "leaks": 97,
+      "false_alarms": 5,
+      "clean": 103,
+      "n": 200
+    },
+    "hard": {
+      "caught": 42,
+      "leaks": 102,
+      "false_alarms": 8,
+      "clean": 98,
+      "n": 200
+    },
+    "demo": {
+      "caught": 11,
+      "leaks": 12,
+      "false_alarms": 1,
+      "clean": 8,
+      "n": 20
+    },
+    "blind": {
+      "caught": 9,
+      "leaks": 15,
+      "false_alarms": 1,
+      "clean": 15,
+      "n": 30
+    }
+  },
+  "base_judge": {
+    "standard": {
+      "caught": 81,
+      "leaks": 97,
+      "false_alarms": 4,
+      "clean": 103,
+      "n": 200
+    },
+    "hard": {
+      "caught": 35,
+      "leaks": 102,
+      "false_alarms": 7,
+      "clean": 98,
+      "n": 200
+    },
+    "demo": {
+      "caught": 10,
+      "leaks": 12,
+      "false_alarms": 2,
+      "clean": 8,
+      "n": 20
+    },
+    "blind": {
+      "caught": 8,
+      "leaks": 15,
+      "false_alarms": 2,
+      "clean": 15,
+      "n": 30
+    }
+  },
+  "river_judge": {
+    "standard": {
+      "caught": 86,
+      "leaks": 97,
+      "false_alarms": 3,
+      "clean": 103,
+      "n": 200
+    },
+    "hard": {
+      "caught": 58,
+      "leaks": 102,
+      "false_alarms": 5,
+      "clean": 98,
+      "n": 200
+    },
+    "demo": {
+      "caught": 12,
+      "leaks": 12,
+      "false_alarms": 0,
+      "clean": 8,
+      "n": 20
+    },
+    "blind": {
+      "caught": 11,
+      "leaks": 15,
+      "false_alarms": 1,
+      "clean": 15,
+      "n": 30
+    }
+  }
+}
