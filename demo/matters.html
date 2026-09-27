@@ -3,417 +3,170 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matters — Okafor &amp; Lind Immigration</title>
-<meta name="description" content="Firm overview: every matter, its documents, wall status, and the practice policy that applies.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
-<!--
-  g4-matters owns this file. Visual language follows docs/DESIGN.md v2 exactly
-  (paper/canvas/ink/form-blue/found/risk/cleared tokens, Public Sans UI +
-  Source Serif 4 document text). The v2 shared shell (demo/assets/nav.js +
-  theme.css) has not landed yet — this page renders the v2 shell inline and
-  will adopt the shared assets when c4 publishes them.
--->
+<title>Matters</title>
+<meta name="description" content="The firm home: every matter, where its petition stands, whether its wall is up, and what needs attention next.">
+<link rel="stylesheet" href="/demo/assets/theme.css">
+<script src="/demo/assets/nav.js" defer></script>
 <style>
-  :root {
-    --paper: #FBFBF9;
-    --canvas: #E6E9ED;
-    --ink: #14213D;
-    --ink-soft: #3D4A6B;
-    --ink-mute: #68748F;
-    --line: #CFD4DE;
-    --line-soft: #DEE2EA;
-    --form-blue: #1F4E9E;
-    --form-blue-dark: #173C7A;
-    --found: #FFE58A;
-    --risk: #C2410C;
-    --risk-bg: #FBE9DE;
-    --cleared: #1E7B4F;
-    --cleared-bg: #DFF0E6;
-    --neutral-bg: #EDEFF3;
-    --sidebar: #14213D;
-    --sidebar-text: #EDF0F6;
-    --sidebar-mute: #9AA3BC;
-    --font-ui: "Public Sans", -apple-system, "Segoe UI", sans-serif;
-    --font-doc: "Source Serif 4", Georgia, "Times New Roman", serif;
-    color-scheme: light;
-  }
-  :root[data-theme="dark"] {
-    --paper: #1B2334;
-    --canvas: #101624;
-    --ink: #E9ECF3;
-    --ink-soft: #B9C1D4;
-    --ink-mute: #8B94AB;
-    --line: #2E3850;
-    --line-soft: #242C42;
-    --form-blue: #7FA6E8;
-    --form-blue-dark: #9DBBEF;
-    --found: #8A7415;
-    --risk: #E8845A;
-    --risk-bg: #3A241A;
-    --cleared: #5FB98C;
-    --cleared-bg: #163527;
-    --neutral-bg: #232B40;
-    --sidebar: #0B1120;
-    --sidebar-text: #E9ECF3;
-    --sidebar-mute: #8B94AB;
-    color-scheme: dark;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: var(--font-ui);
-    font-size: 15px;
-    line-height: 1.5;
-    color: var(--ink);
-    background: var(--canvas);
-  }
-  .app { display: flex; min-height: 100vh; }
+  /* Matters, the firm home. Tokens and components come from theme.css.
+     Layout: an attention block over the matter table, after Plane's home
+     (makeplane/plane apps/web/core/components/home/home-dashboard-widgets.tsx:
+     a stack of widgets, each with a different job). Table header follows Primer
+     DataTable (primer/react packages/react/src/DataTable/Table.module.css), empty and
+     error states follow Primer Blankslate (packages/react/src/Blankslate/Blankslate.tsx),
+     the setup nudge follows Primer Banner (packages/react/src/Banner/Banner.module.css).
+     The one bold element is the next-step block: the petition to open next. */
 
-  /* -- sidebar (v2 app shell) -- */
-  .sidebar {
-    width: 248px;
-    flex: 0 0 248px;
-    background: var(--sidebar);
-    color: var(--sidebar-text);
-    display: flex;
-    flex-direction: column;
-    padding: 1.25rem 0 1rem;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-  }
-  .firm {
-    font-family: var(--font-doc);
-    font-weight: 600;
-    font-size: 17px;
-    line-height: 1.3;
-    padding: 0 1.25rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-  }
-  :root[data-theme="dark"] .firm { border-bottom-color: var(--line); }
-  .firm small {
-    display: block;
-    font-family: var(--font-ui);
-    font-weight: 400;
-    font-size: 12.5px;
-    color: var(--sidebar-mute);
-    margin-top: 0.15rem;
-  }
-  .snav { display: flex; flex-direction: column; padding: 0.75rem 0.6rem; gap: 1px; }
-  .snav a {
-    color: var(--sidebar-text);
-    text-decoration: none;
-    font-size: 14.5px;
-    padding: 0.45rem 0.65rem;
-    border-radius: 4px;
-  }
-  .snav a:hover { background: rgba(255, 255, 255, 0.08); }
-  .snav a[aria-current="page"] { background: rgba(255, 255, 255, 0.14); font-weight: 600; }
-  .sidebar .spacer { flex: 1; }
-  .present-btn {
-    margin: 0 1.25rem;
-    display: block;
-    text-align: center;
-    background: var(--found);
-    color: #14213D;
-    font-weight: 600;
-    font-size: 14.5px;
-    padding: 0.55rem 0;
-    border-radius: 4px;
-    text-decoration: none;
-  }
-  .present-btn:hover { filter: brightness(0.96); }
+  .home { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 16px; margin-bottom: 28px; }
+  .home .panel { display: flex; flex-direction: column; min-width: 0; }
+  .home .panel-head h2 { font-size: var(--fs-15); }
+  .home .panel-head .meta { margin-left: auto; }
 
-  /* -- main column -- */
-  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-  .topbar {
-    background: var(--paper);
-    border-bottom: 1px solid var(--line);
-    padding: 0.6rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+  .next {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 20px; align-items: center;
+    padding: 18px 20px 18px 24px; border-bottom: 1px solid var(--line);
+    box-shadow: inset 4px 0 0 var(--blue);
   }
-  .crumb { font-size: 13.5px; color: var(--ink-mute); }
-  .crumb strong { color: var(--ink); font-weight: 600; }
-  .topbar .grow { flex: 1; }
-  .topbar label { font-size: 13.5px; color: var(--ink-mute); }
-  select, button { font-family: var(--font-ui); font-size: 14px; }
-  select {
-    background: var(--paper);
-    color: var(--ink);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 0.35rem 0.5rem;
-    max-width: 22rem;
-  }
-  .theme-toggle {
-    background: transparent;
-    color: var(--ink-soft);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 0.35rem 0.7rem;
-    cursor: pointer;
-  }
-  .theme-toggle:hover { border-color: var(--form-blue); color: var(--form-blue); }
+  .next .label { font-size: var(--fs-13); color: var(--text-3); display: block; }
+  .next h3 { font-size: var(--fs-21); letter-spacing: -0.01em; }
+  .next p { color: var(--text-2); grid-column: 1; }
+  .next .btn { grid-column: 2; grid-row: 1 / span 2; }
 
-  .content { padding: 1.5rem; max-width: 1100px; width: 100%; margin: 0 auto; }
-  .pagehead h1 {
-    font-family: var(--font-ui);
-    font-weight: 700;
-    font-size: 28px;
-    line-height: 1.2;
-    margin: 0 0 0.25rem;
-  }
-  .pagehead .summary { color: var(--ink-soft); margin: 0 0 0.25rem; font-size: 15px; }
-  .pagehead .summary .n { font-feature-settings: "tnum"; font-weight: 600; color: var(--ink); }
-  .wallcheck {
-    font-size: 13.5px;
-    color: var(--ink-soft);
-    margin: 0 0 1rem;
-  }
-  .wallcheck .ok { color: var(--cleared); font-weight: 600; }
-  .wallcheck .bad { color: var(--risk); font-weight: 600; }
-  .tag {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 0.1rem 0.45rem;
-    border-radius: 4px;
-    background: var(--neutral-bg);
-    color: var(--ink-soft);
-    vertical-align: 1px;
-    margin-left: 0.4rem;
-  }
+  .attn { list-style: none; margin: 0; padding: 0; }
+  .attn li { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px 20px; border-bottom: 1px solid var(--line); }
+  .attn li:last-child { border-bottom: 0; }
+  .attn .dot { width: 8px; height: 8px; border-radius: 50%; margin: 7px 0 0 6px; background: var(--text-3); }
+  .attn .risk .dot { background: var(--risk); }
+  .attn .info .dot { background: var(--blue); }
+  .attn strong { font-weight: 600; }
+  .attn p { color: var(--text-2); font-size: var(--fs-13); margin-top: 2px; }
+  .attn a { font-size: var(--fs-13); font-weight: 600; white-space: nowrap; text-decoration: none; padding-top: 2px; }
+  .attn a:hover { text-decoration: underline; }
 
-  /* -- table panel -- */
-  .panel {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-  }
-  table.matters { width: 100%; border-collapse: collapse; font-size: 14.5px; }
-  table.matters th {
-    text-align: left;
-    font-weight: 600;
-    font-size: 13px;
-    color: var(--ink-mute);
-    padding: 0.6rem 1rem;
-    border-bottom: 1px solid var(--line);
-    white-space: nowrap;
-  }
-  table.matters td {
-    padding: 0.7rem 1rem;
-    border-bottom: 1px solid var(--line-soft);
-    vertical-align: top;
-  }
-  table.matters tbody tr:last-child td { border-bottom: none; }
-  table.matters tbody tr { cursor: pointer; }
-  table.matters tbody tr:hover { background: rgba(31, 78, 158, 0.05); }
-  :root[data-theme="dark"] table.matters tbody tr:hover { background: rgba(127, 166, 232, 0.08); }
-  table.matters tbody tr[aria-selected="true"] { background: rgba(31, 78, 158, 0.09); }
-  table.matters .num { font-feature-settings: "tnum"; }
-  .client-cell strong { display: block; font-weight: 600; }
-  .client-cell .mid { font-size: 12.5px; color: var(--ink-mute); }
-  .badge {
-    display: inline-block;
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 0.15rem 0.55rem;
-    border-radius: 4px;
-    white-space: nowrap;
-  }
-  .badge.walled { background: var(--cleared-bg); color: var(--cleared); }
-  .badge.unwalled { background: var(--neutral-bg); color: var(--ink-soft); }
-  .muted { color: var(--ink-mute); }
-  .error-line { padding: 1.25rem 1rem; color: var(--risk); }
-  .loading-line { padding: 1.25rem 1rem; color: var(--ink-mute); }
+  .stat { padding: 16px 20px; border-bottom: 1px solid var(--line); }
+  .stat:last-child { border-bottom: 0; }
+  .stat .row { display: flex; align-items: baseline; gap: 10px; }
+  .stat .big { font-size: var(--fs-28); font-weight: 700; letter-spacing: -0.01em; line-height: 1.1; }
+  .stat .big.ok { color: var(--cleared); }
+  .stat .big.bad { color: var(--risk); }
+  .stat .big.idle { color: var(--text-3); }
+  .stat .row .meta { margin-left: auto; }
+  .stat p { color: var(--text-2); font-size: var(--fs-13); margin-top: 4px; }
+  .stat .link { display: inline-block; margin-top: 10px; font-size: var(--fs-13); font-weight: 600; text-decoration: none; }
+  .stat .link:hover { text-decoration: underline; }
+  .meter { height: 6px; border-radius: 3px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; margin-top: 10px; }
+  .meter i { display: block; height: 100%; background: var(--cleared); transition: width .4s ease; }
+  .walls { display: flex; gap: 4px; margin-top: 10px; }
+  .walls span { flex: 1; height: 6px; border-radius: 2px; background: var(--line); }
+  .walls span.up { background: var(--cleared); }
 
-  :focus-visible { outline: 2px solid var(--form-blue); outline-offset: 2px; }
-  tbody tr:focus-visible { outline: 2px solid var(--form-blue); outline-offset: -2px; }
+  .tbl-head { margin-bottom: 10px; }
+  .tbl-head h2 { font-size: var(--fs-17); }
+  .tbl-head p { color: var(--text-2); font-size: var(--fs-13); }
+  .table-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); overflow: hidden; }
+  .table td { vertical-align: middle; }
+  .table tbody.group th { background: var(--canvas); color: var(--text-2); font-size: var(--fs-13); font-weight: 600; padding: 8px 12px; border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); }
+  .table tbody.group:first-of-type th { border-top: 0; }
+  .table tbody.group th .meta { font-weight: 400; margin-left: 8px; }
+  .table tr[data-id] { cursor: pointer; }
+  .table tr[data-id]:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--blue); border-radius: 0; }
+  .table tr[aria-selected="true"] td { background: var(--blue-soft); }
+  .client strong { display: block; font-weight: 600; line-height: 1.3; }
+  .client .meta { display: block; }
+  .prog { display: flex; align-items: center; gap: 8px; font-size: var(--fs-13); color: var(--text-2); white-space: nowrap; }
+  .prog .pips { display: inline-flex; gap: 3px; }
+  .prog .pips i { width: 14px; height: 6px; border-radius: 2px; background: var(--line); }
+  .prog .pips i.on { background: var(--cleared); }
+  .prog .pips i.flag { background: var(--risk); }
+  .row-act { text-align: right; white-space: nowrap; width: 1%; }
 
-  /* -- detail drawer -- */
-  .scrim {
-    position: fixed;
-    inset: 0;
-    background: rgba(20, 33, 61, 0.32);
-    opacity: 0;
-    pointer-events: none;
-  }
+  .blank { display: grid; justify-items: center; text-align: center; padding: 48px 24px; }
+  .blank svg { width: 28px; height: 28px; color: var(--text-3); margin-bottom: 8px; }
+  .blank h3 { font-size: var(--fs-17); margin-bottom: 4px; }
+  .blank p { color: var(--text-2); max-width: 46ch; }
+  .blank .btn { margin-top: 16px; }
+
+  .banner { display: flex; align-items: center; gap: 12px; padding: 10px 14px; margin-bottom: 16px; background: var(--blue-soft); border: 1px solid color-mix(in srgb, var(--blue) 30%, transparent); border-radius: var(--r-panel); }
+  .banner .btn { margin-left: auto; }
+
+  .sk-row td { padding: 14px 12px; }
+
+  .scrim { position: fixed; inset: 0; background: rgba(20, 33, 61, 0.32); opacity: 0; pointer-events: none; transition: opacity .16s ease; z-index: 19; }
   .scrim.open { opacity: 1; pointer-events: auto; }
-  .drawer {
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: min(430px, 94vw);
-    height: 100vh;
-    background: var(--paper);
-    border-left: 1px solid var(--line);
-    transform: translateX(100%);
-    display: flex;
-    flex-direction: column;
-    z-index: 20;
-  }
+  .drawer { position: fixed; top: 0; right: 0; width: min(440px, 94vw); height: 100vh; z-index: 20; background: var(--surface); border-left: 1px solid var(--line); transform: translateX(100%); transition: transform .18s ease; display: flex; flex-direction: column; }
   .drawer.open { transform: none; }
-  .drawer-head {
-    padding: 1.1rem 1.25rem 0.9rem;
-    border-bottom: 1px solid var(--line);
-  }
-  .drawer-head .kicker { font-size: 12.5px; color: var(--ink-mute); margin: 0 0 0.15rem; }
-  .drawer-head h2 {
-    font-family: var(--font-doc);
-    font-weight: 600;
-    font-size: 21px;
-    line-height: 1.25;
-    margin: 0 0 0.35rem;
-    padding-right: 2rem;
-  }
-  .drawer-head .meta { font-size: 13.5px; color: var(--ink-soft); margin: 0; }
-  .drawer-close {
-    position: absolute;
-    top: 0.9rem;
-    right: 1rem;
-    background: transparent;
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    color: var(--ink-soft);
-    padding: 0.25rem 0.6rem;
-    cursor: pointer;
-  }
-  .drawer-close:hover { border-color: var(--form-blue); color: var(--form-blue); }
-  .drawer-body { overflow-y: auto; padding: 1.1rem 1.25rem; flex: 1; }
-  .drawer-body section { margin-bottom: 1.4rem; }
-  .drawer-body h3 {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--ink-mute);
-    margin: 0 0 0.5rem;
-  }
-  .doc { border: 1px solid var(--line-soft); border-radius: 2px; margin-bottom: 0.5rem; }
-  .doc > button {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    gap: 0.75rem;
-    background: transparent;
-    border: none;
-    padding: 0.55rem 0.75rem;
-    cursor: pointer;
-    color: var(--ink);
-    text-align: left;
-  }
-  .doc > button:hover .doc-name { color: var(--form-blue); }
-  .doc-name { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
-  .doc-words { font-size: 12.5px; color: var(--ink-mute); font-feature-settings: "tnum"; white-space: nowrap; }
-  .doc-excerpt {
-    display: none;
-    font-family: var(--font-doc);
-    font-size: 14px;
-    line-height: 1.55;
-    color: var(--ink-soft);
-    padding: 0 0.75rem 0.7rem;
-    white-space: pre-wrap;
-  }
+  .drawer-head { padding: 18px 20px 14px; border-bottom: 1px solid var(--line); position: relative; }
+  .drawer-head h2 { font-family: var(--font-doc); font-size: var(--fs-21); padding-right: 72px; }
+  .drawer-head .sub { color: var(--text-2); font-size: var(--fs-13); margin-top: 4px; }
+  .drawer-close { position: absolute; top: 14px; right: 16px; }
+  .drawer-body { overflow-y: auto; padding: 16px 20px; flex: 1; }
+  .drawer-body section { margin-bottom: 22px; }
+  .drawer-body h3 { font-size: var(--fs-13); color: var(--text-2); margin-bottom: 8px; }
+  .doc { border: 1px solid var(--line); border-radius: 6px; margin-bottom: 6px; }
+  .doc > button { width: 100%; display: flex; justify-content: space-between; gap: 12px; align-items: center; background: none; border: 0; padding: 9px 12px; cursor: pointer; color: var(--text); text-align: left; font: inherit; }
+  .doc > button:hover .doc-name { color: var(--blue); }
+  .doc-name { font-weight: 600; overflow-wrap: anywhere; }
+  .doc-excerpt { display: none; margin: 0 12px 12px; padding: 12px 14px; background: var(--paper); color: #1B2436; border-radius: var(--r-sheet); box-shadow: var(--sheet-shadow); font-family: var(--font-doc); font-size: var(--fs-15); line-height: 1.55; white-space: pre-wrap; }
   .doc.open .doc-excerpt { display: block; }
-  .policy-group { margin-bottom: 0.7rem; }
-  .policy-group p { font-size: 13.5px; margin: 0 0 0.35rem; color: var(--ink-soft); }
-  .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
-  .chips li {
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 0.15rem 0.55rem;
-    border-radius: 4px;
-  }
-  .chips.may li { background: var(--cleared-bg); color: var(--cleared); }
-  .chips.never li { background: var(--risk-bg); color: var(--risk); }
-  .drawer-foot {
-    border-top: 1px solid var(--line);
-    padding: 0.9rem 1.25rem;
-  }
-  .btn-primary {
-    display: block;
-    text-align: center;
-    background: var(--form-blue);
-    color: #fff;
-    font-weight: 600;
-    font-size: 14.5px;
-    text-decoration: none;
-    padding: 0.6rem 0;
-    border-radius: 4px;
-  }
-  :root[data-theme="dark"] .btn-primary { color: #0B1120; }
-  .btn-primary:hover { background: var(--form-blue-dark); }
+  .policy-group { margin-bottom: 10px; }
+  .policy-group p { font-size: var(--fs-13); color: var(--text-2); margin-bottom: 6px; }
+  .tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .tags li { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: var(--r-chip); }
+  .tags.may li { background: var(--cleared-soft); color: var(--cleared); }
+  .tags.never li { background: var(--risk-soft); color: var(--risk); }
+  .drawer-foot { border-top: 1px solid var(--line); padding: 14px 20px; display: flex; }
+  .drawer-foot .btn { flex: 1; }
 
-  @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; }
-  }
-  @media (max-width: 860px) {
-    .sidebar { display: none; }
-    .content { padding: 1rem; }
-    table.matters .hide-narrow { display: none; }
-  }
+  @media (max-width: 1100px) { .home { grid-template-columns: 1fr; } .hide-narrow { display: none; } }
 </style>
 </head>
-<body>
-<div class="app">
-  <aside class="sidebar" aria-label="Primary">
-    <div class="firm">Okafor &amp; Lind Immigration<small>Petition training-set workspace</small></div>
-    <nav class="snav">
-      <a href="/demo/">Review</a>
-      <a href="/demo/datasets.html">Datasets</a>
-      <a href="/demo/matters.html" aria-current="page">Matters</a>
-      <a href="/demo/wall.html">Access wall</a>
-      <a href="/demo/compound.html">Know-how</a>
-      <a href="/demo/policy.html">Policy</a>
-      <a href="/scoreboard/">Evaluation</a>
-      <a href="/demo/audit.html">Audit log</a>
-    </nav>
-    <div class="spacer"></div>
-    <a class="present-btn" href="/demo/present.html">Present</a>
-  </aside>
-  <div class="main">
-    <header class="topbar">
-      <span class="crumb"><strong>Matters</strong> &nbsp;/&nbsp; Firm overview</span>
-      <span class="grow"></span>
-      <label for="matter-switch">Matter</label>
-      <select id="matter-switch" aria-label="Jump to a matter"></select>
-      <button class="theme-toggle" id="theme-toggle" type="button">Dark mode</button>
-    </header>
-    <main class="content">
-      <div class="pagehead">
-        <h1>Matters</h1>
-        <p class="summary" id="summary">Loading matters…</p>
-        <p class="wallcheck" id="wallcheck" aria-live="polite"></p>
-      </div>
-      <section class="panel" aria-label="Matter list">
-        <table class="matters" id="matters-table">
-          <thead>
-            <tr>
-              <th scope="col">Client</th>
-              <th scope="col">Practice area</th>
-              <th scope="col">Documents</th>
-              <th scope="col">Wall status</th>
-              <th scope="col" class="hide-narrow">Last activity</th>
-            </tr>
-          </thead>
-          <tbody id="matters-body">
-            <tr><td colspan="5" class="loading-line">Loading matters from the live API…</td></tr>
-          </tbody>
-        </table>
-      </section>
-    </main>
+<body data-crumb="Matters">
+<main class="app-main">
+  <div class="page-head">
+    <div>
+      <h1>Matters</h1>
+      <p id="summary">Loading the firm's matters.</p>
+    </div>
   </div>
-</div>
+
+  <div id="setup-nudge"></div>
+
+  <div class="home" id="home">
+    <section class="panel" aria-labelledby="attn-title">
+      <div class="panel-head"><h2 id="attn-title">What needs attention</h2><span class="meta" id="attn-count"></span></div>
+      <div id="next"><div class="next"><div><span class="skeleton" style="width:40%"></span><span class="skeleton" style="width:70%;height:18px"></span></div></div></div>
+      <ul class="attn" id="attn"></ul>
+    </section>
+    <section class="panel" aria-label="Firm state">
+      <div class="stat" id="wall-stat" aria-live="polite"><div class="row"><span class="big idle">Checking</span></div></div>
+      <div class="stat" id="train-stat"></div>
+    </section>
+  </div>
+
+  <div class="tbl-head">
+    <h2 id="tbl-title">All matters</h2>
+    <p>Select a matter to see its documents and the practice policy that governs it.</p>
+  </div>
+  <div class="table-wrap">
+    <table class="table" aria-labelledby="tbl-title">
+      <thead>
+        <tr><th scope="col">Client</th><th scope="col">Petition</th><th scope="col">Wall</th><th scope="col" class="hide-narrow">Last activity</th><th scope="col"><span class="sr-only">Action</span></th></tr>
+      </thead>
+      <tbody>
+        <tr class="sk-row"><td><span class="skeleton" style="width:60%"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td class="hide-narrow"><span class="skeleton"></span></td><td></td></tr>
+        <tr class="sk-row"><td><span class="skeleton" style="width:50%"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td class="hide-narrow"><span class="skeleton"></span></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
 
 <div class="scrim" id="scrim"></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden>
   <div class="drawer-head">
-    <p class="kicker" id="drawer-kicker">Matter</p>
+    <p class="meta" id="drawer-kicker"></p>
     <h2 id="drawer-title"></h2>
-    <p class="meta" id="drawer-meta"></p>
-    <button class="drawer-close" id="drawer-close" type="button">Close</button>
+    <p class="sub" id="drawer-sub"></p>
+    <button class="btn btn-secondary btn-sm drawer-close" id="drawer-close" type="button">Close</button>
   </div>
   <div class="drawer-body" id="drawer-body"></div>
   <div class="drawer-foot" id="drawer-foot"></div>
@@ -423,298 +176,256 @@
 (function () {
   "use strict";
 
-  var WALLED = { delmarva: true, chen: true, reyes: true };
-  var PRACTICE_LABEL = {
-    litigation: "Litigation",
-    trusts_estates: "Trusts and estates",
-    immigration: "Immigration",
-    asylum: "Asylum"
+  // Matters with a provisioned GBrain source and scoped read-only client (walls/setup.sh).
+  // O-1 matters get theirs from walls/o1/add_sources.sh; until then the page says so.
+  var WALLED = { chen: true, delmarva: true, reyes: true };
+  var PRACTICE = { litigation: "Litigation", trusts_estates: "Trusts and estates", immigration: "Immigration", asylum: "Asylum" };
+  var TRAIN_KEY = "wall.trainingSet";   // written by Review (demo/index.html), one entry per exhibit
+  var MATTER_KEY = "wall.matter";       // the shell's saved matter; Review opens it
+  var EXHIBIT = { "cover-letter-excerpt.md": "Cover letter", "recommendation-letter.md": "Recommendation letter", "criteria-evidence.md": "Criteria evidence", "intake.md": "Intake", "session-demand-letter.md": "Session notes: demand letter" };
+  var ICON = {
+    folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3zM8 7V4h8v3M3 12h18"/></svg>',
+    alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 16H3zM12 10v4M12 17h.01"/></svg>'
   };
-  /* Fixtures copy of fixtures/policy.json, used only when GET /demo/api/policy
-     is unavailable (the policy service is a stub until G2 lands). */
-  var FALLBACK_POLICY = {
-    litigation: {
-      may_compound: ["drafting procedures", "letter templates", "research"],
-      never_compounds: ["parties", "amounts", "strategy", "witness details"]
-    },
-    trusts_estates: {
-      may_compound: ["accounting checklists", "filing steps"],
-      never_compounds: ["family facts", "balances", "allegations"]
-    },
-    asylum: {
-      may_compound: ["checklists", "country-conditions research", "legal argument"],
-      never_compounds: ["any narrative text from a declaration"]
-    },
-    immigration: {
-      may_compound: ["petition structure", "criteria checklists", "legal argument", "exhibit organization"],
-      never_compounds: ["beneficiary identity", "employer", "salary", "awards and their years",
-        "publications and press", "recommender identities", "A-numbers, receipt and passport numbers"]
+
+  var byId = {}, list = [], policy = null, audit = [], training = [];
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function readJSON(key, fb) { try { var v = JSON.parse(localStorage.getItem(key)); return v == null ? fb : v; } catch (e) { return fb; } }
+  function plural(n, one) { return n + " " + (n === 1 ? one : one + "s"); }
+  function practice(p) { return PRACTICE[p] || p; }
+  function docLabel(f) { return EXHIBIT[f] || f.replace(/\.md$/, "").replace(/-/g, " "); }
+  function isO1(m) { return m.practice === "immigration"; }
+  function reviewHref(id) { return "/demo/?matter=" + encodeURIComponent(id); }
+
+  function reviewState(m) {
+    var files = Object.keys(m.documents || {});
+    var mine = training.filter(function (t) { return t && t.matter_id === m.id; });
+    var added = mine.filter(function (t) { return !t.flagged; }).length;
+    var flagged = mine.filter(function (t) { return t.flagged; });
+    var state = flagged.length ? "flagged" : added === 0 ? "todo" : added >= files.length ? "done" : "partial";
+    return { total: files.length, added: added, flagged: flagged, state: state, files: files, entries: mine };
+  }
+  function lastEvent(id) { for (var i = 0; i < audit.length; i++) if (audit[i] && audit[i].matter === id) return audit[i]; return null; }
+  function when(ts) { var d = new Date(ts); return isNaN(d) ? "" : d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
+  function nextMatter() {
+    var o1 = list.filter(isO1), order = ["flagged", "partial", "todo"];
+    for (var i = 0; i < order.length; i++) {
+      var m = o1.filter(function (x) { return reviewState(x).state === order[i]; })[0];
+      if (m) return { m: m, why: order[i] };
     }
-  };
+    return null;
+  }
 
-  var mattersById = {};
-  var auditByMatter = {};
-  var livePolicy = null;
-  var policyIsLive = false;
+  function renderSummary() {
+    var o1 = list.filter(isO1).length, walled = list.filter(function (m) { return WALLED[m.id]; }).length;
+    $("summary").textContent = plural(list.length, "matter") + ", " + o1 + " of them O-1 petitions. Each matter's agent reads only its own source; "
+      + walled + " of those sources are live in GBrain today.";
+  }
 
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  function renderNext() {
+    var n = nextMatter(), box = $("next");
+    if (!n) {
+      var any = list.some(isO1);
+      box.innerHTML = '<div class="next"><div><span class="label">Next step</span><h3>' + (any ? "Every O-1 exhibit is in the training set" : "No O-1 petitions on file yet") + "</h3></div>"
+        + "<p>" + (any ? "Export the de-identified set from Datasets, or retrain on attorney corrections." : "Add the firm's matters in setup, then open the first petition in Review.") + "</p>"
+        + '<a class="btn btn-primary" href="' + (any ? "/demo/datasets.html" : "/demo/onboarding.html") + '">' + (any ? "Open Datasets" : "Open setup") + "</a></div>";
+      return;
+    }
+    var s = reviewState(n.m), left = s.total - s.added - s.flagged.length;
+    var title = n.why === "flagged" ? "Clear the flagged exhibit on " + n.m.client : "De-identify " + n.m.client + "’s petition";
+    var desc = n.why === "flagged" ? "The judge found a residual identifier. Flagged exhibits stay out of training until a reviewer clears them."
+      : plural(left, "exhibit") + " to review. Identifiers become typed placeholders, then the judge checks what's left.";
+    box.innerHTML = '<div class="next"><div><span class="label">Next step</span><h3>' + esc(title) + "</h3></div><p>" + esc(desc) + "</p>"
+      + '<a class="btn btn-primary" data-open-review="' + esc(n.m.id) + '" href="' + reviewHref(n.m.id) + '">Open in Review</a></div>';
+  }
+
+  function renderAttention(wall) {
+    var items = [];
+    if (wall && wall.state === "breached") items.push({ tone: "risk", title: "The live wall check failed", body: wall.detail, href: "/demo/wall.html", cta: "Open Access wall" });
+    list.filter(isO1).forEach(function (m) {
+      reviewState(m).flagged.forEach(function (t) {
+        items.push({ tone: "risk", title: "Flagged: " + (t.title || t.document), body: m.client + ". The judge found a residual identifier.", href: reviewHref(m.id), id: m.id, cta: "Review" });
+      });
     });
-  }
-  function words(text) {
-    var n = String(text).split(/\s+/).filter(Boolean).length;
-    return n.toLocaleString("en-US") + (n === 1 ? " word" : " words");
-  }
-  function practiceLabel(p) { return PRACTICE_LABEL[p] || p; }
-  function wallLabel(id) {
-    return WALLED[id] ? "Isolated source, scoped agent" : "Not yet walled";
-  }
-  function lastActivity(id) {
-    var ev = auditByMatter[id];
-    if (!ev) return "No recorded activity";
-    return ev;
+    var todo = list.filter(function (m) { return isO1(m) && reviewState(m).state !== "done"; });
+    if (todo.length) {
+      var ex = todo.reduce(function (a, m) { var s = reviewState(m); return a + s.total - s.added - s.flagged.length; }, 0);
+      items.push({ tone: "info", title: plural(ex, "O-1 exhibit") + " not yet in the training set", body: "Across " + plural(todo.length, "matter") + ". Datasets can de-identify them in one pass.", href: "/demo/datasets.html", cta: "Open Datasets" });
+    }
+    var unwalled = list.filter(function (m) { return !WALLED[m.id]; }).length;
+    if (unwalled) items.push({ tone: "", title: plural(unwalled, "matter") + " without a GBrain source yet", body: "Their exhibits can be de-identified now. Their agents get a scoped source when the matter is provisioned.", href: "/demo/wall.html", cta: "How the wall works" });
+    if (wall && wall.state === "down") items.push({ tone: "", title: "GBrain didn't answer the live wall check", body: "The wall column shows provisioned grants. Start GBrain on port 3131 to check live.", href: "/demo/wall.html", cta: "Open Access wall" });
+
+    $("attn-count").textContent = items.length ? plural(items.length, "item") : "";
+    $("attn").innerHTML = items.length ? items.map(function (it) {
+      return '<li class="' + it.tone + '"><span class="dot" aria-hidden="true"></span><div><strong>' + esc(it.title) + "</strong><p>" + esc(it.body) + "</p></div>"
+        + '<a href="' + it.href + '"' + (it.id ? ' data-open-review="' + esc(it.id) + '"' : "") + ">" + esc(it.cta) + "</a></li>";
+    }).join("") : '<li><span class="dot" aria-hidden="true"></span><div><strong>Nothing else needs attention</strong><p>Every matter is reviewed and walled.</p></div><span></span></li>';
   }
 
-  function renderTable(list) {
-    var body = document.getElementById("matters-body");
-    var totalDocs = 0;
-    var walled = 0;
-    var html = "";
-    list.forEach(function (m) {
-      var docs = m.documents || {};
-      var names = Object.keys(docs);
-      totalDocs += names.length;
-      if (WALLED[m.id]) walled += 1;
-      var badge = WALLED[m.id]
-        ? '<span class="badge walled">Isolated source, scoped agent</span>'
-        : '<span class="badge unwalled">Not yet walled</span>';
-      html += '<tr tabindex="0" data-id="' + esc(m.id) + '" aria-selected="false">'
-        + '<td class="client-cell"><strong>' + esc(m.client) + '</strong>'
-        + '<span class="mid">' + esc(m.id) + '</span></td>'
-        + "<td>" + esc(practiceLabel(m.practice)) + "</td>"
-        + '<td class="num">' + names.length + "</td>"
-        + "<td>" + badge + "</td>"
-        + '<td class="muted hide-narrow">' + esc(lastActivity(m.id)) + "</td>"
-        + "</tr>";
-    });
-    body.innerHTML = html;
-    var summary = document.getElementById("summary");
-    summary.innerHTML = "Showing <span class=\"n\">" + list.length + "</span> matters, "
-      + "<span class=\"n\">" + totalDocs + "</span> documents, "
-      + "<span class=\"n\">" + walled + "</span> behind the wall.";
-    var sel = document.getElementById("matter-switch");
-    sel.innerHTML = '<option value="">Select a matter…</option>' + list.map(function (m) {
-      return '<option value="' + esc(m.id) + '">' + esc(m.client) + " (" + esc(m.id) + ")</option>";
-    }).join("");
+  function renderWall(w) {
+    var up = list.filter(function (m) { return WALLED[m.id]; }).length, head, body;
+    if (!w) { head = '<span class="big idle">Checking</span>'; body = "Asking GBrain whether Chen's agent can read Delmarva's file."; }
+    else if (w.state === "held") {
+      head = '<span class="big ok">Wall held</span><span class="meta">' + w.passed + " of " + w.total + " checks" + (w.replayed ? ' <span class="replayed" title="GBrain was unreachable; this is the last live result for this pair.">Replayed</span>' : "") + "</span>";
+      body = "Chen's agent asked for Delmarva's file. GBrain answered permission denied.";
+    } else if (w.state === "breached") { head = '<span class="big bad">Wall breached</span><span class="meta">' + w.passed + " of " + w.total + " checks</span>"; body = w.detail; }
+    else { head = '<span class="big idle">Not checked</span>'; body = "GBrain didn't answer, so there's no live result to show."; }
+    $("wall-stat").innerHTML = '<div class="row">' + head + "</div><p>" + esc(body) + "</p>"
+      + '<div class="walls" aria-hidden="true">' + list.map(function (m) { return '<span class="' + (WALLED[m.id] ? "up" : "") + '" title="' + esc(m.client) + '"></span>'; }).join("") + "</div>"
+      + "<p>" + up + " of " + list.length + " matters have a scoped source in GBrain.</p>"
+      + '<a class="link" href="/demo/wall.html">Run the attack yourself</a>';
   }
 
-  function policyFor(practice) {
-    if (livePolicy && livePolicy[practice]) return livePolicy[practice];
-    return FALLBACK_POLICY[practice] || null;
+  function renderTraining() {
+    var total = 0, added = 0, flagged = 0;
+    list.filter(isO1).forEach(function (m) { var s = reviewState(m); total += s.total; added += s.added; flagged += s.flagged.length; });
+    var pct = total ? Math.round(added / total * 100) : 0;
+    $("train-stat").innerHTML = '<div class="row"><span class="big">' + added + ' <span class="meta" style="font-size:var(--fs-15);font-weight:500">of ' + total + '</span></span><span class="meta">O-1 exhibits</span></div>'
+      + "<p>In the training set, de-identified and checked by the judge" + (flagged ? "; " + flagged + " flagged and held back" : "") + ".</p>"
+      + '<div class="meter" role="progressbar" aria-label="Training set progress" aria-valuemin="0" aria-valuemax="' + total + '" aria-valuenow="' + added + '"><i style="width:' + pct + '%"></i></div>'
+      + '<a class="link" href="/demo/datasets.html">' + (added ? "Open the training set" : "Build the training set") + "</a>";
+  }
+
+  function badge(s) {
+    if (s.state === "flagged") return '<span class="badge badge-risk">Flagged</span>';
+    if (s.state === "done") return '<span class="badge badge-cleared">In training set</span>';
+    if (s.state === "partial") return '<span class="badge badge-info">In review</span>';
+    return '<span class="badge">Not started</span>';
+  }
+  function row(m) {
+    var s = reviewState(m), ev = lastEvent(m.id), o1 = isO1(m), pips = "";
+    for (var i = 0; o1 && i < s.total; i++) pips += '<i class="' + (i < s.added ? "on" : i < s.added + s.flagged.length ? "flag" : "") + '"></i>';
+    var petition = o1 ? '<div class="prog">' + badge(s) + '<span class="pips" aria-hidden="true">' + pips + "</span>" + s.added + " of " + s.total + "</div>"
+      : '<span class="meta">' + plural(s.total, "document") + ", not an O-1 petition</span>";
+    var act = o1 ? '<a class="btn btn-secondary btn-sm" data-open-review="' + esc(m.id) + '" href="' + reviewHref(m.id) + '">Open in Review</a>'
+      : '<button class="btn btn-ghost btn-sm" type="button" data-details="' + esc(m.id) + '">Details</button>';
+    return '<tr tabindex="0" data-id="' + esc(m.id) + '" aria-selected="false">'
+      + '<td class="client"><strong>' + esc(m.client) + '</strong><span class="meta">' + esc(practice(m.practice)) + ", " + esc(m.id) + "</span></td>"
+      + "<td>" + petition + "</td>"
+      + "<td>" + (WALLED[m.id] ? '<span class="badge badge-cleared">Scoped source</span>' : '<span class="badge">Not provisioned</span>') + "</td>"
+      + '<td class="hide-narrow meta">' + (ev ? esc(ev.summary || ev.kind) + (ev.timestamp ? ", " + esc(when(ev.timestamp)) : "") : "No activity yet") + "</td>"
+      + '<td class="row-act">' + act + "</td></tr>";
+  }
+  function setBodies(html) {
+    var t = document.querySelector("table.table");
+    Array.prototype.slice.call(t.tBodies).forEach(function (b) { b.remove(); });
+    t.insertAdjacentHTML("beforeend", html);
+  }
+  function renderTable() {
+    var o1 = list.filter(isO1), other = list.filter(function (m) { return !isO1(m); }), html = "";
+    if (o1.length) html += '<tbody class="group"><tr><th colspan="5" scope="colgroup">O-1 petitions<span class="meta">' + plural(o1.length, "matter") + "</span></th></tr></tbody><tbody>" + o1.map(row).join("") + "</tbody>";
+    if (other.length) html += '<tbody class="group"><tr><th colspan="5" scope="colgroup">Other practice areas<span class="meta">Their agents run the live wall attack</span></th></tr></tbody><tbody>' + other.map(row).join("") + "</tbody>";
+    setBodies(html);
+  }
+  function blank(icon, title, body, action) {
+    return '<tbody><tr><td colspan="5"><div class="blank">' + ICON[icon] + "<h3>" + esc(title) + "</h3><p>" + esc(body) + "</p>" + action + "</div></td></tr></tbody>";
+  }
+  function showEmpty() {
+    setBodies(blank("folder", "No matters on file yet", "Each matter gets its own wall. Add the firm's matters in setup, then open the first petition in Review.", '<a class="btn btn-primary" href="/demo/onboarding.html">Add matters in setup</a>'));
+    $("home").hidden = true; $("summary").textContent = "No matters yet.";
+  }
+  function showError(msg) {
+    setBodies(blank("alert", "Couldn't load the firm's matters", "GET /demo/api/matters failed (" + msg + "). Check that the demo API is running, then try again.", '<button class="btn btn-secondary" type="button" id="retry">Try again</button>'));
+    $("home").hidden = true; $("summary").textContent = "Matters unavailable.";
+    $("retry").addEventListener("click", function () { location.reload(); });
+  }
+  function renderNudge() {
+    var ob = readJSON("wall.onboarding", null);
+    if (ob && typeof ob === "object" && ob.done !== true) {
+      $("setup-nudge").innerHTML = '<div class="banner" role="status"><p><strong>Setup isn’t finished.</strong> Your progress is saved.</p><a class="btn btn-secondary btn-sm" href="/demo/onboarding.html">Finish setup</a></div>';
+    }
   }
 
   function renderDrawer(m) {
-    var docs = m.documents || {};
-    var names = Object.keys(docs).sort();
-    document.getElementById("drawer-kicker").textContent =
-      "Matter " + m.id + ", " + practiceLabel(m.practice);
-    document.getElementById("drawer-title").textContent = m.client;
-    document.getElementById("drawer-meta").textContent =
-      names.length + (names.length === 1 ? " document" : " documents")
-      + ", " + wallLabel(m.id).toLowerCase() + ", " + lastActivity(m.id).toLowerCase();
-
-    var docsHtml = '<section aria-label="Documents"><h3>Documents</h3>';
-    if (!names.length) {
-      docsHtml += '<p class="muted">No documents filed on this matter yet.</p>';
-    }
-    names.forEach(function (name) {
-      var text = docs[name] || "";
-      var excerpt = text.length > 420 ? text.slice(0, 420) + "…" : text;
-      docsHtml += '<div class="doc"><button type="button" aria-expanded="false">'
-        + '<span class="doc-name">' + esc(name) + '</span>'
-        + '<span class="doc-words">' + esc(words(text)) + "</span></button>"
-        + '<div class="doc-excerpt">' + esc(excerpt) + "</div></div>";
+    var s = reviewState(m), pol = policy && policy[m.practice], inSet = {};
+    s.entries.forEach(function (t) { inSet[t.document] = t.flagged ? "flag" : "on"; });
+    $("drawer-kicker").textContent = practice(m.practice) + ", " + m.id;
+    $("drawer-title").textContent = m.client;
+    $("drawer-sub").textContent = (isO1(m) ? s.added + " of " + s.total + " exhibits in the training set" : plural(s.total, "document")) + (WALLED[m.id] ? ". Scoped GBrain source." : ". No GBrain source yet.");
+    var docs = "<section><h3>Documents</h3>" + (s.files.length ? s.files.slice().sort().map(function (f) {
+      var text = m.documents[f] || "", words = text.split(/\s+/).filter(Boolean).length;
+      var st = inSet[f] === "on" ? '<span class="badge badge-cleared">In training set</span>' : inSet[f] === "flag" ? '<span class="badge badge-risk">Flagged</span>' : '<span class="meta">' + words.toLocaleString("en-US") + " words</span>";
+      return '<div class="doc"><button type="button" aria-expanded="false"><span class="doc-name">' + esc(docLabel(f)) + "</span>" + st + "</button>"
+        + '<div class="doc-excerpt">' + esc(text.length > 480 ? text.slice(0, 480) + "…" : text) + "</div></div>";
+    }).join("") : '<p class="meta">No documents filed on this matter yet.</p>') + "</section>";
+    var pols = "<section><h3>Practice policy: " + esc(practice(m.practice)) + "</h3>" + (pol
+      ? '<div class="policy-group"><p>May compound across matters</p><ul class="tags may">' + (pol.may_compound || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></div>"
+        + '<div class="policy-group"><p>Never leaves this matter</p><ul class="tags never">' + (pol.never_compounds || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></div>"
+        + '<a href="/demo/policy.html">Open the policy</a>'
+      : '<p class="meta">' + (policy ? "No policy published for this practice area yet." : "Couldn't load the practice policy.") + "</p>") + "</section>";
+    $("drawer-body").innerHTML = docs + pols;
+    $("drawer-foot").innerHTML = isO1(m) ? '<a class="btn btn-primary" data-open-review="' + esc(m.id) + '" href="' + reviewHref(m.id) + '">Open in Review</a>'
+      : '<a class="btn btn-primary" href="/demo/wall.html">Attack this matter’s wall</a>';
+    Array.prototype.forEach.call($("drawer-body").querySelectorAll(".doc > button"), function (b) {
+      b.addEventListener("click", function () { var open = b.parentElement.classList.toggle("open"); b.setAttribute("aria-expanded", open ? "true" : "false"); });
     });
-    docsHtml += "</section>";
-
-    var policy = policyFor(m.practice);
-    var polHtml = '<section aria-label="Practice policy"><h3>Practice policy: '
-      + esc(practiceLabel(m.practice))
-      + (policyIsLive ? "" : '<span class="tag">Fixtures copy</span>') + "</h3>";
-    if (!policy) {
-      polHtml += '<p class="muted">No policy published for this practice area yet.</p>';
-    } else {
-      polHtml += '<div class="policy-group"><p>May compound</p><ul class="chips may">'
-        + (policy.may_compound || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("")
-        + "</ul></div>"
-        + '<div class="policy-group"><p>Never compounds</p><ul class="chips never">'
-        + (policy.never_compounds || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("")
-        + "</ul></div>";
-    }
-    polHtml += "</section>";
-
-    document.getElementById("drawer-body").innerHTML = docsHtml + polHtml;
-    document.getElementById("drawer-foot").innerHTML =
-      '<a class="btn-primary" href="/demo/?matter=' + encodeURIComponent(m.id) + '">Open in Review</a>';
-
-    Array.prototype.forEach.call(
-      document.querySelectorAll("#drawer-body .doc > button"),
-      function (btn) {
-        btn.addEventListener("click", function () {
-          var box = btn.parentElement;
-          var open = box.classList.toggle("open");
-          btn.setAttribute("aria-expanded", open ? "true" : "false");
-        });
-      }
-    );
   }
-
   var lastFocus = null;
+  function selectRow(id) { Array.prototype.forEach.call(document.querySelectorAll("tr[data-id]"), function (r) { r.setAttribute("aria-selected", r.getAttribute("data-id") === id ? "true" : "false"); }); }
   function openDrawer(id) {
-    var m = mattersById[id];
-    if (!m) return;
+    var m = byId[id]; if (!m) return;
     lastFocus = document.activeElement;
-    renderDrawer(m);
-    Array.prototype.forEach.call(
-      document.querySelectorAll('#matters-body tr[data-id]'),
-      function (row) { row.setAttribute("aria-selected", row.getAttribute("data-id") === id ? "true" : "false"); }
-    );
-    var drawer = document.getElementById("drawer");
-    drawer.hidden = false;
-    requestAnimationFrame(function () {
-      drawer.classList.add("open");
-      document.getElementById("scrim").classList.add("open");
-    });
-    document.getElementById("drawer-close").focus();
+    renderDrawer(m); selectRow(id);
+    var d = $("drawer"); d.hidden = false;
+    requestAnimationFrame(function () { d.classList.add("open"); $("scrim").classList.add("open"); });
+    $("drawer-close").focus();
   }
   function closeDrawer() {
-    var drawer = document.getElementById("drawer");
-    drawer.classList.remove("open");
-    document.getElementById("scrim").classList.remove("open");
-    Array.prototype.forEach.call(
-      document.querySelectorAll('#matters-body tr[data-id]'),
-      function (row) { row.setAttribute("aria-selected", "false"); }
-    );
-    window.setTimeout(function () { drawer.hidden = true; }, 160);
+    var d = $("drawer"); d.classList.remove("open"); $("scrim").classList.remove("open"); selectRow(null);
+    setTimeout(function () { d.hidden = true; }, 200);
     if (lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
   function checkWall() {
-    var el = document.getElementById("wallcheck");
-    el.textContent = "Checking the wall between chen and delmarva…";
     fetch("/demo/api/wall?matter=chen&target=delmarva", { method: "POST" })
-      .then(function (r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(function (res) {
-        var ok = res.passed === res.total;
-        el.innerHTML = "Live wall check, chen × delmarva: "
-          + '<span class="' + (ok ? "ok" : "bad") + '">' + res.passed + " of " + res.total
-          + " checks hold</span>"
-          + (res.replayed ? '<span class="tag">Replayed</span>' : "");
+        var failed = (res.checks || []).filter(function (c) { return !c.passed; })[0];
+        var w = { state: res.passed === res.total ? "held" : "breached", passed: res.passed, total: res.total, replayed: !!res.replayed,
+          detail: failed ? "Failed check: " + failed.name + " (" + failed.result + ")." : "" };
+        renderWall(w); renderAttention(w);
       })
-      .catch(function () {
-        el.innerHTML = '<span class="muted">Live wall check unavailable; statuses below are the filed wall grants.</span>';
-      });
+      .catch(function () { var w = { state: "down" }; renderWall(w); renderAttention(w); });
   }
 
+  function json(url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }); }
   function load() {
-    var mattersP = fetch("/demo/api/matters").then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
-    });
-    var auditP = fetch("/demo/api/audit?limit=100").then(function (r) {
-      return r.ok ? r.json() : [];
-    }).catch(function () { return []; });
-    var policyP = fetch("/demo/api/policy").then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
-    });
-
-    policyP.then(function (p) { livePolicy = p; policyIsLive = true; }).catch(function () {
-      livePolicy = null; policyIsLive = false;
-    }).then(function () {
-      return Promise.all([mattersP, auditP]);
-    }).then(function (parts) {
-      var list = parts[0] || [];
-      var audit = parts[1] || [];
-      list.sort(function (a, b) { return a.client.localeCompare(b.client); });
-      list.forEach(function (m) { mattersById[m.id] = m; });
-      audit.forEach(function (ev) {
-        var mid = ev.matter || ev.matter_id;
-        if (mid && !auditByMatter[mid]) {
-          auditByMatter[mid] = ev.summary || ev.action || ev.type || "Recorded activity";
-        }
-      });
-      renderTable(list);
-      checkWall();
-    }).catch(function (err) {
-      document.getElementById("matters-body").innerHTML =
-        '<tr><td colspan="5" class="error-line">Could not load matters from the API (' + esc(err.message)
-        + "). Is the server running?</td></tr>";
-      document.getElementById("summary").textContent = "Matters unavailable.";
-    });
+    training = readJSON(TRAIN_KEY, []); if (!Array.isArray(training)) training = [];
+    renderNudge();
+    Promise.all([json("/demo/api/matters"), json("/demo/api/policy").catch(function () { return null; }), json("/demo/api/audit?limit=200").catch(function () { return []; })])
+      .then(function (p) {
+        list = p[0] || []; policy = p[1]; audit = Array.isArray(p[2]) ? p[2] : [];
+        if (!list.length) { showEmpty(); return; }
+        list.sort(function (a, b) { return (isO1(b) - isO1(a)) || a.client.localeCompare(b.client); });
+        list.forEach(function (m) { byId[m.id] = m; });
+        renderSummary(); renderNext(); renderAttention(null); renderWall(null); renderTraining(); renderTable();
+        checkWall();
+        var initial = new URLSearchParams(location.search).get("matter");
+        if (initial && byId[initial]) openDrawer(initial);
+      })
+      .catch(function (err) { showError(err.message); });
   }
 
-  document.getElementById("matters-body").addEventListener("click", function (e) {
-    var row = e.target.closest("tr[data-id]");
-    if (row) openDrawer(row.getAttribute("data-id"));
+  document.addEventListener("click", function (e) {
+    var go = e.target.closest("[data-open-review]");
+    if (go) { try { localStorage.setItem(MATTER_KEY, go.getAttribute("data-open-review")); } catch (err) {} return; }
+    var det = e.target.closest("[data-details]");
+    if (det) { openDrawer(det.getAttribute("data-details")); return; }
+    var r = e.target.closest("tr[data-id]");
+    if (r && !e.target.closest("a, button")) openDrawer(r.getAttribute("data-id"));
   });
-  document.getElementById("matters-body").addEventListener("keydown", function (e) {
-    var row = e.target.closest("tr[data-id]");
-    if (row && (e.key === "Enter" || e.key === " ")) {
-      e.preventDefault();
-      openDrawer(row.getAttribute("data-id"));
-    }
-  });
-  document.getElementById("matter-switch").addEventListener("change", function (e) {
-    if (e.target.value) openDrawer(e.target.value);
-    e.target.value = "";
-  });
-  document.getElementById("drawer-close").addEventListener("click", closeDrawer);
-  document.getElementById("scrim").addEventListener("click", closeDrawer);
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && !document.getElementById("drawer").hidden) closeDrawer();
+    if (e.key === "Escape" && !$("drawer").hidden) { closeDrawer(); return; }
+    var r = e.target.closest && e.target.closest("tr[data-id]");
+    if (r && e.target === r && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openDrawer(r.getAttribute("data-id")); }
   });
-
-  var toggle = document.getElementById("theme-toggle");
-  function setTheme(mode, persist) {
-    if (mode === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-      toggle.textContent = "Light mode";
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-      toggle.textContent = "Dark mode";
-    }
-    if (persist) {
-      try { window.localStorage.setItem("matters-theme", mode); } catch (e) { /* ignore */ }
-    }
-  }
-  /* Light is the default and the demo mode; a stored choice wins. */
-  var storedTheme = null;
-  try { storedTheme = window.localStorage.getItem("matters-theme"); } catch (e) { /* ignore */ }
-  setTheme(storedTheme === "dark" ? "dark" : "light", false);
-  toggle.addEventListener("click", function () {
-    setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark", true);
-  });
+  $("drawer-close").addEventListener("click", closeDrawer);
+  $("scrim").addEventListener("click", closeDrawer);
 
   load();
-  /* Deep link: ?matter=<id> opens that matter's drawer on load. */
-  try {
-    var initial = new URLSearchParams(window.location.search).get("matter");
-    if (initial) {
-      var tries = 0;
-      var timer = window.setInterval(function () {
-        tries += 1;
-        if (mattersById[initial] || tries > 40) {
-          window.clearInterval(timer);
-          if (mattersById[initial]) openDrawer(initial);
-        }
-      }, 250);
-    }
-  } catch (e) { /* ignore */ }
 })();
 </script>
 </body>
