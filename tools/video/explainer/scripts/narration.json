@@ -1,0 +1,14 @@
+{
+  "voice": "Samantha",
+  "rate": 185,
+  "scenes": [
+    {"id": "s1", "text": "Business is booming at Okafor & Lind Immigration. Every O-1 petition the firm has won is a playbook. Every one is also one person's file. Today: what removing identifiers means, how to choose a technique, and the wall that keeps each client's file to itself."},
+    {"id": "s2", "text": "Removing identifiers means taking out the facts that point to one person: the name, the A-number, the USCIS receipt, the employer, the salary. How you do it depends on the kind of data, and on the purpose. We want the argument to compound, and the person to stay walled in."},
+    {"id": "s3", "text": "Take a recommendation letter. Masking turns each identifier into hash marks, so you can't tell what was there. Replacement uses typed placeholders: name, org, amount. The Wall does this, so the letter still reads as an argument."},
+    {"id": "s4", "text": "But some leaks have no pattern: the founder of the delivery startup that raised its Series A last year. On our hard held-out set of legal drafts, pattern matching catches 0 of 102 such leaks. So a model judge reads what's left."},
+    {"id": "s5", "text": "Each matter lives in its own GBrain source, with scoped credentials. When one beneficiary's agent asks for another's file, GBrain answers: permission denied. Permissions hold the wall, not the prompt."},
+    {"id": "s6", "text": "Every detector sits on a trade-off. On 82 held-out paragraphs with 123 identifiers, simple rules remove 88. Models remove 118 to 123, but the strongest also remove 29 to 38 percent of clean words."},
+    {"id": "s7", "text": "Now the honest scoreboard. Our River-tuned judge catches 102 of 102 on the hard set, which came from its own training generator. On 200 independent rows, it catches 100 of 100 leaks, with 12 false alarms on 100 clean drafts."},
+    {"id": "s8", "text": "The Wall removes identifiers, with residual leakage measured. Compound the how. Wall the what."}
+  ]
+}

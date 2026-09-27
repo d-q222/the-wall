@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+@font-face{font-family:"Public Sans";src:url("assets/fonts/public-sans-400.woff2") format("woff2");font-weight:400;font-style:normal;}@font-face{font-family:"Public Sans";src:url("assets/fonts/public-sans-500.woff2") format("woff2");font-weight:500;font-style:normal;}@font-face{font-family:"Public Sans";src:url("assets/fonts/public-sans-600.woff2") format("woff2");font-weight:600;font-style:normal;}@font-face{font-family:"Public Sans";src:url("assets/fonts/public-sans-700.woff2") format("woff2");font-weight:700;font-style:normal;}
+@font-face{font-family:"Source Serif 4";src:url("assets/fonts/source-serif-4-400.woff2") format("woff2");font-weight:400;font-style:normal;}@font-face{font-family:"Source Serif 4";src:url("assets/fonts/source-serif-4-600.woff2") format("woff2");font-weight:600;font-style:normal;}@font-face{font-family:"Source Serif 4";src:url("assets/fonts/source-serif-4-400-italic.woff2") format("woff2");font-weight:400;font-style:italic;}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#FFFFFF}
+#root{width:100%;height:100%;position:relative;font-family:"Public Sans",sans-serif;color:#14213D;font-variant-numeric:tabular-nums;
+ background-color:#FFFFFF;background-image:linear-gradient(#EEF1F5 1px,transparent 1px),linear-gradient(90deg,#EEF1F5 1px,transparent 1px);background-size:48px 48px}
+.scene{position:absolute;inset:0}
+.center{position:absolute;left:0;right:0;top:0;height:900px;display:flex;align-items:center;justify-content:center}
+.col{flex-direction:column;gap:28px}
+.label{position:absolute;left:96px;top:72px;font-size:40px;font-weight:500;letter-spacing:-0.01em}
+.firm{font-size:48px;font-weight:600}
+.mark{display:block}
+.shelf{display:flex;gap:14px;margin-top:20px;align-items:flex-end}
+.binder{width:62px;height:190px;background:#1F4E9E;border-radius:2px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:16px;color:#FBFBF9;font-weight:600;font-size:18px}
+.binder:nth-child(2n){background:#14213D;height:170px}.binder:nth-child(3n){height:205px}
+.agenda{position:absolute;left:0;right:0;top:170px;display:flex;flex-direction:column;align-items:center;gap:34px}
+.ag-head{display:flex;align-items:center;gap:22px;font-size:44px;font-weight:600;margin-bottom:12px;opacity:0}
+.ag{width:900px;font-size:46px;display:flex;align-items:center;gap:30px;opacity:0}
+.ag b{width:64px;height:64px;border-radius:50%;background:#1F4E9E;color:#fff;display:flex;align-items:center;justify-content:center;font-size:32px}
+.laptop{position:absolute;left:460px;top:190px;width:1000px}
+.screen{height:560px;border:18px solid #14213D;border-radius:14px 14px 0 0;background:#FBFBF9;overflow:hidden}
+.screen .bar{height:26px;background:#1F4E9E}
+.base{height:26px;background:#2B3A55;margin:0 -60px;border-radius:0 0 18px 18px}
+.rec{padding:30px 44px;display:flex;flex-direction:column;gap:14px}
+.row{display:flex;font-size:30px;gap:24px;align-items:center}
+.row .k{width:250px;color:#4A5876}
+.row .v{--hl:0;padding:4px 10px;border-radius:4px;background:rgba(255,229,138,var(--hl));outline:3px solid rgba(194,65,12,var(--hl));font-weight:600}
+.row .v.keep{font-weight:400}
+.factors{position:absolute;left:0;right:0;top:190px;display:flex;justify-content:center;gap:60px}
+.fcard{width:760px;background:#FBFBF9;border:2px solid #D5DBE4;border-radius:8px;padding:36px 40px;display:flex;flex-direction:column;gap:22px;opacity:0}
+.fcard h3{font-size:38px;font-weight:600}
+.chip{display:flex;justify-content:space-between;align-items:center;gap:20px;font-size:28px;padding:14px 18px;border-radius:4px;background:#F1F3F7;opacity:0}
+.chip span{font-weight:600}.chip i{font-style:normal;color:#4A5876;white-space:nowrap}
+.pp{font-size:30px;padding:20px 22px;border-radius:4px;display:flex;flex-direction:column;gap:6px;opacity:0}
+.pp b{font-size:36px}.pp.ok{background:#E3F1EA;color:#14532D}.pp.ok b{color:#1E7B4F}.pp.wall{background:#FBE9E0;color:#7C2D12}.pp.wall b{color:#C2410C}
+.stage{position:absolute;left:0;right:0;top:170px;display:flex;justify-content:center}
+.sheet{width:1080px;filter:drop-shadow(0 6px 14px rgba(20,33,61,.14))}
+.sheet.wide{width:1240px}
+.sheet-in{background:#FBFBF9;padding:56px 64px 40px;display:flex;flex-direction:column;gap:26px}
+.serif{font-family:"Source Serif 4",serif;font-size:36px;line-height:1.5}
+.big{font-size:44px}
+.tear{height:22px;background:#FBFBF9;clip-path:polygon(0% 0%,2.5% 100%,5% 0%,7.5% 100%,10% 0%,12.5% 100%,15% 0%,17.5% 100%,20% 0%,22.5% 100%,25% 0%,27.5% 100%,30% 0%,32.5% 100%,35% 0%,37.5% 100%,40% 0%,42.5% 100%,45% 0%,47.5% 100%,50% 0%,52.5% 100%,55% 0%,57.5% 100%,60% 0%,62.5% 100%,65% 0%,67.5% 100%,70% 0%,72.5% 100%,75% 0%,77.5% 100%,80% 0%,82.5% 100%,85% 0%,87.5% 100%,90% 0%,92.5% 100%,95% 0%,97.5% 100%,100% 0%)}
+.sw{display:inline-grid;--mode:0}.sw>span{grid-area:1/1;white-space:nowrap}
+.sw .b,.sw .c{opacity:0}
+.sw .b{font-family:"Public Sans",sans-serif;font-weight:600;letter-spacing:.06em;color:#14213D}
+.sw .c{font-family:"Public Sans",sans-serif;font-size:28px;font-weight:600;color:#1F4E9E;background:#E4ECF8;border-radius:4px;padding:0 10px;align-self:center;justify-self:start;outline:3px solid rgba(194,65,12,0);outline-offset:3px}
+.q{outline:4px solid rgba(194,65,12,0);outline-offset:6px;border-radius:2px}
+.dim{color:#4A5876;font-style:italic;opacity:0}
+.stat{position:absolute;left:0;right:0;top:220px;display:flex;flex-direction:column;align-items:center;gap:20px;opacity:0}
+.sn{font-size:220px;font-weight:700;line-height:1;color:#C2410C}.sn span{color:#14213D;font-size:120px}
+.sl{font-size:44px;font-weight:500}.note{font-size:28px;color:#4A5876}
+.judge{position:absolute;left:560px;top:250px;width:800px;background:#FBFBF9;border:2px solid #D5DBE4;border-radius:8px;padding:40px 48px;display:flex;flex-direction:column;gap:18px;opacity:0}
+.jh{font-size:30px;color:#4A5876;font-weight:600}.jv{font-size:72px;font-weight:700;color:#C2410C}.jq{font-family:"Source Serif 4",serif;font-size:34px;line-height:1.4}
+.wallstage{position:absolute;left:0;right:0;top:170px;display:flex;justify-content:center;align-items:stretch;gap:70px}
+.src{width:520px;background:#FBFBF9;border:2px solid #D5DBE4;border-radius:8px;padding:30px 36px;display:flex;flex-direction:column;gap:10px;opacity:0}
+.sh{font-size:24px;color:#4A5876}.sid{font-size:42px;font-weight:700}.cred{font-size:24px;color:#1F4E9E}
+.wbar{width:26px;background:#C2410C;border-radius:3px;transform-origin:50% 100%}
+.tbl{position:absolute;left:0;right:0;margin:0 auto;border-collapse:collapse;background:#FFFFFF;opacity:0}
+.tbl th{background:#E9EDF3;text-align:left;font-weight:600;padding:18px 26px;font-size:28px}
+.tbl th small{display:block;font-size:22px;font-weight:400;color:#4A5876}
+.tbl td{padding:18px 26px;border-bottom:1px solid #D5DBE4;font-size:28px}
+.tbl tr{opacity:1}
+.req{top:520px;width:1170px}
+.okc{color:#1E7B4F;font-weight:600}
+.deny{font-weight:700;color:#C2410C;outline:4px solid rgba(194,65,12,0);outline-offset:6px;padding:0 4px}
+.score{top:220px;width:1640px}.score td:first-child{font-weight:600}
+.bx{outline:4px solid rgba(194,65,12,0);outline-offset:8px;border-radius:2px}
+.bx em{font-style:normal;font-weight:700}
+.chart{position:absolute;left:320px;top:130px}
+.tk{font-size:24px;fill:#4A5876}.ax{font-size:28px;fill:#14213D;font-weight:500}
+.dl{font-size:24px;fill:#14213D;font-weight:600}
+.capline{stroke:#C2410C;stroke-width:3;stroke-dasharray:10 8;opacity:0}.capl{fill:#C2410C;font-size:24px;font-weight:600;opacity:0}
+.src-note{position:absolute;left:96px;right:96px;top:860px;font-size:22px;color:#4A5876;text-align:center;opacity:0}
+#s7-n{top:640px}
+.close{font-family:"Source Serif 4",serif;font-size:84px;font-weight:600}
+.et{font-size:120px;font-weight:700;letter-spacing:-0.02em}.eu{font-size:44px;color:#1F4E9E;font-weight:600}.ef{font-size:26px;color:#4A5876;margin-top:24px}
+.ncard{position:absolute;inset:0;background:#F4EEE2}
+.nc-in{position:absolute;left:160px;right:160px;top:0;height:900px;display:flex;align-items:center;justify-content:center}
+.nc-in p{font-family:"Source Serif 4",serif;font-size:96px;font-weight:600;line-height:1.15;text-align:center;color:#14213D}
+.cc.clip{position:absolute;left:0;right:0;top:940px;display:flex;justify-content:center}
+.cc.clip span{background:rgba(20,33,61,.9);color:#FFFFFF;font-size:38px;font-weight:500;padding:10px 26px;border-radius:6px;max-width:1600px;text-align:center}
+</style></head><body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="120.5" data-width="1920" data-height="1080">
+<div id="s1" class="clip scene" data-start="0.00" data-duration="16.20" data-track-index="1"><div class="center col">
+  <div id="s1-mark"><div class="mark" style="width:190px;height:190px"><svg viewBox="0 0 100 100" width="190" height="190"><circle cx="50" cy="50" r="46" fill="#FBFBF9" stroke="#1F4E9E" stroke-width="6"/><rect x="27" y="30" width="12" height="42" rx="1.5" fill="#14213D"/><rect x="42" y="26" width="12" height="46" rx="1.5" fill="#1F4E9E"/><rect x="57" y="32" width="12" height="40" rx="1.5" fill="#14213D"/><rect x="72" y="22" width="4" height="54" fill="#C2410C"/></svg></div></div>
+  <div id="s1-name" class="firm">Okafor &amp; Lind Immigration</div>
+  <div id="s1-shelf" class="shelf"><div class="binder" id="s1-b0"><span>O-1</span></div><div class="binder" id="s1-b1"><span>O-1</span></div><div class="binder" id="s1-b2"><span>O-1</span></div><div class="binder" id="s1-b3"><span>O-1</span></div><div class="binder" id="s1-b4"><span>O-1</span></div><div class="binder" id="s1-b5"><span>O-1</span></div><div class="binder" id="s1-b6"><span>O-1</span></div></div>
+</div>
+<div id="s1-agenda" class="agenda">
+  <div class="ag-head"><div class="mark" style="width:84px;height:84px"><svg viewBox="0 0 100 100" width="84" height="84"><circle cx="50" cy="50" r="46" fill="#FBFBF9" stroke="#1F4E9E" stroke-width="6"/><rect x="27" y="30" width="12" height="42" rx="1.5" fill="#14213D"/><rect x="42" y="26" width="12" height="46" rx="1.5" fill="#1F4E9E"/><rect x="57" y="32" width="12" height="40" rx="1.5" fill="#14213D"/><rect x="72" y="22" width="4" height="54" fill="#C2410C"/></svg></div><span>Today</span></div>
+  <div class="ag" id="s1-a0"><b>1</b>What removing identifiers means</div>
+  <div class="ag" id="s1-a1"><b>2</b>How to choose a technique</div>
+  <div class="ag" id="s1-a2"><b>3</b>The wall around each client</div>
+</div></div>
+<div id="s2" class="clip scene" data-start="16.20" data-duration="17.50" data-track-index="1"><div class="label" id="s2-l1">Removing identifiers</div>
+<div class="label" id="s2-l2">Two factors</div>
+<div id="s2-laptop" class="laptop"><div class="screen"><div class="bar"></div>
+  <div class="rec">
+   <div class="row"><span class="k">Beneficiary</span><span class="v" id="s2-v0">Adaeze Umeh</span></div>
+   <div class="row"><span class="k">A-number</span><span class="v" id="s2-v1">A134-902-661</span></div>
+   <div class="row"><span class="k">USCIS receipt</span><span class="v" id="s2-v2">IOE0912345682</span></div>
+   <div class="row"><span class="k">Employer</span><span class="v" id="s2-v3">Terraform Grid Systems, Inc.</span></div>
+   <div class="row"><span class="k">Salary</span><span class="v" id="s2-v4">$260,000</span></div>
+   <div class="row"><span class="k">Classification</span><span class="v keep">O-1A, extraordinary ability in business</span></div>
+  </div></div><div class="base"></div></div>
+<div id="s2-factors" class="factors">
+  <div class="fcard" id="s2-f1"><h3>1&nbsp; Kind of data</h3>
+    <div class="chip"><span>A134-902-661</span><i>fixed pattern</i></div>
+    <div class="chip"><span>$260,000</span><i>a number</i></div>
+    <div class="chip"><span>“named to a founders list two years running”</span><i>no pattern</i></div></div>
+  <div class="fcard" id="s2-f2"><h3>2&nbsp; Purpose</h3>
+    <div class="pp ok" id="s2-p1"><b>Compound</b>the argument: criteria, structure, reasoning</div>
+    <div class="pp wall" id="s2-p2"><b>Wall</b>the person: name, employer, salary, IDs</div></div>
+</div></div>
+<div id="s3" class="clip scene" data-start="33.70" data-duration="15.10" data-track-index="1"><div class="label" id="s3-l1">Masking</div><div class="label" id="s3-l2">Replacement</div>
+<div class="stage"><div class="sheet" id="s3-sheet"><div class="sheet-in serif">
+<p>I have worked alongside <span class="sw" id="s3-n"><span class="a">Adaeze Umeh</span><span class="b">###########</span><span class="c">[NAME]</span></span>, the company's founder and CEO, since our first investment.</p>
+<p><span class="sw" id="s3-o"><span class="a">Terraform Grid Systems, Inc.</span><span class="b">##############</span><span class="c">[ORG]</span></span> closed an <span class="sw" id="s3-m"><span class="a">$18,500,000</span><span class="b">###########</span><span class="c">[AMOUNT]</span></span> round she led personally through six months of due diligence.</p>
+<p>The board compensates her at <span class="sw" id="s3-s"><span class="a">$260,000</span><span class="b">########</span><span class="c">[AMOUNT]</span></span> annually.</p>
+</div><div class="tear"></div></div></div></div>
+<div id="s4" class="clip scene" data-start="48.80" data-duration="14.50" data-track-index="1"><div class="label" id="s4-l1">The paraphrase problem</div>
+<div class="stage" id="s4-a"><div class="sheet wide" id="s4-sheet"><div class="sheet-in serif big">
+<p>The beneficiary is <span id="s4-q" class="q">the founder of the delivery startup that raised its Series A last year</span>.</p>
+<p class="dim">No name. No number. Still one person.</p></div><div class="tear"></div></div></div>
+<div id="s4-stat" class="stat"><div class="sn">0<span>/102</span></div><div class="sl">paraphrased leaks caught by pattern matching</div>
+<div class="note">Hard held-out set: synthetic legal drafts, not O-1 petitions. n = 102 leaks.</div></div>
+<div id="s4-judge" class="judge"><div class="jh">Model judge</div><div class="jv">Leak</div>
+<div class="jq">“…the delivery startup that raised its Series A last year” points to one person.</div></div></div>
+<div id="s5" class="clip scene" data-start="63.30" data-duration="13.00" data-track-index="1"><div class="label">The wall</div>
+<div class="wallstage">
+  <div class="src" id="s5-a"><div class="sh">GBrain source</div><div class="sid">o1-umeh</div><div class="cred">scoped credential: o1-umeh only</div></div>
+  <div class="wbar" id="s5-w"></div>
+  <div class="src" id="s5-b"><div class="sh">GBrain source</div><div class="sid">o1-achterberg</div><div class="cred">scoped credential: o1-achterberg only</div></div>
+</div>
+<table class="tbl req" id="s5-t"><tr><th>Agent on o1-umeh asks</th><th>GBrain returns</th></tr>
+<tr id="s5-r0"><td>search its own matter</td><td class="okc">hits from o1-umeh</td></tr>
+<tr id="s5-r1"><td>open o1-achterberg/intake</td><td><span id="s5-deny" class="deny">permission_denied</span></td></tr></table></div>
+<div id="s6" class="clip scene" data-start="76.30" data-duration="16.70" data-track-index="1"><div class="label">The trade-off</div>
+<svg class="chart" viewBox="0 0 1280 720" width="1280" height="720">
+<line x1="400" y1="40" x2="400" y2="600" class="capline" id="s6-cap"/>
+<text x="412" y="560" class="capl" id="s6-capl">10% cap</text>
+<path id="s6-axes" d="M140 30 L140 600 L1190 600" fill="none" stroke="#14213D" stroke-width="3"/>
+<text x="140" y="640" class="tk" text-anchor="middle">0%</text><text x="400" y="640" class="tk" text-anchor="middle">10%</text><text x="660" y="640" class="tk" text-anchor="middle">20%</text><text x="920" y="640" class="tk" text-anchor="middle">30%</text><text x="1180" y="640" class="tk" text-anchor="middle">40%</text><text x="122" y="608" class="tk" text-anchor="end">0</text><text x="122" y="425.8861788617886" class="tk" text-anchor="end">40</text><text x="122" y="243.77235772357722" class="tk" text-anchor="end">80</text><text x="122" y="48" class="tk" text-anchor="end">123</text>
+<text x="660" y="688" class="ax" text-anchor="middle">Over-redaction: clean words removed, of 2,253</text>
+<text transform="translate(40 320) rotate(-90)" class="ax" text-anchor="middle">Identifiers removed, of 123</text>
+<g class="dot" id="s6-d0"><circle cx="140" cy="581.7886178861788" r="11" fill="#1F4E9E" stroke="#FBFBF9" stroke-width="3"/><text x="158" y="567.7886178861788" class="dl">Facts, blind: 4</text></g><g class="dot" id="s6-d1"><circle cx="275.20000000000005" cy="199.34959349593498" r="11" fill="#1F4E9E" stroke="#FBFBF9" stroke-width="3"/><text x="293.20000000000005" y="205.34959349593498" class="dl">Rules: 88</text></g><g class="dot" id="s6-d2"><circle cx="275.20000000000005" cy="181.13821138211387" r="11" fill="#1F4E9E" stroke="#FBFBF9" stroke-width="3"/></g><g class="dot" id="s6-d3"><circle cx="374" cy="62.76422764227641" r="11" fill="#1E7B4F" stroke="#FBFBF9" stroke-width="3"/><text x="390" y="98.76422764227641" class="dl">River base: 118 at 9.0%</text></g><g class="dot" id="s6-d4"><circle cx="457.2" cy="62.76422764227641" r="11" fill="#1F4E9E" stroke="#FBFBF9" stroke-width="3"/></g><g class="dot" id="s6-d5"><circle cx="883.6000000000001" cy="58.21138211382106" r="11" fill="#1F4E9E" stroke="#FBFBF9" stroke-width="3"/><text x="733.6000000000001" y="92.21138211382106" class="dl">Claude: 119</text></g><g class="dot" id="s6-d6"><circle cx="896.6" cy="53.65853658536582" r="11" fill="#1F4E9E" stroke="#FBFBF9" stroke-width="3"/></g><g class="dot" id="s6-d7"><circle cx="953.8" cy="40" r="11" fill="#1F4E9E" stroke="#FBFBF9" stroke-width="3"/></g><g class="dot" id="s6-d8"><circle cx="979.7999999999998" cy="40" r="11" fill="#1F4E9E" stroke="#FBFBF9" stroke-width="3"/></g><g class="dot" id="s6-d9"><circle cx="1138.4" cy="40" r="11" fill="#1F4E9E" stroke="#FBFBF9" stroke-width="3"/><text x="948.4000000000001" y="18" class="dl">All four: 123 at 38.4%</text></g></svg>
+<div class="src-note">n = 82 held-out paragraphs, 123 identifiers. Source: evals/bakeoff/README.md, results table.</div></div>
+<div id="s7" class="clip scene" data-start="93.00" data-duration="16.60" data-track-index="1"><div class="label">The honest scoreboard</div>
+<table class="tbl score" id="s7-t"><tr><th>Detector</th><th>Hard set<small>102 leaks, 98 clean</small></th><th>Independent sets<small>100 leaks, 100 clean</small></th></tr>
+<tr id="s7-r0"><td>Pattern matching</td><td>0/102 caught, 0/98 false alarms</td><td>38/100 caught, 1/100 false alarms</td></tr>
+<tr id="s7-r1"><td>Prompt judge (Claude Sonnet 5)</td><td>59/102 caught, 7/98 false alarms</td><td>99/100 caught, 3/100 false alarms</td></tr>
+<tr id="s7-r2"><td>River-tuned judge</td><td><span class="bx" id="s7-h">102/102 caught, 0/98 false alarms</span></td><td><span class="bx" id="s7-i">100/100 caught, <em id="s7-fa">12/100 false alarms</em></span></td></tr></table>
+<div class="src-note" id="s7-n">Hard set comes from the same generator the River judge trained on. Independent sets: 5 writers who never saw it. Source: evals/independent/README.md.</div></div>
+<div id="s8" class="clip scene" data-start="109.60" data-duration="6.90" data-track-index="1"><div class="center col"><div class="mark" style="width:170px;height:170px"><svg viewBox="0 0 100 100" width="170" height="170"><circle cx="50" cy="50" r="46" fill="#FBFBF9" stroke="#1F4E9E" stroke-width="6"/><rect x="27" y="30" width="12" height="42" rx="1.5" fill="#14213D"/><rect x="42" y="26" width="12" height="46" rx="1.5" fill="#1F4E9E"/><rect x="57" y="32" width="12" height="40" rx="1.5" fill="#14213D"/><rect x="72" y="22" width="4" height="54" fill="#C2410C"/></svg></div><div class="close" id="s8-c1">Compound the how.</div><div class="close" id="s8-c2">Wall the what.</div></div></div>
+<div id="end" class="clip scene" data-start="116.50" data-duration="4.00" data-track-index="1"><div class="center col"><div class="et">The Wall</div><div class="eu">github.com/d-q222/the-wall</div>
+<div class="ef">Removes identifiers, with residual leakage measured. Synthetic data; every person and firm shown is fictional.</div></div></div>
+<div id="nc1" class="clip ncard" data-start="6.40" data-duration="3.80" data-track-index="3"><div class="nc-in"><p>A playbook. And one person’s file.</p></div></div>
+<div id="nc2" class="clip ncard" data-start="30.80" data-duration="2.90" data-track-index="3"><div class="nc-in"><p>Compound the argument. Wall the person.</p></div></div>
+<div id="nc3" class="clip ncard" data-start="45.10" data-duration="3.70" data-track-index="3"><div class="nc-in"><p>You can still tell what was removed.</p></div></div>
+<div id="nc5" class="clip ncard" data-start="72.70" data-duration="3.60" data-track-index="3"><div class="nc-in"><p>Permissions hold the wall, not the prompt.</p></div></div>
+<div id="nc7" class="clip ncard" data-start="105.90" data-duration="3.70" data-track-index="3"><div class="nc-in"><p>Recall holds. Precision is next.</p></div></div>
+
+<div class="cc clip" data-start="0.40" data-duration="2.92" data-track-index="8"><span>Business is booming at Okafor &amp; Lind Immigration.</span></div>
+<div class="cc clip" data-start="3.32" data-duration="2.97" data-track-index="8"><span>Every O-1 petition the firm has won is a playbook.</span></div>
+<div class="cc clip" data-start="6.29" data-duration="2.14" data-track-index="8"><span>Every one is also one person's file.</span></div>
+<div class="cc clip" data-start="8.43" data-duration="2.32" data-track-index="8"><span>Today: what removing identifiers means,</span></div>
+<div class="cc clip" data-start="10.75" data-duration="1.55" data-track-index="8"><span>how to choose a technique,</span></div>
+<div class="cc clip" data-start="12.30" data-duration="2.68" data-track-index="8"><span>and the wall that keeps each client's file to</span></div>
+<div class="cc clip" data-start="14.98" data-duration="0.42" data-track-index="8"><span>itself.</span></div>
+<div class="cc clip" data-start="16.60" data-duration="2.87" data-track-index="8"><span>Removing identifiers means taking out the facts</span></div>
+<div class="cc clip" data-start="19.47" data-duration="1.53" data-track-index="8"><span>that point to one person:</span></div>
+<div class="cc clip" data-start="21.00" data-duration="1.40" data-track-index="8"><span>the name, the A-number,</span></div>
+<div class="cc clip" data-start="22.40" data-duration="1.95" data-track-index="8"><span>the USCIS receipt, the employer,</span></div>
+<div class="cc clip" data-start="24.35" data-duration="2.75" data-track-index="8"><span>the salary. How you do it depends on the kind</span></div>
+<div class="cc clip" data-start="27.10" data-duration="1.71" data-track-index="8"><span>of data, and on the purpose.</span></div>
+<div class="cc clip" data-start="28.81" data-duration="2.01" data-track-index="8"><span>We want the argument to compound,</span></div>
+<div class="cc clip" data-start="30.82" data-duration="2.01" data-track-index="8"><span>and the person to stay walled in.</span></div>
+<div class="cc clip" data-start="34.10" data-duration="1.80" data-track-index="8"><span>Take a recommendation letter.</span></div>
+<div class="cc clip" data-start="35.90" data-duration="2.85" data-track-index="8"><span>Masking turns each identifier into hash marks,</span></div>
+<div class="cc clip" data-start="38.75" data-duration="2.04" data-track-index="8"><span>so you can't tell what was there.</span></div>
+<div class="cc clip" data-start="40.79" data-duration="2.23" data-track-index="8"><span>Replacement uses typed placeholders:</span></div>
+<div class="cc clip" data-start="43.02" data-duration="2.35" data-track-index="8"><span>name, org, amount. The Wall does this,</span></div>
+<div class="cc clip" data-start="45.38" data-duration="2.54" data-track-index="8"><span>so the letter still reads as an argument.</span></div>
+<div class="cc clip" data-start="49.20" data-duration="1.85" data-track-index="8"><span>But some leaks have no pattern:</span></div>
+<div class="cc clip" data-start="51.05" data-duration="2.80" data-track-index="8"><span>the founder of the delivery startup that raised</span></div>
+<div class="cc clip" data-start="53.85" data-duration="1.37" data-track-index="8"><span>its Series A last year.</span></div>
+<div class="cc clip" data-start="55.22" data-duration="2.45" data-track-index="8"><span>On our hard held-out set of legal drafts,</span></div>
+<div class="cc clip" data-start="57.67" data-duration="2.68" data-track-index="8"><span>pattern matching catches 0 of 102 such leaks.</span></div>
+<div class="cc clip" data-start="60.35" data-duration="2.09" data-track-index="8"><span>So a model judge reads what's left.</span></div>
+<div class="cc clip" data-start="63.70" data-duration="2.60" data-track-index="8"><span>Each matter lives in its own GBrain source,</span></div>
+<div class="cc clip" data-start="66.30" data-duration="1.45" data-track-index="8"><span>with scoped credentials.</span></div>
+<div class="cc clip" data-start="67.75" data-duration="2.84" data-track-index="8"><span>When one beneficiary's agent asks for another's</span></div>
+<div class="cc clip" data-start="70.59" data-duration="2.42" data-track-index="8"><span>file, GBrain answers: permission denied.</span></div>
+<div class="cc clip" data-start="73.00" data-duration="1.57" data-track-index="8"><span>Permissions hold the wall,</span></div>
+<div class="cc clip" data-start="74.58" data-duration="0.91" data-track-index="8"><span>not the prompt.</span></div>
+<div class="cc clip" data-start="76.70" data-duration="2.83" data-track-index="8"><span>Every detector sits on a trade-off.</span></div>
+<div class="cc clip" data-start="79.53" data-duration="3.80" data-track-index="8"><span>On 82 held-out paragraphs with 123 identifiers,</span></div>
+<div class="cc clip" data-start="83.33" data-duration="1.86" data-track-index="8"><span>simple rules remove 88.</span></div>
+<div class="cc clip" data-start="85.19" data-duration="2.02" data-track-index="8"><span>Models remove 118 to 123,</span></div>
+<div class="cc clip" data-start="87.21" data-duration="3.72" data-track-index="8"><span>but the strongest also remove 29 to 38 percent</span></div>
+<div class="cc clip" data-start="90.93" data-duration="1.21" data-track-index="8"><span>of clean words.</span></div>
+<div class="cc clip" data-start="93.40" data-duration="1.82" data-track-index="8"><span>Now the honest scoreboard.</span></div>
+<div class="cc clip" data-start="95.22" data-duration="3.29" data-track-index="8"><span>Our River-tuned judge catches 102 of 102 on the</span></div>
+<div class="cc clip" data-start="98.51" data-duration="3.71" data-track-index="8"><span>hard set, which came from its own training generator.</span></div>
+<div class="cc clip" data-start="102.21" data-duration="1.68" data-track-index="8"><span>On 200 independent rows,</span></div>
+<div class="cc clip" data-start="103.89" data-duration="1.96" data-track-index="8"><span>it catches 100 of 100 leaks,</span></div>
+<div class="cc clip" data-start="105.85" data-duration="2.87" data-track-index="8"><span>with 12 false alarms on 100 clean drafts.</span></div>
+<div class="cc clip" data-start="110.00" data-duration="1.79" data-track-index="8"><span>The Wall removes identifiers,</span></div>
+<div class="cc clip" data-start="111.79" data-duration="1.91" data-track-index="8"><span>with residual leakage measured.</span></div>
+<div class="cc clip" data-start="113.70" data-duration="1.97" data-track-index="8"><span>Compound the how. Wall the what.</span></div>
+
+<audio id="vo-s1" src="audio/s1.wav" data-start="0.40" data-duration="14.994" data-track-index="10"></audio>
+<audio id="vo-s2" src="audio/s2.wav" data-start="16.60" data-duration="16.239" data-track-index="10"></audio>
+<audio id="vo-s3" src="audio/s3.wav" data-start="34.10" data-duration="13.817" data-track-index="10"></audio>
+<audio id="vo-s4" src="audio/s4.wav" data-start="49.20" data-duration="13.241" data-track-index="10"></audio>
+<audio id="vo-s5" src="audio/s5.wav" data-start="63.70" data-duration="11.782" data-track-index="10"></audio>
+<audio id="vo-s6" src="audio/s6.wav" data-start="76.70" data-duration="15.439" data-track-index="10"></audio>
+<audio id="vo-s7" src="audio/s7.wav" data-start="93.40" data-duration="15.321" data-track-index="10"></audio>
+<audio id="vo-s8" src="audio/s8.wav" data-start="110.00" data-duration="5.667" data-track-index="10"></audio>
+
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+tl.fromTo("#s1-mark",{scale:0.6,opacity:0},{scale:1,opacity:1,duration:0.6,ease:"back.out(1.6)"},0.10);
+tl.fromTo("#s1-name",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},0.60);
+tl.fromTo("#s1-b0",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},2.60);
+tl.fromTo("#s1-b1",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},2.67);
+tl.fromTo("#s1-b2",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},2.74);
+tl.fromTo("#s1-b3",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},2.81);
+tl.fromTo("#s1-b4",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},2.88);
+tl.fromTo("#s1-b5",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},2.95);
+tl.fromTo("#s1-b6",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},3.02);
+tl.to("#s1-mark,#s1-name,#s1-shelf",{opacity:0,duration:0.01},10.10);
+tl.fromTo("#s1-agenda .ag-head",{opacity:0},{opacity:1,duration:0.4},10.20);
+tl.fromTo("#s1-a0",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},10.80);
+tl.fromTo("#s1-a1",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},12.50);
+tl.fromTo("#s1-a2",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},14.00);
+tl.fromTo("#s2-l1",{opacity:0},{opacity:1,duration:0.4},16.30);
+tl.fromTo("#s2-laptop",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},16.30);
+tl.fromTo("#s2-v0",{"--hl":0},{"--hl":1,duration:0.35},18.60);
+tl.fromTo("#s2-v1",{"--hl":0},{"--hl":1,duration:0.35},19.30);
+tl.fromTo("#s2-v2",{"--hl":0},{"--hl":1,duration:0.35},20.00);
+tl.fromTo("#s2-v3",{"--hl":0},{"--hl":1,duration:0.35},21.40);
+tl.fromTo("#s2-v4",{"--hl":0},{"--hl":1,duration:0.35},22.20);
+tl.to("#s2-l1,#s2-laptop",{opacity:0,duration:0.01},23.80);
+tl.fromTo("#s2-l2",{opacity:0},{opacity:1,duration:0.4},23.80);
+tl.fromTo("#s2-f1",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},23.90);
+tl.fromTo("#s2-f1 .chip",{opacity:0,x:-20},{opacity:1,x:0,duration:0.4,stagger:0.5},24.50);
+tl.fromTo("#s2-f2",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},26.80);
+tl.fromTo("#s2-p1",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},28.20);
+tl.fromTo("#s2-p2",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},29.40);
+tl.fromTo("#s3-l1",{opacity:0},{opacity:1,duration:0.4},33.80);
+tl.fromTo("#s3-sheet",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},33.80);
+tl.to("#s3-n .a",{opacity:0,duration:0.35},35.70);
+tl.fromTo("#s3-n .b",{opacity:0},{opacity:1,duration:0.35},35.85);
+tl.to("#s3-o .a",{opacity:0,duration:0.35},35.70);
+tl.fromTo("#s3-o .b",{opacity:0},{opacity:1,duration:0.35},35.85);
+tl.to("#s3-m .a",{opacity:0,duration:0.35},35.70);
+tl.fromTo("#s3-m .b",{opacity:0},{opacity:1,duration:0.35},35.85);
+tl.to("#s3-s .a",{opacity:0,duration:0.35},35.70);
+tl.fromTo("#s3-s .b",{opacity:0},{opacity:1,duration:0.35},35.85);
+tl.set("#s3-l1",{opacity:0},39.00);
+tl.fromTo("#s3-l2",{opacity:0},{opacity:1,duration:0.2},39.00);
+tl.set("#s3 .sw .b",{opacity:0},39.00);
+tl.set("#s3 .sw .a",{opacity:1},39.00);
+tl.to("#s3-n .a",{opacity:0,duration:0.3},40.50);
+tl.fromTo("#s3-n .c",{opacity:0},{opacity:1,duration:0.3},40.65);
+tl.to("#s3-o .a",{opacity:0,duration:0.3},40.50);
+tl.fromTo("#s3-o .c",{opacity:0},{opacity:1,duration:0.3},40.65);
+tl.to("#s3-m .a",{opacity:0,duration:0.3},40.50);
+tl.fromTo("#s3-m .c",{opacity:0},{opacity:1,duration:0.3},40.65);
+tl.to("#s3-s .a",{opacity:0,duration:0.3},40.50);
+tl.fromTo("#s3-s .c",{opacity:0},{opacity:1,duration:0.3},40.65);
+tl.fromTo("#s3 .c",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},42.30);
+tl.fromTo("#s4-l1",{opacity:0},{opacity:1,duration:0.4},48.90);
+tl.fromTo("#s4-sheet",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},48.90);
+tl.fromTo("#s4-q",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},50.20);
+tl.fromTo("#s4-sheet .dim",{opacity:0},{opacity:1,duration:0.4},53.00);
+tl.to("#s4-a",{opacity:0,duration:0.01},54.40);
+tl.fromTo("#s4-stat",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},54.40);
+tl.to("#s4-stat",{opacity:0,duration:0.01},59.20);
+tl.fromTo("#s4-judge",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},59.20);
+tl.fromTo("#s5-a",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},63.50);
+tl.fromTo("#s5-b",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},63.80);
+tl.fromTo("#s5-w",{scaleY:0},{scaleY:1,duration:0.6,ease:"power2.out"},64.30);
+tl.fromTo("#s5-t",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},66.30);
+tl.fromTo("#s5-r0",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},66.60);
+tl.fromTo("#s5-r1",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},68.50);
+tl.fromTo("#s5-deny",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},70.60);
+tl.fromTo("#s6-axes",{opacity:0},{opacity:1,duration:0.5},76.40);
+tl.fromTo("#s6 .tk,#s6 .ax",{opacity:0},{opacity:1,duration:0.4},76.70);
+tl.fromTo("#s6-d0",{opacity:0},{opacity:1,duration:0.4},80.30);
+tl.fromTo("#s6-d1",{opacity:0},{opacity:1,duration:0.4},83.10);
+tl.fromTo("#s6-d2",{opacity:0},{opacity:1,duration:0.4},83.40);
+tl.fromTo("#s6-d3",{opacity:0},{opacity:1,duration:0.4},84.90);
+tl.fromTo("#s6-d4",{opacity:0},{opacity:1,duration:0.4},85.02);
+tl.fromTo("#s6-d5",{opacity:0},{opacity:1,duration:0.4},85.14);
+tl.fromTo("#s6-d6",{opacity:0},{opacity:1,duration:0.4},85.26);
+tl.fromTo("#s6-d7",{opacity:0},{opacity:1,duration:0.4},85.38);
+tl.fromTo("#s6-d8",{opacity:0},{opacity:1,duration:0.4},85.50);
+tl.fromTo("#s6-d9",{opacity:0},{opacity:1,duration:0.4},85.62);
+tl.fromTo("#s6-cap,#s6-capl",{opacity:0},{opacity:1,duration:0.4},87.80);
+tl.fromTo("#s6 .src-note",{opacity:0},{opacity:1,duration:0.4},77.30);
+tl.fromTo("#s7-t",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},93.20);
+tl.fromTo("#s7-r0",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},93.60);
+tl.fromTo("#s7-r1",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},94.00);
+tl.fromTo("#s7-r2",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},94.40);
+tl.fromTo("#s7-h",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},96.20);
+tl.fromTo("#s7-i",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},100.80);
+tl.fromTo("#s7-fa",{color:"#14213D"},{color:"#C2410C",duration:0.3},103.80);
+tl.fromTo("#s7-n",{opacity:0},{opacity:1,duration:0.4},95.00);
+tl.fromTo("#s8 .mark",{scale:0.7,opacity:0},{scale:1,opacity:1,duration:0.5,ease:"back.out(1.6)"},109.70);
+tl.fromTo("#s8-c1",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},113.20);
+tl.fromTo("#s8-c2",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},114.20);
+tl.fromTo("#end .et",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},116.60);
+tl.fromTo("#end .eu",{opacity:0,y:24},{opacity:1,y:0,duration:0.5,ease:"power2.out"},117.00);
+tl.fromTo("#end .ef",{opacity:0},{opacity:1,duration:0.4},117.40);
+tl.to("#end .center",{opacity:0,duration:0.5},119.90);
+tl.fromTo("#nc1 p",{opacity:0,y:18},{opacity:1,y:0,duration:0.45,ease:"power2.out"},document.getElementById("nc1").dataset.start*1+0.05);
+tl.fromTo("#nc2 p",{opacity:0,y:18},{opacity:1,y:0,duration:0.45,ease:"power2.out"},document.getElementById("nc2").dataset.start*1+0.05);
+tl.fromTo("#nc3 p",{opacity:0,y:18},{opacity:1,y:0,duration:0.45,ease:"power2.out"},document.getElementById("nc3").dataset.start*1+0.05);
+tl.fromTo("#nc5 p",{opacity:0,y:18},{opacity:1,y:0,duration:0.45,ease:"power2.out"},document.getElementById("nc5").dataset.start*1+0.05);
+tl.fromTo("#nc7 p",{opacity:0,y:18},{opacity:1,y:0,duration:0.45,ease:"power2.out"},document.getElementById("nc7").dataset.start*1+0.05);
+window.__timelines["main"] = tl;
+tl.seek(0);
+</script>
+</body></html>
