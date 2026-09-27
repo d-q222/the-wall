@@ -18,7 +18,6 @@ import argparse
 import hashlib
 import json
 import subprocess
-from collections import Counter
 from pathlib import Path
 
 import river_client as river
@@ -32,7 +31,7 @@ WORKTREES = Path("/Users/dqi26/the-wall-wt")
 RIVER_STATES = [WORKTREES / "h2-river-live/.runtime/river/state.json", WORKTREES / "b2-river/.runtime/river/state.json"]
 OUT = Path(".runtime/indep/verdicts.json")
 DETECTORS = ["regex", "carryover", "prompt", "base", "river"]
-TRICK_KEYS = ("trick", "category", "kind", "type", "tag", "id")
+TRICK_KEYS = ("id", "trick", "category")
 
 
 def _git(*args: str) -> str:
@@ -131,10 +130,11 @@ def main() -> None:
             entry.setdefault("flags", {})[detector] = flags
             pooled[det][0].extend(labels)
             pooled[det][1].extend(flags)
-            misses = Counter(trick_of(r) for r, lab, f in zip(raws, labels, flags) if lab == "leak" and f is not True)
+            missed = [trick_of(r) for r, lab, f in zip(raws, labels, flags) if lab == "leak" and f is not True]
+            alarms = [trick_of(r) for r, lab, f in zip(raws, labels, flags) if lab == "clean" and f is True]
             print(
                 f"  {detector:14s} caught {result.caught}/{result.leaks}  false alarms {result.false_alarms}/{result.clean}"
-                f"  errors {errors}  misses by trick {dict(misses)}"
+                f"  errors {errors}  missed {missed}  false-alarmed {alarms}"
             )
 
     for det in detectors:
