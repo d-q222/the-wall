@@ -43,7 +43,7 @@
   .sheet.animating .ident .orig { display: inline-block; white-space: nowrap; overflow: hidden; vertical-align: top; }
   .sheet.animating .ident.found .orig { background: var(--found); box-shadow: 0 0 0 2px var(--found); color: #14213D; }
   .sheet.animating .ident .chip { display: inline-flex; overflow: hidden; max-width: 0; padding-left: 0; padding-right: 0; border-width: 0; opacity: 0; margin: 0; transition: max-width .38s cubic-bezier(.2,.7,.2,1), opacity .25s ease .08s, padding .38s; }
-  .sheet.animating .ident.collapsed .orig { max-width: 0 !important; opacity: 0; transition: max-width .38s cubic-bezier(.2,.7,.2,1), opacity .2s ease; }
+  .sheet.animating .ident.collapsed .orig { max-width: 0 !important; opacity: 0; box-shadow: none; background: transparent; transition: max-width .38s cubic-bezier(.2,.7,.2,1), opacity .2s ease; }
   .sheet.animating .ident.collapsed .chip { max-width: 16em; opacity: 1; padding-left: 6px; padding-right: 6px; border-width: 1px; margin: 0 1px; }
 
   .residual-text { background: var(--risk-soft); color: #9A3412; text-decoration: underline wavy #C2410C; text-decoration-thickness: 1px; text-underline-offset: 4px; border-radius: 2px; }
@@ -482,7 +482,8 @@
     setTimeout(function () {
       sheet.classList.remove("animating");
       idents.forEach(function (n) { n.classList.remove("found", "collapsed"); n.querySelector(".orig").style.maxWidth = ""; });
-      setView("clean");
+      var want = /[?&]view=(original|redline|clean)/.exec(location.search);
+      setView(want ? want[1] : "clean");
       land();
     }, foldStart + idents.length * FOLD + 450);
   }
