@@ -16,9 +16,9 @@ Say/don't-say per `docs/pitch/claims.md`.
    "GBrain did not answer"). Slide 3: click "De-identify", confirm
    placeholders + judge verdict appear (no "did not answer"). Re-click both
    buttons to reset to the pre-run state before the talk.
-3. Slide 4: read the three big numbers and confirm they match the values
-   under Beat 4 below. If a blind-set cell has appeared, use its numbers
-   off the screen instead.
+3. Slide 4: read the numbers and confirm they match Beat 4 below — regex
+   hard 0/102; blind Claude 19/20, River 20/20, FA 1/20 each, n = 40;
+   independent River 100/100 vs Claude 99/100, FA 12/100 vs 3/100.
 4. Screen recording of both live runs captured in a background tab. Note its
    timestamp here: ____:____.
 
@@ -91,17 +91,17 @@ SCREEN: three big numbers + note line (all rendered live from results.json).
 
 Say:
 "Here's the number that matters. Pattern matching catches 0 of 102
-paraphrased leaks on the held-out hard set, n = 200 with 98 clean.
-Our small River-tuned model, which the firm owns, catches 100 of 100
-against Claude's 99 of 100 on the larger agent-written set — but it
-over-flags more, 12 false alarms in 100 clean against Claude's 3, and the
-slide says so: calibrating that is next. The hard-set caveat is the same
-as ever: it shares its generator with training, so familiar phrasing
-helps. The hand-written 40-case blind set is the stronger test."
-[If a blind-set cell is on screen, read it instead: "On the hand-written
-blind set — the stronger test — Claude catches X, the River model catches
-Y." If the over-flag sentence is gone from the note line, drop the
-calibration sentence.]
+paraphrased leaks on the held-out hard set, n = 200 with 98 clean. On the
+hand-written blind set — the stronger test, 20 leaks plus 20 clean, n =
+40 — Claude catches 19 of 20 at 1 false alarm in 20, and our small
+River-tuned model, which the firm owns, catches 20 of 20 at 1 false alarm
+in 20. Pattern matching gets 12 of 20 there, because the blind set has
+literal leaks too. One honest footnote, on the slide: on the larger
+agent-written set the River model over-flags more, 12 false alarms in 100
+clean against Claude's 3 — calibrating that is next."
+[If any of these moved on screen, say what's on screen. The hard-set
+caveat stands: it shares its generator with training, so familiar phrasing
+helps.]
 
 ### Slide 5 — Built on, 1:40–1:50 (fast)
 
