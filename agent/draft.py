@@ -18,7 +18,9 @@ import urllib.request
 from agent.env import load_env
 from agent.gbrain_client import GBrainClient, content_text
 
-CHECK_URL = os.environ.get("WALL_CHECK_URL", "http://localhost:8787/check")
+API_URL = os.environ.get("WALL_API_URL", "http://localhost:8788")
+CHECK_URL = f"{API_URL}/check"
+SCRUB_URL = f"{API_URL}/scrub"
 DEFAULT_MODEL = "claude-sonnet-5"
 
 
@@ -64,10 +66,13 @@ def draft_letter(prompt: str, model: str | None = None) -> str:
     client = anthropic.Anthropic(default_headers=headers)
     resp = client.messages.create(
         model=model or os.environ.get("WALL_LLM_MODEL", DEFAULT_MODEL),
-        max_tokens=1024,
+        max_tokens=4096,
         messages=[{"role": "user", "content": prompt}],
     )
-    return resp.content[0].text
+    text_blocks = [block.text for block in resp.content if block.type == "text"]
+    if not text_blocks:
+        raise RuntimeError(f"no text in response (stop_reason={resp.stop_reason})")
+    return "".join(text_blocks)
 
 
 def check_draft(matter_id: str, draft: str) -> dict | None:
