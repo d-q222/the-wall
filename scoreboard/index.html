@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ethical Wall Brain - Leak Detection Scoreboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f0f0f;
+            color: #ffffff;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #aaaaaa;
+            margin-bottom: 2rem;
+        }
+
+        .last-updated {
+            font-size: 0.9rem;
+            color: #666666;
+            margin-bottom: 2rem;
+        }
+
+        .scoreboard {
+            background-color: #1a1a1a;
+            border: 2px solid #333333;
+            border-radius: 8px;
+            overflow: auto;
+            margin-bottom: 3rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1.1rem;
+        }
+
+        thead {
+            background-color: #222222;
+            border-bottom: 2px solid #333333;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #ffffff;
+            border-right: 1px solid #333333;
+        }
+
+        th:last-child {
+            border-right: none;
+        }
+
+        td {
+            padding: 1rem;
+            border-right: 1px solid #333333;
+            border-bottom: 1px solid #333333;
+            font-weight: 500;
+        }
+
+        td:last-child {
+            border-right: none;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .detector-name {
+            font-weight: 700;
+            color: #ffffff;
+            min-width: 150px;
+        }
+
+        .eval-set-header {
+            background-color: #333333;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: center;
+            padding: 0.8rem 1rem;
+        }
+
+        .metric-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 100px;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: #888888;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .caught {
+            color: #4ade80;
+        }
+
+        .false-alarm {
+            color: #f87171;
+        }
+
+        .neutral {
+            color: #888888;
+        }
+
+        .highlighted {
+            background-color: #374151;
+            border: 3px solid #fbbf24;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+        }
+
+        .blind-section {
+            background-color: #1a1a1a;
+            border: 2px solid #333333;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .blind-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #ffffff;
+        }
+
+        .blind-detectors {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .blind-detector {
+            background-color: #222222;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border: 1px solid #333333;
+        }
+
+        .blind-detector-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+
+        .blind-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .blind-metric {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .blind-metric-label {
+            font-size: 0.8rem;
+            color: #888888;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .blind-metric-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #888888;
+            font-size: 1.3rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            body {
+                padding: 1rem;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 0.7rem;
+            }
+
+            .metric-value {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Leak Detection Scoreboard</h1>
+        <p class="subtitle">Ethical Wall Brain Evaluation Results</p>
+        <p class="last-updated">Last updated: <span id="updateTime">--:--:--</span> (Auto-refresh every 5s)</p>
+
+        <div id="content">
+            <div class="no-results">Loading results...</div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const useSample = params.has('sample');
+        const resultsUrl = useSample ? './sample_results.json' : '../results/results.json';
+
+        async function loadAndRender() {
+            try {
+                const response = await fetch(resultsUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                render(data);
+            } catch (error) {
+                document.getElementById('content').innerHTML = `
+                    <div class="no-results">
+                        Unable to load results. ${useSample ? '(Sample mode)' : '(Make sure results.json exists at ../results/)'}<br/>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+            }
+            updateTimestamp();
+        }
+
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('updateTime').textContent = now.toLocaleTimeString();
+        }
+
+        function render(data) {
+            if (!data || Object.keys(data).length === 0) {
+                document.getElementById('content').innerHTML = '<div class="no-results">No results yet</div>';
+                return;
+            }
+
+            // Separate blind results from other eval sets
+            const blindResults = {};
+            const regularResults = {};
+
+            for (const [detector, evalSets] of Object.entries(data)) {
+                regularResults[detector] = {};
+                blindResults[detector] = null;
+
+                for (const [evalSet, result] of Object.entries(evalSets)) {
+                    if (evalSet === 'blind') {
+                        blindResults[detector] = result;
+                    } else {
+                        regularResults[detector][evalSet] = result;
+                    }
+                }
+            }
+
+            // Order of detectors to display
+            const detectorOrder = ['regex', 'carryover', 'prompt_judge', 'base_judge', 'river_judge'];
+            const orderedDetectors = detectorOrder.filter(d => Object.keys(regularResults).includes(d));
+
+            // Order of eval sets
+            const allEvalSets = new Set();
+            for (const evalSets of Object.values(regularResults)) {
+                Object.keys(evalSets).forEach(e => allEvalSets.add(e));
+            }
+            const evalSetOrder = ['hard', 'standard', 'demo'];
+            const orderedEvalSets = evalSetOrder.filter(e => allEvalSets.has(e));
+            const otherEvalSets = Array.from(allEvalSets).filter(e => !evalSetOrder.includes(e));
+            const sortedEvalSets = [...orderedEvalSets, ...otherEvalSets];
+
+            let html = '';
+
+            // Main scoreboard
+            html += '<div class="scoreboard">';
+            html += '<table><thead><tr>';
+            html += '<th>Detector</th>';
+
+            // Header for each eval set
+            for (const evalSet of sortedEvalSets) {
+                html += `<th class="eval-set-header" colspan="3">${evalSet.charAt(0).toUpperCase() + evalSet.slice(1)}</th>`;
+            }
+
+            html += '</tr><tr><th>Detector</th>';
+
+            // Sub-headers for each metric
+            for (const evalSet of sortedEvalSets) {
+                html += '<th style="text-align: center; font-size: 0.9rem;">Leaks Caught</th>';
+                html += '<th style="text-align: center; font-size: 0.9rem;">False Alarms</th>';
+                html += '<th style="text-align: center; font-size: 0.9rem;">n</th>';
+            }
+
+            html += '</tr></thead>';
+            html += '<tbody>';
+
+            // Data rows
+            for (const detector of orderedDetectors) {
+                html += '<tr>';
+                html += `<td class="detector-name">${detector}</td>`;
+
+                for (const evalSet of sortedEvalSets) {
+                    const result = regularResults[detector][evalSet];
+
+                    if (!result) {
+                        html += '<td>-</td><td>-</td><td>-</td>';
+                    } else {
+                        // Determine if this cell should be highlighted
+                        const isHighlighted = detector === 'river_judge' && evalSet === 'hard' ||
+                                              (detector === 'prompt_judge' && evalSet === 'hard' && !regularResults['river_judge']);
+
+                        const cellClass = isHighlighted ? 'highlighted' : '';
+
+                        // Leaks caught
+                        const caughtTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">Caught</div><div class="metric-value caught">${result.caught}</div><div class="metric-label" style="font-size: 0.65rem;">${result.caught}/${result.leaks}</div></div></td>`;
+
+                        // False alarms
+                        const falseAlarmTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">False Alarms</div><div class="metric-value false-alarm">${result.false_alarms}</div><div class="metric-label" style="font-size: 0.65rem;">${result.false_alarms}/${result.clean}</div></div></td>`;
+
+                        // n (sample size)
+                        const nTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">n</div><div class="metric-value neutral">${result.n}</div></div></td>`;
+
+                        html += caughtTd + falseAlarmTd + nTd;
+                    }
+                }
+
+                html += '</tr>';
+            }
+
+            html += '</tbody></table>';
+            html += '</div>';
+
+            // Blind evaluation set in separate box
+            if (Object.values(blindResults).some(r => r !== null)) {
+                html += '<div class="blind-section">';
+                html += '<div class="blind-title">Blind Evaluation Set</div>';
+                html += '<div class="blind-detectors">';
+
+                for (const detector of orderedDetectors) {
+                    const result = blindResults[detector];
+                    if (!result) continue;
+
+                    html += '<div class="blind-detector">';
+                    html += `<div class="blind-detector-name">${detector}</div>`;
+                    html += '<div class="blind-metrics">';
+
+                    html += '<div class="blind-metric">';
+                    html += '<div class="blind-metric-label">Leaks Caught</div>';
+                    html += `<div class="blind-metric-value caught">${result.caught}/${result.leaks}</div>`;
+                    html += '</div>';
+
+                    html += '<div class="blind-metric">';
+                    html += '<div class="blind-metric-label">False Alarms</div>';
+                    html += `<div class="blind-metric-value false-alarm">${result.false_alarms}/${result.clean}</div>`;
+                    html += '</div>';
+
+                    html += '<div class="blind-metric">';
+                    html += '<div class="blind-metric-label">Sample Size</div>';
+                    html += `<div class="blind-metric-value neutral">${result.n}</div>`;
+                    html += '</div>';
+
+                    html += '<div class="blind-metric">';
+                    html += '<div class="blind-metric-label">Accuracy</div>';
+                    const accuracy = result.n > 0 ? Math.round((result.caught + (result.clean - result.false_alarms)) / result.n * 100) : 0;
+                    html += `<div class="blind-metric-value">${accuracy}%</div>`;
+                    html += '</div>';
+
+                    html += '</div>';
+                    html += '</div>';
+                }
+
+                html += '</div>';
+                html += '</div>';
+            }
+
+            document.getElementById('content').innerHTML = html;
+        }
+
+        // Initial load and set up auto-refresh
+        loadAndRender();
+        setInterval(loadAndRender, 5000);
+    </script>
+</body>
+</html>
