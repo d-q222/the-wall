@@ -20,11 +20,13 @@ HELD_OUT = ["o1-halliday", "o1-brandt", "o1-almeida", "o1-duarte"]
 EVAL_SET = "o1_deid_heldout"
 COVERED = 0.8  # an identifier counts as removed when >=80% of its characters are
 WORD = re.compile(r"\w+")
+DISTINCTIVE: set[str] = set()  # quasi-identifier fact strings, reported separately
 
 
 def paragraphs(fixtures: Path, matter: str) -> tuple[list[str], list[str]]:
     facts = json.loads((fixtures / matter / "matter.json").read_text())["facts"]
     idents = sorted({v for vals in facts.values() for v in vals}, key=len, reverse=True)
+    DISTINCTIVE.update(v for v in facts.get("distinctive", []) if " " in v)  # phrases, not ID numbers
     paras = [p.strip() for doc in sorted((fixtures / matter).glob("*.md"))
              for p in doc.read_text().split("\n\n") if p.strip()]
     return paras, idents
@@ -46,11 +48,15 @@ def score(text: str, idents: list[str], predicted: list[tuple[int, int]]) -> dic
     for s, e in predicted:
         removed[s:e] = [True] * (e - s)
     ident_chars = [False] * len(text)
-    caught = leaks = 0
+    caught = leaks = q_caught = q_leaks = 0
     for v in idents:
         for s, e in _find_all(text, v):
+            hit = sum(removed[s:e]) >= COVERED * (e - s)
             leaks += 1
-            caught += sum(removed[s:e]) >= COVERED * (e - s)
+            caught += hit
+            if v in DISTINCTIVE:
+                q_leaks += 1
+                q_caught += hit
             ident_chars[s:e] = [True] * (e - s)
     clean = over = 0
     for m in WORD.finditer(text):
@@ -58,7 +64,8 @@ def score(text: str, idents: list[str], predicted: list[tuple[int, int]]) -> dic
             continue
         clean += 1
         over += any(removed[m.start():m.end()])
-    return {"caught": caught, "leaks": leaks, "false_alarms": over, "clean": clean}
+    return {"caught": caught, "leaks": leaks, "false_alarms": over, "clean": clean,
+            "q_caught": q_caught, "q_leaks": q_leaks}
 
 
 def main(fixtures: Path, matters: list[str], detectors: list[str]) -> None:
@@ -75,13 +82,15 @@ def main(fixtures: Path, matters: list[str], detectors: list[str]) -> None:
             completions = river_deid.sample_many(texts, "immigration", model)
             predictions[name] = [text_spans(p, river_deid.parse(p, c)) for p, c in zip(texts, completions)]
     for name, preds in predictions.items():
-        total = {"caught": 0, "leaks": 0, "false_alarms": 0, "clean": 0}
+        total = {"caught": 0, "leaks": 0, "false_alarms": 0, "clean": 0, "q_caught": 0, "q_leaks": 0}
         for (p, idents), pred in zip(rows, preds):
             for k, v in score(p, idents, pred).items():
                 total[k] += v
+        q_caught, q_leaks = total.pop("q_caught"), total.pop("q_leaks")
         result = EvalResult(**total, n=total["leaks"] + total["clean"])
         record(name, EVAL_SET, result)
         print(f"{name}: identifiers removed {result.caught}/{result.leaks}, "
+              f"(quasi-identifier phrases {q_caught}/{q_leaks}), "
               f"over-redacted tokens {result.false_alarms}/{result.clean} "
               f"({len(rows)} paragraphs, matters={','.join(matters)})")
 
