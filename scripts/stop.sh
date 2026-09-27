@@ -5,7 +5,6 @@ set -uo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUNTIME_DIR="$REPO_ROOT/.runtime/demo"
 API_PORT=8788
-STATIC_PORT=8790
 
 stop_pidfile() {
     local pidfile="$1" label="$2"
@@ -21,16 +20,13 @@ stop_pidfile() {
 }
 
 stop_pidfile "$RUNTIME_DIR/api.pid" "API"
-stop_pidfile "$RUNTIME_DIR/static.pid" "scoreboard static server"
 
-# Fallback: in case demo.sh wasn't the one that started them (or the pidfile is stale),
-# kill anything still bound to our two ports. Never touches :3131 (GBrain).
-for port in "$API_PORT" "$STATIC_PORT"; do
-    pid="$(lsof -ti tcp:"$port" 2>/dev/null || true)"
-    if [ -n "$pid" ]; then
-        kill $pid 2>/dev/null
-        echo "Stopped process on :$port (pid $pid)."
-    fi
-done
+# Fallback: in case demo.sh wasn't the one that started it, the pidfile is
+# stale, or `uv run` left its uvicorn child behind. Never touches :3131 (GBrain).
+pid="$(lsof -ti tcp:"$API_PORT" 2>/dev/null || true)"
+if [ -n "$pid" ]; then
+    kill $pid 2>/dev/null
+    echo "Stopped process on :$API_PORT (pid $pid)."
+fi
 
 echo "Done. GBrain on :3131 was left untouched."
