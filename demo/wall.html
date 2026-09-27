@@ -3,470 +3,376 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ethical Wall Brain — the wall</title>
-<meta name="description" content="A live attack against the client wall: one matter's agent tries to reach another's facts, and fails.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<title>Access wall</title>
+<meta name="description" content="A live attack on the wall between two matters: one matter's agent tries to reach another matter's file, and GBrain refuses.">
 <link rel="stylesheet" href="/demo/assets/theme.css">
 <script src="/demo/assets/nav.js" defer></script>
 <style>
-  /* Page-specific: the wall attack stage. Colors, type and components otherwise
-     come from the shared /demo/assets/theme.css. The wall stays --danger (red):
-     it is the one thing on this page that must read as a hard boundary. */
+  /* Access wall screen. Tokens and components come from theme.css (Design v2).
+     The one bold element is the wall itself, drawn in --risk: every request
+     that tries to cross it stops at its face. Everything else stays quiet. */
 
-  .hero {
-    text-align: center;
-    padding: var(--space-12) 0 var(--space-8);
-  }
-  .hero h1 {
-    font-family: var(--font-doc);
-    font-weight: 600;
-    font-size: clamp(2.1rem, 4vw, 3.1rem);
-    line-height: 1.15;
-    margin: 0 0 var(--space-3);
-    color: var(--text);
-  }
-  .hero p {
-    font-size: var(--text-xl);
-    color: var(--text-secondary);
-    max-width: 40rem;
-    margin: 0 auto;
-    line-height: 1.5;
-  }
-  .hero p .who { color: var(--text); font-weight: 600; }
+  .pickers { display: flex; align-items: flex-end; gap: 10px; }
+  .pickers label { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-13); color: var(--text-3); }
+  .pickers select { min-width: 220px; }
 
-  .toolbar.run-toolbar {
-    justify-content: center;
-    gap: var(--space-8);
-  }
-  .picker {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-  .picker label {
-    margin: 0;
-    font-size: var(--text-xs);
-    color: var(--text-tertiary);
-  }
-  .picker select { min-width: 15rem; }
-  .versus { color: var(--text-tertiary); font-size: var(--text-sm); }
-
-  .status-line {
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
-    min-height: 1.2rem;
-    margin-bottom: var(--space-6);
-  }
-  .status-line.error { color: var(--danger); }
-  .status-line button.retry {
-    margin-left: var(--space-2);
-    padding: 0.15rem 0.6rem;
-  }
-
-  /* -- the two rooms + wall -- */
   .stage {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 0;
+    grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
     align-items: stretch;
-    margin-bottom: var(--space-8);
+    margin-bottom: 20px;
   }
 
-  .room {
-    padding: var(--space-6);
-    min-height: 20rem;
-    display: flex;
-    flex-direction: column;
-  }
-  .room.attacker { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none; }
+  .room { display: flex; flex-direction: column; min-width: 0; }
+  .room .panel-head { align-items: baseline; }
+  .room .panel-head h2 { font-size: var(--fs-17); }
+  .room .panel-head .meta { margin-left: auto; }
+  .room .panel-body { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+  .room.attacker { border-top-right-radius: 0; border-bottom-right-radius: 0; }
   .room.target { border-top-left-radius: 0; border-bottom-left-radius: 0; }
 
-  .room h2 {
-    font-family: var(--font-doc);
-    font-size: var(--text-xl);
-    font-weight: 600;
-    margin: 0 0 0.15rem;
-    color: var(--text);
-  }
-  .room .sub {
-    font-size: var(--text-sm);
-    color: var(--text-tertiary);
-    margin-bottom: var(--space-6);
-  }
-
-  .lane {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-
-  .chip {
-    font-size: var(--text-sm);
-    background: var(--surface-raised);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 0.55rem 0.8rem;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.35s ease, transform 0.35s ease, border-color 0.2s ease;
-    width: fit-content;
-    max-width: 100%;
-    color: var(--text);
-  }
-  .chip.show { opacity: 1; transform: translateY(0); }
-  .chip.attacker-origin { align-self: flex-start; }
-  .chip.target-origin { align-self: flex-end; text-align: right; }
-  .chip.hit-wall { border-color: var(--danger); animation: bump 0.32s ease; }
-  .chip.passed-through { border-color: var(--success); }
-  @keyframes bump {
-    0% { transform: translateX(0); }
-    40% { transform: translateX(6px); }
-    100% { transform: translateX(0); }
-  }
-
-  .chip .badge {
-    display: block;
-    width: fit-content;
-    margin-top: 0.4rem;
-    font-size: var(--text-xs);
-    padding: 0.15rem 0.5rem;
-    border-radius: var(--radius-sm);
-    opacity: 0;
-    transition: opacity 0.3s ease 0.15s;
-  }
-  .chip .badge.show { opacity: 1; }
-
-  .divider {
-    width: 2.75rem;
+  /* the matter's real intake, as a small paper sheet */
+  .room .sheet {
+    max-width: none; padding: 18px 22px 16px; font-size: var(--fs-15); line-height: 1.6;
     position: relative;
-    background:
-      repeating-linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--danger) 35%, transparent) 0 3px,
-        transparent 3px 14px
-      ),
-      var(--surface-raised);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
   }
-  .divider::before, .divider::after {
-    content: "";
-    position: absolute;
-    top: 0; bottom: 0;
-    width: 2px;
-    background: var(--danger);
+  .room .sheet h3 { font-family: var(--font-doc); font-size: var(--fs-15); margin-bottom: 6px; color: #14213D; }
+  .room .sheet p {
+    margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .divider::before { left: 0; }
-  .divider::after { right: 0; }
-  .divider.active { animation: pulse 1.1s ease-in-out infinite; }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 rgba(0,0,0,0); }
-    50% { box-shadow: 0 0 22px color-mix(in srgb, var(--danger) 45%, transparent); }
-  }
+  .room .sheet .file { display: block; margin-top: 10px; font-family: var(--font-ui); font-size: var(--fs-13); color: var(--text-3); }
+  .room.target .sheet.targeted { box-shadow: var(--sheet-shadow), 0 0 0 2px var(--risk); }
 
-  /* -- result -- */
-  .result { text-align: center; }
-  .result .tally {
-    font-family: var(--font-doc);
-    font-size: clamp(2.6rem, 6vw, 4.2rem);
-    font-weight: 700;
-    line-height: 1;
-    margin: 0 0 var(--space-2);
-    opacity: 0;
-    transform: scale(0.94);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-  }
-  .result .tally.show { opacity: 1; transform: scale(1); }
-  .result .tally.held { color: var(--success); }
-  .result .tally.broken { color: var(--danger); }
-  .result .caption { color: var(--text-secondary); font-size: var(--text-lg); }
-  .result .replayed {
-    display: inline-block;
-    margin-top: var(--space-3);
-    font-size: var(--text-xs);
-    color: var(--text-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 0.15rem 0.5rem;
-  }
-  .result .replayed[hidden] { display: none; }
+  .lane-title { font-size: var(--fs-13); color: var(--text-3); }
+  .lane { display: flex; flex-direction: column; gap: 10px; min-height: 120px; }
+  /* tracks run to the panel edge so a request visibly reaches the wall face */
+  .room.attacker .lane { margin-right: -16px; }
+  .room.target .lane { margin-left: -16px; }
+  .lane:empty::before { content: attr(data-empty); color: var(--text-3); font-size: var(--fs-13); }
 
-  /* -- detail log -- */
-  details.log {
-    margin-top: var(--space-12);
-    border-top: 1px solid var(--border);
-    padding-top: var(--space-4);
+  /* one request: label, then a track that grows toward the wall */
+  .req {
+    display: grid; grid-template-columns: auto minmax(24px, 1fr); align-items: center; gap: 10px;
+    opacity: 0; transition: opacity .25s ease;
   }
-  details.log summary {
-    cursor: pointer;
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
+  .req.show { opacity: 1; }
+  .req .call {
+    background: var(--surface); border: 1px solid var(--line-strong); border-radius: 6px;
+    padding: 6px 10px; font-size: var(--fs-15); font-weight: 500; white-space: nowrap;
   }
-  .log-row {
-    display: grid;
-    grid-template-columns: 1.6fr 1.6fr 2fr auto;
-    gap: var(--space-4);
-    align-items: baseline;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid var(--border);
-    font-size: var(--text-sm);
+  .req .answer { display: block; font-size: var(--fs-13); font-weight: 600; margin-top: 2px; min-height: 1.4em; }
+  .req.blocked .call { border-color: var(--risk); }
+  .req.blocked .answer { color: var(--risk); }
+  .req.allowed .call { border-color: var(--cleared); }
+  .req.allowed .answer { color: var(--cleared); }
+  .req .track { height: 2px; background: var(--line); position: relative; }
+  .req .track::after {
+    content: ""; position: absolute; inset: 0; background: var(--risk);
+    transform: scaleX(0); transform-origin: left; transition: transform .55s cubic-bezier(.5, 0, .9, .6);
   }
-  .log-row .name { color: var(--text); }
-  .log-row .call, .log-row .res {
-    font-family: ui-monospace, Menlo, Consolas, monospace;
-    color: var(--text-secondary);
-    font-size: 0.8rem;
+  .req.travel .track::after { transform: scaleX(1); }
+  .req.blocked .track::before {
+    content: ""; position: absolute; right: 0; top: -7px; width: 3px; height: 16px; background: var(--risk);
   }
-  .log-row .badge { font-size: var(--text-xs); padding: 0.15rem 0.5rem; }
+  .req.own .track { visibility: hidden; }
+  .req.mirror { grid-template-columns: minmax(24px, 1fr) auto; }
+  .req.mirror .track { order: -1; }
 
-  @media (max-width: 720px) {
+  /* the wall */
+  .wall {
+    position: relative;
+    background: var(--risk);
+    display: grid; place-items: center;
+    transition: box-shadow .15s ease;
+  }
+  .wall span {
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    color: #fff; font-weight: 600; font-size: var(--fs-13); letter-spacing: 0.02em; white-space: nowrap;
+  }
+  .wall.hit { box-shadow: 0 0 0 5px color-mix(in srgb, var(--risk) 28%, transparent); }
+
+  /* verdict */
+  .verdict {
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel);
+    padding: 18px 22px; margin-bottom: 20px; min-height: 84px;
+  }
+  .verdict .tally { font-size: var(--fs-40); font-weight: 700; line-height: 1; letter-spacing: -0.01em; }
+  .verdict .tally.held { color: var(--cleared); }
+  .verdict .tally.broken { color: var(--risk); }
+  .verdict p { color: var(--text-2); font-size: var(--fs-17); max-width: 52ch; }
+  .verdict .actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  .verdict.error p { color: var(--risk); }
+
+  .table td.call-cell, .table td.res-cell { color: var(--text-2); }
+
+  @media (max-width: 900px) {
+    .page-head { flex-wrap: wrap; }
     .stage { grid-template-columns: 1fr; }
-    .divider { width: 100%; height: 2.25rem; }
-    .divider::before, .divider::after { left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 2px; }
-    .divider::after { top: auto; bottom: 0; }
-    .room.attacker { border-radius: var(--radius-lg); border-right: 1px solid var(--border); }
-    .room.target { border-radius: var(--radius-lg); }
-    .log-row { grid-template-columns: 1fr; gap: 0.15rem; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .chip, .chip .badge, .result .tally, .divider.active { transition: none !important; animation: none !important; }
+    .wall { height: 40px; }
+    .wall span { writing-mode: horizontal-tb; transform: none; }
+    .room.attacker, .room.target { border-radius: var(--r-panel); }
   }
 </style>
 </head>
-<body>
-<div id="site-nav"></div>
-
-<div class="page">
-  <div class="hero">
-    <h1>Ask for everything anyway.</h1>
-    <p>
-      <span class="who" id="attackerLabel">Chen</span>'s agent can ask GBrain for anything it wants.
-      Watch what happens when it asks for <span class="who" id="targetLabel">Delmarva</span>.
-    </p>
+<body data-crumb="Access wall">
+<main class="app-main">
+  <div class="page-head">
+    <div>
+      <h1>Access wall</h1>
+      <p>Each matter's agent can only read its own matter in GBrain. Run the attack to watch one agent ask for another matter's file, live.</p>
+    </div>
+    <div class="actions pickers">
+      <label>Attacking matter<select id="attackerSelect"></select></label>
+      <label>Walled-off matter<select id="targetSelect"></select></label>
+      <button class="btn btn-primary" id="runBtn" type="button">Run live attack</button>
+    </div>
   </div>
-
-  <div class="toolbar run-toolbar">
-    <label class="picker">
-      attacker
-      <select id="attackerSelect"></select>
-    </label>
-    <span class="versus">vs.</span>
-    <label class="picker">
-      target
-      <select id="targetSelect"></select>
-    </label>
-    <button class="primary" id="runBtn" type="button">Run attack</button>
-  </div>
-
-  <p class="status-line" id="statusLine" aria-live="polite"></p>
 
   <div class="stage">
-    <section class="room card attacker">
-      <h2 id="attackerRoomTitle">Chen Family Trust</h2>
-      <div class="sub" id="attackerRoomSub">trusts_estates</div>
-      <div class="lane" id="attackerLane"></div>
+    <section class="panel room attacker" aria-labelledby="aTitle">
+      <div class="panel-head"><h2 id="aTitle"></h2><span class="meta" id="aMeta"></span></div>
+      <div class="panel-body">
+        <div class="sheet" id="aSheet"></div>
+        <div class="lane-title" id="aLaneTitle"></div>
+        <div class="lane" id="aLane" data-empty="No requests yet." aria-live="polite"></div>
+      </div>
     </section>
-    <div class="divider" id="wallDivider"></div>
-    <section class="room card target">
-      <h2 id="targetRoomTitle">Delmarva Logistics LLC</h2>
-      <div class="sub" id="targetRoomSub">litigation</div>
-      <div class="lane" id="targetLane"></div>
+    <div class="wall" id="wall" aria-hidden="true"><span>Wall enforced by GBrain</span></div>
+    <section class="panel room target" aria-labelledby="tTitle">
+      <div class="panel-head"><h2 id="tTitle"></h2><span class="meta" id="tMeta"></span></div>
+      <div class="panel-body">
+        <div class="sheet" id="tSheet"></div>
+        <div class="lane-title" id="tLaneTitle"></div>
+        <div class="lane" id="tLane" data-empty="No requests yet." aria-live="polite"></div>
+      </div>
     </section>
   </div>
 
-  <div class="result">
-    <p class="tally" id="tally"></p>
-    <p class="caption" id="captionLine" style="visibility:hidden">Enforced by GBrain's permissions, not by the prompt.</p>
-    <span class="replayed" id="replayedTag" hidden>replayed from last live run</span>
+  <div class="verdict" id="verdict" aria-live="polite">
+    <p id="verdictText">The attack sends five real requests to GBrain. Nothing on this page is simulated.</p>
   </div>
 
-  <details class="log">
-    <summary>Show the 5 checks as raw calls and results</summary>
-    <div id="logRows"></div>
-  </details>
-</div>
+  <section class="panel">
+    <div class="panel-head"><h3>Requests and GBrain's responses</h3></div>
+    <table class="table">
+      <thead><tr><th>Check</th><th>Request</th><th>GBrain response</th><th>Outcome</th></tr></thead>
+      <tbody id="logRows"><tr><td colspan="4" class="muted">Run the attack to fill this table.</td></tr></tbody>
+    </table>
+  </section>
+</main>
 
 <script>
 (function () {
-  // Only matters with a live GBrain wall client are listed here; extend once
-  // e5-o1-wall registers clients for fixtures/matters/o1-*.
-  var MATTERS = [
-    { id: "chen", client: "Chen Family Trust", practice: "trusts_estates" },
-    { id: "delmarva", client: "Delmarva Logistics LLC", practice: "litigation" },
-    { id: "reyes", client: "Luisa Reyes", practice: "litigation" }
-  ];
+  // Matters with a live GBrain source and read-only client. The O-1 matters
+  // join this list once their GBrain sources exist (walls/o1/add_sources.sh).
+  var WALLED = ["chen", "delmarva", "reyes"];
+  var PRACTICE = { trusts_estates: "Trusts and estates", litigation: "Litigation", immigration: "Immigration" };
   var byId = {};
-  MATTERS.forEach(function (m) { byId[m.id] = m; });
 
-  var attackerSelect = document.getElementById("attackerSelect");
-  var targetSelect = document.getElementById("targetSelect");
-  var runBtn = document.getElementById("runBtn");
-  var statusLine = document.getElementById("statusLine");
-  var attackerLane = document.getElementById("attackerLane");
-  var targetLane = document.getElementById("targetLane");
-  var wallDivider = document.getElementById("wallDivider");
-  var tally = document.getElementById("tally");
-  var captionLine = document.getElementById("captionLine");
-  var replayedTag = document.getElementById("replayedTag");
-  var logRows = document.getElementById("logRows");
+  var $ = function (id) { return document.getElementById(id); };
+  var aSel = $("attackerSelect"), tSel = $("targetSelect"), runBtn = $("runBtn");
+  var aLane = $("aLane"), tLane = $("tLane"), wall = $("wall"), verdict = $("verdict"), logRows = $("logRows");
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  function fillSelect(sel, defaultId) {
-    MATTERS.forEach(function (m) {
-      var opt = document.createElement("option");
-      opt.value = m.id;
-      opt.textContent = m.client + " (" + m.id + ")";
-      if (m.id === defaultId) opt.selected = true;
-      sel.appendChild(opt);
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, reduceMotion ? 0 : ms); }); }
+  // "chen" -> "Chen": the name partners use for the matter in conversation
+  function short(m) { return m.id.charAt(0).toUpperCase() + m.id.slice(1); }
+
+  function fillSelect(sel, ids, chosen) {
+    sel.innerHTML = "";
+    ids.forEach(function (id) {
+      var o = el("option", null, byId[id].client);
+      o.value = id;
+      if (id === chosen) o.selected = true;
+      sel.appendChild(o);
     });
   }
-  fillSelect(attackerSelect, "chen");
-  fillSelect(targetSelect, "delmarva");
+
+  function renderSheet(node, m) {
+    node.innerHTML = "";
+    node.classList.remove("targeted");
+    var file = Object.keys(m.documents || {})[0];
+    if (!file) { node.appendChild(el("p", null, "No documents in this matter.")); return; }
+    var lines = m.documents[file].split("\n").filter(function (l) { return l.trim(); });
+    var title = lines[0].replace(/^#+\s*/, "");
+    node.appendChild(el("h3", null, title));
+    node.appendChild(el("p", null, lines.slice(1).join(" ")));
+    node.appendChild(el("span", "file", m.id + "/" + file.replace(/\.md$/, "")));
+  }
 
   function renderRooms() {
-    var a = byId[attackerSelect.value], t = byId[targetSelect.value];
-    document.getElementById("attackerLabel").textContent = a.client.split(" ")[0];
-    document.getElementById("targetLabel").textContent = t.client.split(" ")[0];
-    document.getElementById("attackerRoomTitle").textContent = a.client;
-    document.getElementById("attackerRoomSub").textContent = a.practice;
-    document.getElementById("targetRoomTitle").textContent = t.client;
-    document.getElementById("targetRoomSub").textContent = t.practice;
-  }
-  attackerSelect.addEventListener("change", renderRooms);
-  targetSelect.addEventListener("change", renderRooms);
-  renderRooms();
-
-  function clearStage() {
-    attackerLane.innerHTML = "";
-    targetLane.innerHTML = "";
-    tally.className = "tally";
-    tally.textContent = "";
-    captionLine.style.visibility = "hidden";
-    replayedTag.hidden = true;
-    logRows.innerHTML = "";
-    wallDivider.classList.remove("active");
-  }
-
-  function humanize(check, attacker, target) {
-    // A short, spoken-language label for the traveling chip; the raw call
-    // stays visible in the detail log below.
-    if (check.name.indexOf("recalls its own facts") !== -1) return "search: its own matter";
-    if (check.name.indexOf("control") !== -1) return "search: its own file";
-    if (check.name.indexOf("searches for") !== -1) return "search: " + target;
-    if (check.name.indexOf("ALL sources") !== -1) return "search: all sources";
-    if (check.name.indexOf("opens") !== -1) return "open: " + target + "'s file";
-    return check.name;
-  }
-
-  function addChip(lane, origin, label) {
-    var chip = document.createElement("div");
-    chip.className = "chip " + origin + "-origin";
-    chip.textContent = label;
-    lane.appendChild(chip);
-    // force layout before adding .show so the transition runs
-    requestAnimationFrame(function () { chip.classList.add("show"); });
-    return chip;
-  }
-
-  function addVerdict(chip, ok, text) {
-    var v = document.createElement("div");
-    v.className = "badge " + (ok ? "clean" : "leak");
-    v.textContent = text;
-    chip.appendChild(v);
-    requestAnimationFrame(function () { v.classList.add("show"); });
-  }
-
-  function sleep(ms) {
-    return new Promise(function (resolve) { setTimeout(resolve, reduceMotion ? 0 : ms); });
-  }
-
-  function addLogRow(check) {
-    var row = document.createElement("div");
-    row.className = "log-row";
-    row.innerHTML =
-      '<div class="name">' + escapeHtml(check.name) + '</div>' +
-      '<div class="call">' + escapeHtml(check.call) + '</div>' +
-      '<div class="res">' + escapeHtml(check.result) + '</div>' +
-      '<div class="badge ' + (check.passed ? "clean" : "leak") + '">' +
-        (check.passed ? "held" : "breached") + '</div>';
-    logRows.appendChild(row);
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
-
-  async function animateChecks(checks, attacker, target) {
-    for (var i = 0; i < checks.length; i++) {
-      var c = checks[i];
-      var crossesWall = c.name.indexOf("searches for") !== -1 ||
-        c.name.indexOf("ALL sources") !== -1 || c.name.indexOf("opens") !== -1;
-      var originatesInTarget = c.name.indexOf("control") !== -1;
-      var lane = originatesInTarget ? targetLane : attackerLane;
-      var origin = originatesInTarget ? "target" : "attacker";
-      var chip = addChip(lane, origin, humanize(c, attacker, target));
-
-      await sleep(220);
-
-      if (crossesWall) {
-        wallDivider.classList.add("active");
-        await sleep(380);
-        chip.classList.add("hit-wall");
-        wallDivider.classList.remove("active");
-      } else {
-        chip.classList.add("passed-through");
-      }
-
-      addVerdict(chip, c.passed, c.result);
-      addLogRow(c);
-      await sleep(reduceMotion ? 0 : 260);
+    if (aSel.value === tSel.value) {
+      // a matter can't attack itself; move the target to the next matter
+      var next = WALLED.filter(function (id) { return id !== aSel.value; })[0];
+      tSel.value = next;
     }
+    var a = byId[aSel.value], t = byId[tSel.value];
+    $("aTitle").textContent = a.client;
+    $("aMeta").textContent = PRACTICE[a.practice] || a.practice;
+    $("tTitle").textContent = t.client;
+    $("tMeta").textContent = PRACTICE[t.practice] || t.practice;
+    $("aLaneTitle").textContent = "Requests from " + short(a) + "'s agent";
+    $("tLaneTitle").textContent = "Requests from " + short(t) + "'s agent";
+    renderSheet($("aSheet"), a);
+    renderSheet($("tSheet"), t);
+    reset();
+  }
+
+  function reset() {
+    aLane.innerHTML = "";
+    tLane.innerHTML = "";
+    verdict.className = "verdict";
+    verdict.innerHTML = "";
+    verdict.appendChild(el("p", null, "The attack sends five real requests to GBrain. Nothing on this page is simulated."));
+    logRows.innerHTML = '<tr><td colspan="4" class="muted">Run the attack to fill this table.</td></tr>';
+  }
+
+  // Map a check from /demo/api/wall onto the stage. Names come from
+  // wall/walldemo.py (tests/test_walldemo.py pins the substrings).
+  function describe(c, a, t) {
+    var n = c.name;
+    if (n.indexOf("control") !== -1) return { lane: "target", crosses: false, label: "Search its own matter" };
+    if (n.indexOf("recalls its own facts") !== -1) return { lane: "attacker", crosses: false, label: "Search its own matter" };
+    if (n.indexOf("ALL sources") !== -1) return { lane: "attacker", crosses: true, label: "Search every matter" };
+    if (n.indexOf("opens") !== -1) return { lane: "attacker", crosses: true, label: "Open " + short(t) + "'s intake", opens: true };
+    if (n.indexOf("searches for") !== -1) return { lane: "attacker", crosses: true, label: "Search for " + short(t) };
+    return { lane: "attacker", crosses: false, label: n };
+  }
+
+  function answerText(c, crosses) {
+    var r = c.result;
+    if (/permission_denied/.test(r)) return "Permission denied";
+    if (/^refused/.test(r)) return "Refused";
+    var m = r.match(/^(\d+) hit/);
+    if (m) {
+      var k = +m[1];
+      var s = k === 0 ? "No results" : k + (k === 1 ? " result" : " results");
+      return crosses && k === 0 ? s + ", wall held" : s;
+    }
+    return r;
+  }
+
+  function checkName(c, a, t) {
+    return c.name.replace(a.id, short(a)).replace(t.id, short(t)).replace("ALL sources", "all sources");
+  }
+
+  function addLogRow(c, a, t) {
+    var tr = el("tr");
+    tr.appendChild(el("td", null, checkName(c, a, t)));
+    tr.appendChild(el("td", "call-cell", c.call));
+    tr.appendChild(el("td", "res-cell", c.result.replace(" -- ", ": ")));
+    var td = el("td");
+    td.appendChild(el("span", "badge " + (c.passed ? "badge-cleared" : "badge-risk"), c.passed ? "As expected" : "Wall breached"));
+    tr.appendChild(td);
+    logRows.appendChild(tr);
+  }
+
+  async function animate(checks, a, t) {
+    logRows.innerHTML = "";
+    for (var i = 0; i < checks.length; i++) {
+      var c = checks[i], d = describe(c, a, t);
+      var inTarget = d.lane === "target";
+      var row = el("div", "req" + (inTarget ? " mirror" : "") + (d.crosses ? "" : " own"));
+      var callBox = el("div", "call", d.label);
+      var ans = el("span", "answer");
+      callBox.appendChild(ans);
+      row.appendChild(callBox);
+      row.appendChild(el("div", "track"));
+      (inTarget ? tLane : aLane).appendChild(row);
+      await sleep(30);
+      row.classList.add("show");
+      await sleep(250);
+
+      if (d.crosses) {
+        if (d.opens) $("tSheet").classList.add("targeted");
+        row.classList.add("travel");
+        await sleep(560);
+        wall.classList.add("hit");
+        await sleep(160);
+        wall.classList.remove("hit");
+      }
+      var breach = d.crosses && !c.passed;
+      row.classList.add(d.crosses && !breach ? "blocked" : "allowed");
+      ans.textContent = answerText(c, d.crosses);
+      if (d.opens) $("tSheet").classList.remove("targeted");
+      addLogRow(c, a, t);
+      await sleep(420);
+    }
+  }
+
+  function showVerdict(data) {
+    var held = data.passed === data.total;
+    verdict.innerHTML = "";
+    verdict.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+    verdict.appendChild(el("div", "tally " + (held ? "held" : "broken"),
+      (held ? "Wall held: " : "Wall breached: ") + data.passed + " of " + data.total));
+    verdict.appendChild(el("p", null, held
+      ? "Enforced by GBrain's permissions, not by the prompt."
+      : "At least one request crossed the wall. See the failed check below."));
+    if (data.replayed) {
+      var tag = el("span", "replayed", "Replayed");
+      tag.title = "GBrain was unreachable, so this is the last live result for this pair of matters.";
+      var actions = el("div", "actions");
+      actions.appendChild(tag);
+      verdict.appendChild(actions);
+    }
+  }
+
+  function showError(msg) {
+    verdict.className = "verdict error";
+    verdict.innerHTML = "";
+    verdict.appendChild(el("p", null, "GBrain didn't answer (" + msg + "), and there's no earlier live run for this pair to replay. Check that GBrain is running on port 3131, then run the attack again."));
+    var actions = el("div", "actions");
+    var retry = el("button", "btn btn-secondary", "Run live attack again");
+    retry.type = "button";
+    retry.addEventListener("click", run);
+    actions.appendChild(retry);
+    verdict.appendChild(actions);
   }
 
   async function run() {
-    clearStage();
-    runBtn.disabled = true;
-    statusLine.className = "status-line";
-    statusLine.textContent = "Running the attack live against GBrain…";
-
-    var attacker = attackerSelect.value, target = targetSelect.value;
-    var url = "/demo/api/wall?matter=" + encodeURIComponent(attacker) +
-      "&target=" + encodeURIComponent(target);
-
+    var a = byId[aSel.value], t = byId[tSel.value];
+    reset();
+    runBtn.disabled = aSel.disabled = tSel.disabled = true;
+    runBtn.textContent = "Running";
+    verdict.innerHTML = "";
+    verdict.appendChild(el("p", null, "Sending the requests to GBrain as " + short(a) + "'s agent."));
     try {
-      var res = await fetch(url, { method: "POST" });
-      if (!res.ok) throw new Error("http " + res.status);
+      var res = await fetch("/demo/api/wall?matter=" + encodeURIComponent(a.id) + "&target=" + encodeURIComponent(t.id), { method: "POST" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
       var data = await res.json();
-
-      statusLine.textContent = "";
-      await animateChecks(data.checks, attacker, target);
-
-      var held = data.passed === data.total;
-      tally.textContent = "Wall held: " + data.passed + "/" + data.total;
-      tally.classList.add("show", held ? "held" : "broken");
-      captionLine.style.visibility = "visible";
-      if (data.replayed) replayedTag.hidden = false;
+      await animate(data.checks, a, t);
+      showVerdict(data);
     } catch (err) {
-      statusLine.className = "status-line error";
-      statusLine.textContent = "Couldn't reach the wall (" + err.message + ").";
-      var retry = document.createElement("button");
-      retry.className = "secondary retry";
-      retry.type = "button";
-      retry.textContent = "Retry";
-      retry.addEventListener("click", run);
-      statusLine.appendChild(retry);
+      showError(err.message);
     } finally {
-      runBtn.disabled = false;
+      runBtn.disabled = aSel.disabled = tSel.disabled = false;
+      runBtn.textContent = "Run live attack";
     }
   }
 
+  fetch("/demo/api/matters").then(function (r) { return r.json(); }).then(function (ms) {
+    ms.forEach(function (m) { byId[m.id] = m; });
+    var ids = WALLED.filter(function (id) { return byId[id]; });
+    fillSelect(aSel, ids, "chen");
+    fillSelect(tSel, ids, "delmarva");
+    renderRooms();
+  }).catch(function () {
+    verdict.className = "verdict error";
+    verdict.innerHTML = "";
+    verdict.appendChild(el("p", null, "Couldn't load the firm's matters from /demo/api/matters. Check that the demo API is running, then reload."));
+    runBtn.disabled = true;
+  });
+
+  aSel.addEventListener("change", renderRooms);
+  tSel.addEventListener("change", renderRooms);
   runBtn.addEventListener("click", run);
 })();
 </script>

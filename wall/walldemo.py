@@ -4,9 +4,10 @@ Mirrors walls/attack.py's 5 checks (self-recall, control, blocked search,
 clamped __all__, blocked direct page read), generalized to any matter/target
 pair via walls.client.Client against the live GBrain server.
 
-Demo-safe rule: cache the last live success under .runtime/demo_cache/wall.json
-and replay it (flagged "replayed": true) if the live call fails. Never
-fabricate a result that was never produced live.
+Demo-safe rule: cache the last live success per matter/target pair under
+.runtime/demo_cache/wall.json and replay it (flagged "replayed": true) if the
+live call fails. Only the requested pair is ever replayed, so the page never
+shows one pair's result under another pair's names.
 """
 import json
 from pathlib import Path
@@ -55,16 +56,30 @@ def _run_live(matter: str, target: str) -> dict:
     return {"checks": checks, "passed": passed, "total": len(checks), "replayed": False}
 
 
+def _load_cache() -> dict:
+    """{"matter|target": result}. A pre-pairing cache held one bare result; its
+    pair is recoverable from the first two check names (see _run_live)."""
+    if not CACHE.exists():
+        return {}
+    data = json.loads(CACHE.read_text())
+    if "checks" in data:
+        matter = data["checks"][0]["name"].split(" ")[0]
+        target = data["checks"][1]["name"].split(" ")[0]
+        return {f"{matter}|{target}": data}
+    return data
+
+
 def attack(matter: str = "chen", target: str = "delmarva") -> dict:
     """{"checks": [{"name", "call", "result", "passed"}], "passed": int, "total": int, "replayed": bool}"""
+    key = f"{matter}|{target}"
+    cache = _load_cache()
     try:
         result = _run_live(matter, target)
     except Exception:
-        if CACHE.exists():
-            cached = json.loads(CACHE.read_text())
-            cached["replayed"] = True
-            return cached
+        if key in cache:
+            return {**cache[key], "replayed": True}
         raise
+    cache[key] = result
     CACHE.parent.mkdir(parents=True, exist_ok=True)
-    CACHE.write_text(json.dumps(result))
+    CACHE.write_text(json.dumps(cache))
     return result
