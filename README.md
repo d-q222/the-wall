@@ -7,7 +7,7 @@ Agent memory for small law firms that compounds the firm's know-how across matte
 ## What it does
 
 - **A wall per client.** Every matter gets its own isolated GBrain source. A matter's agent connects with a scoped OAuth client that can read only its own source — never a local trusted caller — and [`walls/attack.py`](walls/attack.py) runs a live cross-matter attack that prints `permission_denied`. ([`walls/client.py`](walls/client.py), [`walls/README.md`](walls/README.md))
-- **De-identify, then verify.** `POST /deidentify` detects a petition draft's identifiers — beneficiary name, employer, salary, award years, A-number, receipt/passport number, plus generic PII ([`wall/pii.py`](wall/pii.py)) — and replaces each with a typed placeholder (`[NAME]`, `[ORG]`, `[AMOUNT]`, …). The response carries a `residual` slot for a judge's read on whether a *paraphrased* description still re-identifies the beneficiary; it's populated once the judge (below) is wired. ([`wall/deid.py`](wall/deid.py), [`wall/judge.py`](wall/judge.py), contract in [`wall/contract.py`](wall/contract.py))
+- **De-identify, then verify.** `POST /deidentify` detects a petition draft's identifiers — beneficiary name, employer, salary, award years, A-number, receipt/passport number, plus generic PII ([`wall/pii.py`](wall/pii.py)) — replaces each with a typed placeholder (`[NAME]`, `[ORG]`, `[AMOUNT]`, …), then a judge reads what's left for a *paraphrased* description that could still re-identify the beneficiary. ([`wall/deid.py`](wall/deid.py), [`wall/judge.py`](wall/judge.py), contract in [`wall/contract.py`](wall/contract.py))
 - **Policy per practice area.** Every matter carries a practice tag ([`fixtures/policy.json`](fixtures/policy.json)) that sets what may compound — procedures, checklists, research — against what never does: beneficiary identity, employer, salary, strategy, witness or recommender details. [`wall/scrub.py`](wall/scrub.py) enforces the policy before a procedure can be shared, and the scrubbed trace is what reaches Memorable ([`memorable/ingest.sh`](memorable/ingest.sh)).
 
 Full request path and de-identification pipeline: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
@@ -57,7 +57,7 @@ Cost (n=20, live `claude-sonnet-5` calls): prompt judge runs **$1.34 per 1,000 j
 | Host | Job in this product | Where |
 |---|---|---|
 | **GBrain** | The wall — one isolated source per matter, a scoped read-only OAuth client per matter agent | `walls/` |
-| **River** | Owned leak judge, SFT-tuned on synthetic leak/clean examples with zero real client data | `river/`, `wall/judge.py` |
+| **River** | Owned leak judge — base Qwen plus a LoRA checkpoint SFT-tuned on synthetic leak/clean examples with zero real client data | `river/`, `evals/run_judges.py` |
 | **Memorable** | Procedural memory — ingests a scrubbed session trace so a procedure (not a fact) becomes firm know-how | `memorable/` |
 | **QM** | Room-per-matter, scoped skill promotion — scoped out of this build; the wall and web demo carry that story instead | `docs/PRD.md` |
 

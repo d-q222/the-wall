@@ -57,7 +57,7 @@ flowchart TD
 | De-identify endpoint: replace spans, verify residual | `wall/deid.py` |
 | Synthetic O-1 beneficiaries (matter.json + petition docs) | `fixtures/matters/o1-achterberg/`, `fixtures/matters/o1-umeh/`, `fixtures/matters/o1-duarte/` |
 | Immigration practice policy (may/never compound) | `fixtures/policy.json` → `"immigration"` |
-| Judge: prompt frontier, base Qwen, River-tuned Qwen (`/judge` HTTP endpoint lands with B2's merge; the three-way numbers in `results/results.json` are already recorded by B2's eval harness) | `wall/judge.py`, `river/` |
+| Judge: `/judge` runs the prompt frontier judge (`claude-sonnet-5` via the `anthropic` SDK) live; `evals/run_judges.py` also samples base Qwen and the River-tuned LoRA checkpoint off River, recording all three to `results/results.json` | `wall/judge.py`, `river/`, `evals/run_judges.py` |
 | O-1-specific eval set (self-written, never the headline) | `evals/` (set name `o1_demo` in `results/results.json`) |
 | Web demo: de-identify workspace, wall + compounding pages | `demo/`, `wall/walldemo.py`, `wall/compound.py` — ownership in `docs/CONTRACT.md` § "Web demo" |
 | Scoreboard (reads `results/results.json` only) | `scoreboard/`, `wall/results.py` |
@@ -66,11 +66,10 @@ The contract for every shape above — `CheckRequest`/`CheckResponse`, `ScrubReq
 `JudgeRequest`/`JudgeResponse`, `DeidentifyRequest`/`DeidentifyResponse`, `EvalResult` — is frozen in
 [`wall/contract.py`](../wall/contract.py); no lane changes it without the coordinator.
 
-`wall/deid.py` calls the judge module in-process (not over HTTP) and catches its
-`NotImplementedError` until `wall/judge.py` is wired, so `DeidentifyResponse.residual` and
-`.judge` are `null` today and populate automatically once the judge lands — no change needed on
-the caller side. Detection and replacement (`text`, `spans`, `removed`) are live now: verified
-against `POST /deidentify` on 2026-09-27.
+`wall/deid.py` calls the judge module in-process (not over HTTP): detect, replace, and the
+judge-verified `residual` are all live end to end. Verified against `POST /deidentify` on
+2026-09-27 — a synthetic draft with a name, org and amount came back with typed placeholders and
+a live `"residual": {"verdict": "clean", ...}` from `prompt_judge`.
 
 ## Two rules that shape both diagrams
 
