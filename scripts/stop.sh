@@ -4,7 +4,7 @@ set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUNTIME_DIR="$REPO_ROOT/.runtime/demo"
-API_PORT=8788
+API_PORT="${API_PORT:-8788}"  # override for dev ports, e.g. API_PORT=8805
 
 stop_pidfile() {
     local pidfile="$1" label="$2"

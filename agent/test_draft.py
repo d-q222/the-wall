@@ -34,3 +34,29 @@ def test_offline_recall_only_reads_own_matter_documents():
     context = draft.recall_offline("chen")
     leaked = [f for f in other_matter_facts("chen") if f in context]
     assert leaked == []
+
+
+def test_demo_safe_caches_live_success_and_replays_on_failure(monkeypatch, tmp_path):
+    monkeypatch.setattr(draft, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(draft, "run", lambda *a, **k: ("live draft", {"verdict": "clean"}))
+    assert draft.run_demo_safe("chen", "task") == ("live draft", {"verdict": "clean"}, False)
+
+    def boom(*a, **k):
+        raise ConnectionError("gbrain down")
+
+    monkeypatch.setattr(draft, "run", boom)
+    assert draft.run_demo_safe("chen", "task") == ("live draft", {"verdict": "clean"}, True)
+
+
+def test_demo_safe_never_fabricates_without_a_live_success(monkeypatch, tmp_path):
+    monkeypatch.setattr(draft, "CACHE_DIR", tmp_path)
+
+    def boom(*a, **k):
+        raise ConnectionError("gbrain down")
+
+    monkeypatch.setattr(draft, "run", boom)
+    try:
+        draft.run_demo_safe("chen", "task")
+    except ConnectionError:
+        return
+    raise AssertionError("expected the live failure to propagate")

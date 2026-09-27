@@ -30,6 +30,9 @@ LOG = OUT / "train.log"
 # k3-river-deid's outputs; override if k3 writes elsewhere.
 K3_DATA = Path(os.environ.get("K3_DEID_DATA", RUNTIME / "river-deid" / "train.jsonl"))
 K3_STATE = Path(os.environ.get("K3_DEID_STATE", RUNTIME / "river-deid" / "state.json"))
+# Blind eval set (docs/BLIND_SET.md): must never be trained on. build_set() refuses any row
+# whose passage overlaps it, including one pasted into an attorney correction.
+BLIND = Path(os.environ.get("WALL_BLIND", "/Users/dqi26/the-wall/data/blind.jsonl"))
 FEEDBACK_UPSAMPLE = 4
 MAX_BASE_ROWS = 200
 REPO = Path(__file__).resolve().parent.parent
@@ -55,7 +58,7 @@ def start_checkpoint() -> str | None:
     ours = _read_json(STATE)
     if ours.get("status") == "done" and ours.get("checkpoint"):
         return ours["checkpoint"]
-    return _read_json(K3_STATE).get("checkpoint_path")
+    return ours.get("last_good_checkpoint") or _read_json(K3_STATE).get("checkpoint_path")
 
 
 def plan() -> dict:
@@ -89,9 +92,34 @@ def _write_state(**fields) -> None:
     STATE.write_text(json.dumps(s, indent=2))
 
 
+def _blind_texts() -> list[str]:
+    if not BLIND.exists():
+        return []
+    texts = []
+    for line in BLIND.read_text().splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        texts += [row.get("draft"), row.get("current")]
+        texts += [m.get("content") for m in row.get("messages", []) if m.get("role") == "user"]
+    return [t.strip() for t in texts if isinstance(t, str) and len(t.strip()) >= 40]
+
+
+def assert_no_blind(rows: list[dict]) -> None:
+    blind = _blind_texts()
+    if not blind:
+        return
+    for r in rows:
+        text = " ".join(m["content"] for m in r["messages"] if m["role"] == "user")
+        for b in blind:
+            if b in text or text.strip() in b:
+                raise ValueError("retrain set overlaps the blind eval set; refusing to train")
+
+
 def build_set() -> tuple[int, int]:
     fb = feedback.to_training_examples()
     rows = _base_rows() + fb * FEEDBACK_UPSAMPLE
+    assert_no_blind(rows)
     random.Random(1).shuffle(rows)
     OUT.mkdir(parents=True, exist_ok=True)
     with TRAIN.open("w") as f:
@@ -110,10 +138,13 @@ def launch() -> dict:
         raise ValueError("no attorney corrections recorded yet")
     job = f"k2-deid-retrain-{int(time.time())}"
     from_ckpt = start_checkpoint()
+    prev = _read_json(STATE)
+    last_good = prev.get("checkpoint") if prev.get("status") == "done" else prev.get("last_good_checkpoint")
     STATE.write_text("{}")
     _write_state(
         job=job, status="starting", n_examples=n_examples, n_feedback=n_feedback,
         from_checkpoint=from_ckpt, checkpoint=None, started_at=time.time(),
+        last_good_checkpoint=last_good, last_good_n_feedback=prev.get("n_feedback") if prev.get("status") == "done" else prev.get("last_good_n_feedback"),
     )
     with LOG.open("w") as log:
         proc = subprocess.Popen(
