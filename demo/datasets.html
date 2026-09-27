@@ -114,9 +114,10 @@
   .sheet {
     background: var(--ds-paper); border-radius: 2px; box-shadow: 0 1px 2px rgba(20,33,61,.12), 0 6px 18px rgba(20,33,61,.08);
     padding: 28px 40px; max-width: 78ch; margin: 0 auto;
-    font-family: var(--font-doc, "Source Serif 4", Georgia, serif); font-size: 16px; line-height: 1.65; white-space: pre-wrap; color: var(--ink, #14213D);
+    font-family: var(--font-doc, "Source Serif 4", Georgia, serif); font-size: 16px; line-height: 1.65; white-space: pre-wrap; max-height: 460px; overflow: auto; color: var(--ink, #14213D);
   }
   .sheet .ph { font-size: 12.5px; color: var(--ink, #14213D); background: #E4ECF8; border-color: #B9CBEA; }
+  .sheet .sheet-h { font-size: 19px; font-weight: 600; }
   .sheet mark.resid { background: none; color: inherit; border-bottom: 2px solid var(--ds-risk); }
   .detail-meta { max-width: 78ch; margin: 0 auto 10px; font-size: 13px; color: var(--ds-ink-2); display: flex; gap: 16px; }
   .detail-meta .grow { flex: 1; }
@@ -278,6 +279,9 @@
       pos = s.end;
     });
     out += esc(t.slice(pos));
+    out = out.replace(/([^\n])\n(?!\n)/g, "$1 ")              // reflow hard-wrapped lines
+      .replace(/^# (.*)$/m, '<strong class="sheet-h">$1</strong>')
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
     var ev = d.result.residual && d.result.residual.verdict === "leak" && d.result.residual.evidence;
     if (ev) { var e = esc(ev), i = out.indexOf(e); if (i >= 0) out = out.slice(0, i) + '<mark class="resid">' + e + "</mark>" + out.slice(i + e.length); }
     return out;
@@ -302,7 +306,7 @@
       if (openId === d.id) {
         html += '<tr class="detail"><td colspan="5">';
         if (d.state === "done") {
-          html += '<div class="detail-meta"><span class="grow">De-identified text, as it will be exported</span><span>' +
+          html += '<div class="detail-meta"><span class="grow">De-identified text for training. The residual the judge flagged is underlined.</span><span>' +
             d.result.removed + " identifiers replaced</span></div><div class=\"sheet\">" + renderSheet(d) + "</div>";
         } else {
           html += '<div class="detail-meta"><span class="grow">Original text. De-identify to see the training version.</span></div>' +
