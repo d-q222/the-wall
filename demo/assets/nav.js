@@ -14,12 +14,14 @@
   var SCREENS = [
     { id: "review", label: "Review", href: "/demo/", icon: "M4 3h9l5 5v13H4zM13 3v5h5M8 13h8M8 17h6" },
     { id: "datasets", label: "Datasets", href: "/demo/datasets.html", icon: "M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" },
+    { id: "model", label: "Model", href: "/demo/training.html", icon: "M12 3l9 5-9 5-9-5zM3 13l9 5 9-5" },
     { id: "matters", label: "Matters", href: "/demo/matters.html", icon: "M3 7h18v13H3zM8 7V4h8v3M3 12h18" },
     { id: "wall", label: "Access wall", href: "/demo/wall.html", icon: "M3 5h18v14H3zM3 10h18M3 15h18M9 5v5M15 10v5M9 15v4" },
     { id: "knowhow", label: "Know-how", href: "/demo/compound.html", icon: "M12 3a6 6 0 0 0-3.5 10.9V17h7v-3.1A6 6 0 0 0 12 3zM9.5 21h5" },
     { id: "policy", label: "Policy", href: "/demo/policy.html", icon: "M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6zM9 12l2 2 4-4" },
     { id: "evaluation", label: "Evaluation", href: "/scoreboard/", icon: "M4 20V10M10 20V4M16 20v-7M22 20H2" },
-    { id: "audit", label: "Audit log", href: "/demo/audit.html", icon: "M5 3h14v18H5zM9 8h6M9 12h6M9 16h4" }
+    { id: "audit", label: "Audit log", href: "/demo/audit.html", icon: "M5 3h14v18H5zM9 8h6M9 12h6M9 16h4" },
+    { id: "stack", label: "Built on", href: "/demo/stack.html", icon: "M4 17l8 4 8-4M4 12l8 4 8-4M12 3l8 4-8 4-8-4z" }
   ];
   var PRESENT = { label: "Present", href: "/demo/present.html" };
   var FIRM = "Okafor & Lind Immigration";
@@ -32,6 +34,10 @@
       localStorage.setItem(key, val);
     } catch (e) { return null; }
   }
+
+  // A link like /demo/?matter=o1-umeh (from Matters) picks the matter on arrival.
+  var linkedMatter = new URLSearchParams(location.search).get("matter");
+  if (linkedMatter) store(MATTER_KEY, linkedMatter);
 
   // apply theme before paint where possible
   var savedTheme = store(THEME_KEY);
