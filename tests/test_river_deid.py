@@ -35,7 +35,9 @@ def test_spans_caches_live_success_and_replays_on_failure(tmp_path, monkeypatch)
     monkeypatch.setattr(river_deid, "sample_many",
                         lambda texts, p, m: ['{"spans":[{"text":"$200,000","kind":"amount"}]}'])
     live = river_deid.spans(TEXT)
-    assert live == [{"text": "$200,000", "kind": "amount", "replacement": "[AMOUNT]"}]
+    start = TEXT.index("$200,000")
+    assert live == [{"text": "$200,000", "kind": "amount", "replacement": "[AMOUNT]",
+                     "start": start, "end": start + len("$200,000")}]
 
     def boom(*a):
         raise RuntimeError("river down")
