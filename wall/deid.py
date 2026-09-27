@@ -163,8 +163,9 @@ def _detect(
 
 
 def _merge(candidates: list[tuple[int, int, str, str]]) -> list[tuple[int, int, str, str]]:
-    """Resolve overlaps: longest match wins at each start position."""
-    ordered = sorted(candidates, key=lambda c: (c[0], -(c[1] - c[0])))
+    """Resolve overlaps: longest match wins at each start position; on an exact tie a
+    specific kind (a_number, receipt, ...) beats the generic quasi_identifier."""
+    ordered = sorted(candidates, key=lambda c: (c[0], -(c[1] - c[0]), c[2] == "quasi_identifier"))
     accepted: list[tuple[int, int, str, str]] = []
     last_end = -1
     for start, end, kind, matched in ordered:
