@@ -200,8 +200,10 @@ async function record(browser, n) {
   const src = await video.path();
   const base = path.join(OUT, `${n}-${name}`);
   const ss = String(start.toFixed(2));
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', ss, '-i', src, '-c:v', 'libvpx-vp9', '-b:v', '4M', '-deadline', 'realtime', '-cpu-used', '8', '-row-mt', '1', '-an', base + '.webm']);
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', ss, '-i', src, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-preset', 'fast', '-an', base + '.mp4']);
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', ss, '-i', src, '-c:v', 'libvpx-vp9', '-b:v', '4M', '-deadline', 'realtime', '-cpu-used', '8', '-row-mt', '1', '-an', base + '.tmp.webm']);
+  fs.renameSync(base + '.tmp.webm', base + '.webm');
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', ss, '-i', src, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-preset', 'fast', '-an', base + '.tmp.mp4']);
+  fs.renameSync(base + '.tmp.mp4', base + '.mp4');
   const dur = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', base + '.mp4']).toString().trim());
   console.log(`beat ${n} ${name}: ${dur.toFixed(1)}s ${ok ? 'ok' : 'INCOMPLETE'}`);
   return { file: `${n}-${name}.webm`, mp4: `${n}-${name}.mp4`, beat: n, name, duration_s: Math.round(dur * 10) / 10,
@@ -221,7 +223,8 @@ async function record(browser, n) {
     const i = manifest.findIndex(m => m.beat === n);
     if (i >= 0) manifest[i] = entry; else manifest.push(entry);
     manifest.sort((a, b) => a.beat - b.beat);
-    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    fs.writeFileSync(manifestPath + '.tmp', JSON.stringify(manifest, null, 2));
+    fs.renameSync(manifestPath + '.tmp', manifestPath);
   }
   await browser.close();
 })();
