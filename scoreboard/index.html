@@ -74,8 +74,12 @@
 
   .notice { margin-top: 20px; padding: 14px 20px; border-left: 3px solid var(--risk); background: var(--surface); border-radius: 0 var(--r-panel, 8px) var(--r-panel, 8px) 0; font-size: var(--fs-15, 15px); line-height: 1.5; color: var(--text); }
   .notice strong { font-weight: 600; }
-  .hero { font-size: var(--fs-21, 21px); line-height: 1.35; margin: 0 0 18px; max-width: 60ch; }
+  .hero { font-size: var(--fs-17, 17px); line-height: 1.5; margin: 0 0 18px; max-width: 80ch; padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel, 8px); }
   .hero b { color: var(--blue); font-weight: 600; }
+  .breakdown { border-top: 1px solid var(--line); }
+  .breakdown summary { cursor: pointer; padding: 12px 20px; font-size: var(--fs-15, 15px); color: var(--blue); font-weight: 500; }
+  .breakdown summary:focus-visible { outline: none; box-shadow: var(--focus); }
+  .breakdown[open] summary { border-bottom: 1px solid var(--line); }
   .err { padding: 20px; color: var(--risk); }
   .stamp { font-size: var(--fs-13, 13px); color: var(--text-2); }
 </style>
@@ -103,7 +107,22 @@
       </div>
     </section>
 
-    <div class="notice" id="caveat"><strong>Read the hard set with care.</strong> It shares templates with the training data: 69 of the 200 evaluation drafts share more than half of their 8-grams with a training draft. The blind set below is the check against that.</div>
+    <div class="notice" id="caveat"><strong>Read the hard set with care.</strong> It shares templates with the training data: 69 of the 200 evaluation drafts share more than half of their 8-grams with a training draft. The independent and blind sets below are the check against that.</div>
+
+    <section class="panel" style="margin-top:20px" aria-labelledby="h-indep">
+      <div class="panel-head">
+        <div>
+          <h2 id="h-indep">Independent sets</h2>
+          <p class="sub">Written by separate agents that never saw the training generator. Five sets combined.</p>
+        </div>
+        <div class="meta" id="indep-n"></div>
+      </div>
+      <div id="indep-head"></div>
+      <details class="breakdown">
+        <summary>Show each independent set</summary>
+        <div id="indep" style="overflow-x:auto"></div>
+      </details>
+    </section>
 
     <div class="grid2">
       <section class="panel" aria-labelledby="h-blind">
@@ -129,15 +148,6 @@
       </section>
     </div>
 
-    <section class="panel" style="margin-top:20px" aria-labelledby="h-indep">
-      <div class="panel-head">
-        <div>
-          <h2 id="h-indep">Independent sets</h2>
-          <p class="sub">Each set was written by a separate agent that never saw the training data. Recall, with false alarms on clean drafts.</p>
-        </div>
-      </div>
-      <div id="indep" style="overflow-x:auto"></div>
-    </section>
 
     <section class="panel" style="margin-top:20px" aria-labelledby="h-cost" id="cost-panel" hidden>
       <div class="panel-head">
@@ -260,6 +270,19 @@
     $("cost-panel").hidden = false;
   }
 
+  // Honest framing: the hard-set result is always paired with the independent sets.
+  function heroText(data) {
+    function g(d, set) { return data[d] && data[d][set]; }
+    var rh = g("regex", "hard"), ri = g("regex", "independent"), vi = g("river_judge", "independent"), pi = g("prompt_judge", "independent"), bi = g("base_judge", "independent");
+    if (!vi || !pi) return null;
+    var parts = [];
+    if (rh && ri) parts.push("Pattern matching fails on paraphrase: regex caught " + rh.caught + " of " + rh.leaks + " hard leaks and " + ri.caught + " of " + ri.leaks + " independent ones.");
+    if (bi) parts.push("Model judges work: " + Math.min(bi.caught, pi.caught, vi.caught) + " to " + Math.max(bi.caught, pi.caught, vi.caught) + " of " + vi.leaks + " on independent data.");
+    parts.push("<b>The River-tuned judge we own matches Claude Sonnet 5 on recall, " + vi.caught + " of " + vi.leaks + " against " + pi.caught + ",</b> but over-flags: " +
+      vi.false_alarms + " false alarms on " + vi.clean + " clean drafts against " + pi.false_alarms + ". Calibration is the next step.");
+    return parts.join(" ");
+  }
+
   function getJSON(url) { return fetch(url, { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); }
 
   function load() {
@@ -271,13 +294,12 @@
       var h = headline(data, ci, "hard");
       $("hard").innerHTML = h ? h.html : '<div class="err">No hard-set results recorded yet.</div>';
       $("hard-n").textContent = h ? "n = " + nLabel(h.n) : "";
-      var rj = data.river_judge && data.river_judge.hard, pj = data.prompt_judge && data.prompt_judge.hard;
-      if (rj) {
-        var w = interval(ci, "river_judge", "hard", "recall", rj.caught, rj.leaks);
-        $("hero").innerHTML = "On the hard set the River-tuned judge caught <b>" + rj.caught + " of " + rj.leaks + " leaks</b> (95% interval " + pct(w[0]) + " to " + pct(w[1]) + ") with " + rj.false_alarms + " false alarms on " + rj.clean + " clean drafts" +
-          (pj ? ". The Claude Sonnet 5 prompt judge caught " + pj.caught + "." : ".");
-        $("hero").hidden = false;
-      }
+      var hero = heroText(data);
+      if (hero) { $("hero").innerHTML = hero; $("hero").hidden = false; }
+
+      var ind = headline(data, ci, "independent");
+      $("indep-head").innerHTML = ind ? ind.html : "";
+      $("indep-n").textContent = ind ? "n = " + nLabel(ind.n) : "";
 
       var b = headline(data, ci, "blind");
       $("blind").innerHTML = b ? b.html : '<div class="pending"><span class="pill">Pending</span><p>No detector has been scored on the blind set yet. Results appear here as soon as a run is recorded.</p></div>';
