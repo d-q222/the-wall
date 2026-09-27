@@ -1,7 +1,7 @@
 // Drive the live presenter headless at 1920x1080 through every beat and record it.
 // CDP screencast frames (with timestamps) -> ffmpeg concat -> H.264 mp4, plus one PNG per beat.
 import { chromium } from "playwright-core";
-import { mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdirSync, writeFileSync, rmSync, symlinkSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 
@@ -103,6 +103,8 @@ execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0"
   "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", mp4]);
 const dur = execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", mp4]).toString().trim();
 if (!process.env.KEEP_FRAMES) rmSync(frames, { recursive: true, force: true });
+rmSync(join(OUT, "demo-latest.mp4"), { force: true });
+symlinkSync(`demo-${stamp}.mp4`, join(OUT, "demo-latest.mp4"));
 
 const summary = { mp4, duration_s: Number(Number(dur).toFixed(1)), frames: shots.length, beats, errors, url: URL };
 writeFileSync(join(OUT, `demo-${stamp}.json`), JSON.stringify(summary, null, 2));
