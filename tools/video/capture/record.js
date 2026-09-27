@@ -8,6 +8,8 @@ const path = require('path');
 const BASE = process.env.WALL_API_URL || 'http://localhost:8788';
 const OUT = '/Users/dqi26/the-wall/.runtime/video/clips';
 const RAW = path.join(OUT, 'raw');
+// Browser storage carried across runs, so pages can replay their cached last live result (demo-safe rule).
+const STATE = path.join(RAW, 'storage.json');
 const W = 1920, H = 1080;
 
 // Headless video has no pointer, so draw one that follows real mouse events.
@@ -181,6 +183,7 @@ async function record(browser, n) {
   fs.rmSync(dir, { recursive: true, force: true });
   const ctx = await browser.newContext({
     viewport: { width: W, height: H }, colorScheme: 'light',
+    storageState: fs.existsSync(STATE) ? STATE : undefined,
     recordVideo: { dir, size: { width: W, height: H } },
   });
   await ctx.addInitScript(CURSOR);
@@ -196,6 +199,7 @@ async function record(browser, n) {
   await page.screenshot({ path: path.join(OUT, `${n}-${name}.png`) });
   const total = (Date.now() - t0) / 1000;
   const video = page.video();
+  await ctx.storageState({ path: STATE });
   await ctx.close();
   const src = await video.path();
   const base = path.join(OUT, `${n}-${name}`);
