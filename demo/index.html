@@ -289,10 +289,15 @@
         escapeHtml(response.residual.evidence || "unspecified") + "</span>";
     }
 
+    var replayedHtml = response.replayed
+      ? '<span class="mock-flag">replayed</span>'
+      : "";
+
     resultsEl.className = "results";
     resultsEl.innerHTML =
       '<span class="removed-count"><strong>' + response.removed + "</strong> removed</span>" +
       '<div class="kind-chips">' + chips + "</div>" +
+      replayedHtml +
       '<div class="spacer"></div>' +
       badgeHtml +
       '<button class="secondary" id="download-btn" type="button">Download training JSONL</button>';
