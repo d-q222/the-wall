@@ -34,12 +34,12 @@ The "own sheet known" numbers are also in the JSON under `metrics_own_fact_sheet
 | rules (`wall.pii`) | 88/123 (72%) | 0/5 | 117/2253 (5.2%) | <0.1 ms | $0 |
 | claude (claude-sonnet-5, k3 prompt) | 119/123 (97%) | 5/5 | 644/2253 (28.6%) | 3,768 ms | $4.42 |
 | river_base (Qwen3.6-35B-A3B, untuned) | 118/123 (96%) | 0/5 | 202/2253 (9.0%) | 246 ms* | not priced |
-| river_tuned (k3 LoRA, step 20) | 121/123 (98%) | 3/5 | 639/2253 (28.4%) | 220 ms* | not priced |
+| river_tuned (k3 LoRA, final step 59) | 120/123 (98%) | 5/5 | 655/2253 (29.1%) | 250 ms* | not priced |
 | rules+facts | 92/123 (75%) | 0/5 | 117/2253 (5.2%) | <0.1 ms | $0 |
 | rules+facts+river_base | 118/123 (96%) | 0/5 | 274/2253 (12.2%) | 246 ms* | not priced |
 | rules+facts+claude | 123/123 (100%) | 5/5 | 727/2253 (32.3%) | 3,768 ms | $4.42 |
-| rules+facts+river (tuned) | 121/123 (98%) | 3/5 | 681/2253 (30.2%) | 220 ms* | not priced |
-| rules+facts+river+claude | 123/123 (100%) | 5/5 | 874/2253 (38.8%) | 3,988 ms | not priced |
+| rules+facts+river (tuned) | 123/123 (100%) | 5/5 | 705/2253 (31.3%) | 250 ms* | not priced |
+| rules+facts+river+claude | 123/123 (100%) | 5/5 | 865/2253 (38.4%) | 4,017 ms | not priced |
 
 \* River runs all 82 paragraphs in one batched session. Latency is total wall time divided by 82.
 Claude is called once per paragraph, 8 at a time. River cost is "not priced" because River
@@ -58,9 +58,12 @@ because it is free and removed 0 clean tokens in every condition. The written st
 **`["facts", "river_base"]`**. On documents whose fact sheet exists, that floor restores
 123/123.
 
-Claude and the tuned River model both find more (119 and 121 of 123, and they are the only
-ones that catch the paraphrased quasi-identifiers). Both break the 10% cap: they remove about
-28% of the tokens the key calls clean.
+Claude and the tuned River model both find more (119 and 120 of 123). They are also the only
+detectors that catch the paraphrased quasi-identifiers (5/5 each). Both break the 10% cap:
+they remove about 29% of the tokens the key calls clean. Tuned River matches Claude at about
+1/15 of the latency. Across checkpoints, tuned identifier recall went 119 (step 20), 120
+(step 40) and 120 (step 59), and quasi recall went 3/5, 5/5 and 5/5. Over-redaction never
+came under the cap.
 
 ## Caveat: the answer key undercounts what the policy asks to remove
 
@@ -70,7 +73,8 @@ k3's prompt) also removes award names, years, press outlets and locations, which
 do not list. Much of the measured "over-redaction" for claude and river_tuned is therefore
 policy-correct removal that this key counts as a false alarm. The 10% cap favours
 detectors that stay close to the fact sheets. If the firm wants policy-level redaction,
-raise `WALL_DEID_MAX_OVERREDACT` (at 0.35, `rules+facts+claude` wins with 123/123 and 5/5)
+raise `WALL_DEID_MAX_OVERREDACT`. At 0.35, `rules+facts+river` (tuned) wins: 123/123 and 5/5,
+tied with `rules+facts+claude` on recall and ahead on latency (250 ms vs 3.8 s)
 or label a policy-level answer key. Only 5 quasi-phrase occurrences exist, so quasi recall
 is a weak signal.
 
