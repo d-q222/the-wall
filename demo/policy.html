@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Policy — Ethical Wall Brain</title>
+<link rel="stylesheet" href="assets/theme.css">
+<style>
+  .practice { margin-bottom: 16px; }
+  .practice .panel-head { gap: 12px; }
+  .practice .panel-body > p.muted { margin-bottom: 12px; }
+  .practice .panel-head .badge { margin-left: auto; }
+
+  .lists {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .list-block {
+    border: 1px solid var(--line);
+    border-radius: var(--r-panel);
+    background: var(--surface-2);
+    padding: 12px 14px;
+  }
+
+  .list-block h4 { margin-bottom: 8px; }
+  .list-block.never h4 { color: var(--risk); }
+
+  ul.items {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+  }
+
+  ul.items li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  ul.items li:last-child { border-bottom: none; }
+  ul.items li span { flex: 1; }
+  ul.items li.empty-note { color: var(--text-3); font-size: var(--fs-13); }
+
+  .add-row { display: flex; gap: 8px; }
+  .add-row input { flex: 1; min-width: 0; }
+
+  .asylum-note {
+    margin: 14px 16px 16px;
+    padding: 10px 12px;
+    background: var(--risk-soft);
+    border-radius: var(--r-chip);
+    font-size: var(--fs-13);
+    max-width: 88ch;
+  }
+
+  .save-status { margin-top: 4px; min-height: 20px; }
+  .save-status.ok { color: var(--cleared); }
+  .save-status.error { color: var(--risk); }
+
+  @media (max-width: 900px) {
+    .lists { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body data-crumb="Policy">
+<main class="app-main">
+  <div class="page-head">
+    <div>
+      <h1>Compounding policy</h1>
+      <p>The firm decides what its memory may carry between matters. Procedures on the
+        left may compound into firm-wide know-how after scrubbing. Facts on the right
+        never leave the matter they came from. Changes take effect when you save.</p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="save-btn" type="button">Save policy</button>
+    </div>
+  </div>
+
+  <div id="sections"><div class="empty"><p>Loading policy…</p></div></div>
+  <p class="meta save-status" id="save-status" role="status"></p>
+</main>
+
+<script src="assets/nav.js" defer></script>
+<script>
+(function () {
+  "use strict";
+
+  var ORDER = ["litigation", "trusts_estates", "immigration", "asylum"];
+  var LABELS = {
+    litigation: "Litigation",
+    trusts_estates: "Trusts and estates",
+    immigration: "Immigration",
+    asylum: "Asylum"
+  };
+  var DESCRIPTIONS = {
+    litigation: "How the firm drafts and researches carries over. Who the parties are, what is at stake, and how the case is argued never do.",
+    trusts_estates: "Checklists and filing steps carry over. Family facts, balances, and allegations never do.",
+    immigration: "Petition structure and checklists carry over. Beneficiary, employer, and recommender facts never do.",
+    asylum: "Checklists and legal argument carry over. Declaration narrative never does."
+  };
+  var ASYLUM_NOTE = "In asylum, shared narrative phrasing is itself the harm, so narrative text never compounds (Matter of V-S-A-, BIA 2026).";
+
+  var sectionsEl = document.getElementById("sections");
+  var saveBtn = document.getElementById("save-btn");
+  var statusEl = document.getElementById("save-status");
+  var policy = null;
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function label(key) {
+    if (LABELS[key]) return LABELS[key];
+    return key.replace(/_/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+
+  function orderedKeys(obj) {
+    var keys = Object.keys(obj);
+    keys.sort(function (a, b) {
+      var ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
+      if (ia === -1 && ib === -1) return a < b ? -1 : 1;
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+    return keys;
+  }
+
+  function setStatus(text, cls) {
+    statusEl.textContent = text;
+    statusEl.className = "meta save-status" + (cls ? " " + cls : "");
+  }
+
+  function markDirty() {
+    setStatus("Unsaved changes", "");
+  }
+
+  function listHtml(items, practice, field) {
+    if (!items.length) {
+      return '<li class="empty-note">Nothing listed.</li>';
+    }
+    return items.map(function (item, i) {
+      return '<li><span>' + escapeHtml(item) + '</span>' +
+        '<button class="btn btn-secondary btn-sm" type="button" data-practice="' + escapeHtml(practice) +
+        '" data-field="' + field + '" data-index="' + i + '">Remove</button></li>';
+    }).join("");
+  }
+
+  function render() {
+    sectionsEl.innerHTML = orderedKeys(policy).map(function (practice) {
+      var entry = policy[practice] || {};
+      var may = entry.may_compound || [];
+      var never = entry.never_compounds || [];
+      var desc = DESCRIPTIONS[practice] ? '<p class="muted">' + DESCRIPTIONS[practice] + '</p>' : '';
+      var note = practice === "asylum" ? '<div class="asylum-note">' + ASYLUM_NOTE + '</div>' : '';
+      return '<section class="panel practice" data-practice="' + escapeHtml(practice) + '">' +
+        '<div class="panel-head"><h3>' + escapeHtml(label(practice)) + '</h3>' +
+        '<span class="badge plain">' + (may.length + never.length) + ' items</span></div>' +
+        '<div class="panel-body">' + desc +
+        '<div class="lists">' +
+        '<div class="list-block"><h4>May carry over between matters</h4>' +
+        '<ul class="items">' + listHtml(may, practice, "may_compound") + '</ul>' +
+        '<div class="add-row"><input type="text" placeholder="Add an item that may carry over" aria-label="Add an item that may carry over in ' + escapeHtml(label(practice)) + '" data-add="' + escapeHtml(practice) + '|may_compound">' +
+        '<button class="btn btn-secondary" type="button" data-addbtn="' + escapeHtml(practice) + '|may_compound">Add</button></div></div>' +
+        '<div class="list-block never"><h4>Never leaves the matter</h4>' +
+        '<ul class="items">' + listHtml(never, practice, "never_compounds") + '</ul>' +
+        '<div class="add-row"><input type="text" placeholder="Add an item that never leaves" aria-label="Add an item that never leaves the matter in ' + escapeHtml(label(practice)) + '" data-add="' + escapeHtml(practice) + '|never_compounds">' +
+        '<button class="btn btn-secondary" type="button" data-addbtn="' + escapeHtml(practice) + '|never_compounds">Add</button></div></div>' +
+        '</div></div>' + note + '</section>';
+    }).join("");
+  }
+
+  function addItem(practice, field, value) {
+    value = value.trim();
+    if (!value) return;
+    if (policy[practice][field].some(function (v) { return v.toLowerCase() === value.toLowerCase(); })) return;
+    policy[practice][field].push(value);
+    render();
+    markDirty();
+  }
+
+  sectionsEl.addEventListener("click", function (e) {
+    var t = e.target.closest("button");
+    if (!t) return;
+    if (t.hasAttribute("data-index")) {
+      policy[t.dataset.practice][t.dataset.field].splice(Number(t.dataset.index), 1);
+      render();
+      markDirty();
+    } else if (t.hasAttribute("data-addbtn")) {
+      var parts = t.getAttribute("data-addbtn").split("|");
+      var input = sectionsEl.querySelector('input[data-add="' + parts[0] + "|" + parts[1] + '"]');
+      addItem(parts[0], parts[1], input.value);
+    }
+  });
+
+  sectionsEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target.hasAttribute("data-add")) {
+      var parts = e.target.getAttribute("data-add").split("|");
+      addItem(parts[0], parts[1], e.target.value);
+    }
+  });
+
+  saveBtn.addEventListener("click", function () {
+    saveBtn.disabled = true;
+    setStatus("Saving…", "");
+    fetch("api/policy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(policy)
+    }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (merged) {
+      policy = merged;
+      render();
+      var now = new Date();
+      var hh = String(now.getHours()).padStart(2, "0");
+      var mm = String(now.getMinutes()).padStart(2, "0");
+      setStatus("Saved at " + hh + ":" + mm, "ok");
+    }).catch(function (err) {
+      setStatus("Save failed (" + err.message + ")", "error");
+    }).finally(function () {
+      saveBtn.disabled = false;
+    });
+  });
+
+  fetch("api/policy")
+    .then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
+    .then(function (data) {
+      policy = data;
+      render();
+      setStatus("", "");
+    })
+    .catch(function (err) {
+      sectionsEl.innerHTML = '<div class="empty"><h3>Policy failed to load</h3><p>' +
+        escapeHtml(err.message) + '</p></div>';
+    });
+})();
+</script>
+</body>
+</html>
