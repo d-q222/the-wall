@@ -1,427 +1,325 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethical Wall Brain - Leak Detection Scoreboard</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evaluation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/demo/assets/theme.css">
+<script src="/demo/assets/nav.js" defer></script>
+<style>
+  .ev { max-width: 1160px; padding: 4px 8px 48px; font-variant-numeric: tabular-nums; }
+  .ev h1 { font-size: var(--fs-28, 28px); font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .ev .lede { font-size: var(--fs-15, 15px); color: var(--text-2); margin: 0 0 18px; max-width: 70ch; line-height: 1.5; }
+  .ev h2 { font-size: var(--fs-17, 17px); font-weight: 600; margin: 0; }
+  .ev .sub { font-size: var(--fs-13, 13px); color: var(--text-2); margin: 4px 0 0; line-height: 1.45; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #0f0f0f;
-            color: #ffffff;
-            padding: 2rem;
-            line-height: 1.6;
-        }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel, 8px); }
+  .panel-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding: 18px 20px 14px; border-bottom: 1px solid var(--line); }
+  .panel-head .meta { font-size: var(--fs-13, 13px); color: var(--text-2); white-space: nowrap; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+  @media (max-width: 1180px) { .grid2 { grid-template-columns: 1fr; } }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+  /* headline table */
+  table.board { width: 100%; border-collapse: collapse; font-size: var(--fs-15, 15px); }
+  .board th { text-align: left; font-weight: 500; font-size: var(--fs-13, 13px); color: var(--text-2); padding: 10px 20px; border-bottom: 1px solid var(--line); white-space: nowrap; background: var(--surface-2); }
+  .board td { padding: 11px 20px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  .board tr:last-child td { border-bottom: 0; }
+  .board .name { font-weight: 600; }
+  .board .desc { font-size: var(--fs-13, 13px); color: var(--text-2); margin-top: 2px; }
+  .board .num { font-size: var(--fs-21, 21px); font-weight: 600; line-height: 1.1; }
+  .board .frac { font-size: var(--fs-13, 13px); color: var(--text-2); margin-top: 2px; white-space: nowrap; }
+  .board .ours td { background: var(--blue-soft); }
+  .board .ours td:first-child { box-shadow: inset 3px 0 0 var(--blue); }
+  .board .ours .num.recall { color: var(--blue); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 6px; border-radius: var(--r-chip, 4px); background: var(--blue); color: var(--on-blue); margin-left: 8px; vertical-align: 2px; }
+  .col-bar { width: 26%; }
+  .board th:first-child { width: 290px; }
+  .board .desc { white-space: nowrap; }
 
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            color: #ffffff;
-            font-weight: 700;
-        }
+  /* interval bar */
+  .ci { position: relative; height: 22px; }
+  .ci .track { position: absolute; left: 0; right: 0; top: 10px; height: 2px; background: var(--line); }
+  .ci .band { position: absolute; top: 5px; height: 12px; background: color-mix(in srgb, var(--text-3) 35%, transparent); border-radius: 2px; }
+  .ci .pt { position: absolute; top: 3px; width: 3px; height: 16px; margin-left: -1.5px; background: var(--text); border-radius: 1px; }
+  .ci.fa .band { background: color-mix(in srgb, var(--risk) 30%, transparent); }
+  .ci.fa .pt { background: var(--risk); }
+  .ours .ci.rec .band { background: color-mix(in srgb, var(--blue) 35%, transparent); }
+  .ours .ci.rec .pt { background: var(--blue); }
+  .ci-lbl { font-size: var(--fs-13, 13px); color: var(--text-2); margin-top: 2px; white-space: nowrap; }
+  .axis { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-3); font-weight: 400; }
 
-        .subtitle {
-            font-size: 1.2rem;
-            color: #aaaaaa;
-            margin-bottom: 2rem;
-        }
+  .legend { display: flex; flex-wrap: wrap; gap: 20px; padding: 12px 20px; border-top: 1px solid var(--line); font-size: var(--fs-13, 13px); color: var(--text-2); }
+  .legend i { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+  .sw-ours { width: 14px; height: 14px; background: var(--blue-soft); box-shadow: inset 3px 0 0 var(--blue); }
+  .sw-band { width: 22px; height: 10px; background: color-mix(in srgb, var(--text-3) 35%, transparent); border-left: 3px solid var(--text); }
 
-        .last-updated {
-            font-size: 0.9rem;
-            color: #666666;
-            margin-bottom: 2rem;
-        }
+  /* compact tables */
+  table.mini { width: 100%; border-collapse: collapse; font-size: var(--fs-13, 13px); }
+  .mini th, .mini td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  .mini th:first-child, .mini td:first-child { text-align: left; padding-left: 20px; }
+  .mini th:last-child, .mini td:last-child { padding-right: 20px; }
+  .mini th { font-weight: 500; color: var(--text-2); background: var(--surface-2); }
+  .mini tr:last-child td { border-bottom: 0; }
+  .mini .ours { background: var(--blue-soft); font-weight: 600; }
+  .mini .fa { color: var(--text-2); }
+  .mini .fa.hi { color: var(--risk); }
+  .mini td.total { font-weight: 600; }
 
-        .scoreboard {
-            background-color: #1a1a1a;
-            border: 2px solid #333333;
-            border-radius: 8px;
-            overflow: auto;
-            margin-bottom: 3rem;
-        }
+  .pending { padding: 28px 20px; display: flex; gap: 14px; align-items: flex-start; }
+  .pending .pill { font-size: var(--fs-13, 13px); font-weight: 600; padding: 3px 8px; border-radius: var(--r-chip, 4px); background: var(--found-soft); color: var(--text); border: 1px solid color-mix(in srgb, var(--found) 80%, var(--line)); }
+  .pending p { margin: 0; font-size: var(--fs-15, 15px); color: var(--text-2); line-height: 1.5; max-width: 52ch; }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 1.1rem;
-        }
-
-        thead {
-            background-color: #222222;
-            border-bottom: 2px solid #333333;
-        }
-
-        th {
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: #ffffff;
-            border-right: 1px solid #333333;
-        }
-
-        th:last-child {
-            border-right: none;
-        }
-
-        td {
-            padding: 1rem;
-            border-right: 1px solid #333333;
-            border-bottom: 1px solid #333333;
-            font-weight: 500;
-        }
-
-        td:last-child {
-            border-right: none;
-        }
-
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .detector-name {
-            font-weight: 700;
-            color: #ffffff;
-            min-width: 150px;
-        }
-
-        .eval-set-header {
-            background-color: #333333;
-            font-weight: 700;
-            color: #ffffff;
-            text-align: center;
-            padding: 0.8rem 1rem;
-        }
-
-        .metric-group {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .metric {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 100px;
-        }
-
-        .metric-label {
-            font-size: 0.75rem;
-            color: #888888;
-            text-transform: uppercase;
-            margin-bottom: 0.25rem;
-        }
-
-        .metric-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .caught {
-            color: #4ade80;
-        }
-
-        .false-alarm {
-            color: #f87171;
-        }
-
-        .neutral {
-            color: #888888;
-        }
-
-        .highlighted {
-            background-color: #374151;
-            border: 3px solid #fbbf24;
-            box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
-        }
-
-        .blind-section {
-            background-color: #1a1a1a;
-            border: 2px solid #333333;
-            border-radius: 8px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .blind-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: #ffffff;
-        }
-
-        .blind-detectors {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .blind-detector {
-            background-color: #222222;
-            padding: 1.5rem;
-            border-radius: 6px;
-            border: 1px solid #333333;
-        }
-
-        .blind-detector-name {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: #ffffff;
-        }
-
-        .blind-metrics {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        .blind-metric {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .blind-metric-label {
-            font-size: 0.8rem;
-            color: #888888;
-            text-transform: uppercase;
-            margin-bottom: 0.25rem;
-        }
-
-        .blind-metric-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .no-results {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: #888888;
-            font-size: 1.3rem;
-        }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            body {
-                padding: 1rem;
-            }
-
-            table {
-                font-size: 0.9rem;
-            }
-
-            th, td {
-                padding: 0.7rem;
-            }
-
-            .metric-value {
-                font-size: 1.1rem;
-            }
-        }
-    </style>
+  .notice { margin-top: 20px; padding: 14px 20px; border-left: 3px solid var(--risk); background: var(--surface); border-radius: 0 var(--r-panel, 8px) var(--r-panel, 8px) 0; font-size: var(--fs-15, 15px); line-height: 1.5; color: var(--text); }
+  .notice strong { font-weight: 600; }
+  .hero { font-size: var(--fs-17, 17px); line-height: 1.5; margin: 0 0 18px; max-width: 80ch; padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel, 8px); }
+  .hero b { color: var(--blue); font-weight: 600; }
+  .breakdown { border-top: 1px solid var(--line); }
+  .breakdown summary { cursor: pointer; padding: 12px 20px; font-size: var(--fs-15, 15px); color: var(--blue); font-weight: 500; }
+  .breakdown summary:focus-visible { outline: none; box-shadow: var(--focus); }
+  .breakdown[open] summary { border-bottom: 1px solid var(--line); }
+  .err { padding: 20px; color: var(--risk); }
+  .stamp { font-size: var(--fs-13, 13px); color: var(--text-2); }
+</style>
 </head>
-<body>
-    <div class="container">
-        <h1>Leak Detection Scoreboard</h1>
-        <p class="subtitle">Ethical Wall Brain Evaluation Results</p>
-        <p class="last-updated">Last updated: <span id="updateTime">--:--:--</span> (Auto-refresh every 5s)</p>
+<body data-screen="evaluation" data-crumb="Evaluation">
+<main class="app-main">
+  <div data-topbar-extra><span class="stamp" id="stamp">Loading results</span></div>
+  <div class="ev">
+    <h1>Evaluation</h1>
+    <p class="lede">How often each detector catches a draft that leaks another client's facts, and how often it flags a clean draft by mistake. Figures are read live from the recorded evaluation runs.</p>
 
-        <div id="content">
-            <div class="no-results">Loading results...</div>
+    <p class="hero" id="hero" hidden></p>
+    <section class="panel" aria-labelledby="h-hard">
+      <div class="panel-head">
+        <div>
+          <h2 id="h-hard">Hard held-out set</h2>
+          <p class="sub">Drafts where the leaked fact is paraphrased, not copied. Held out from training.</p>
         </div>
+        <div class="meta" id="hard-n"></div>
+      </div>
+      <div id="hard"></div>
+      <div class="legend">
+        <span><i class="sw-ours"></i>The firm's River-tuned judge</span>
+        <span><i class="sw-band"></i>Point estimate and 95% Wilson interval, on a 0 to 100% scale</span>
+      </div>
+    </section>
+
+    <div class="notice" id="caveat"><strong>Read the hard set with care.</strong> It shares templates with the training data: 69 of the 200 evaluation drafts share more than half of their 8-grams with a training draft. The independent and blind sets below are the check against that.</div>
+
+    <section class="panel" style="margin-top:20px" aria-labelledby="h-indep">
+      <div class="panel-head">
+        <div>
+          <h2 id="h-indep">Independent sets</h2>
+          <p class="sub">Written by separate agents that never saw the training generator. Five sets combined.</p>
+        </div>
+        <div class="meta" id="indep-n"></div>
+      </div>
+      <div id="indep-head"></div>
+      <details class="breakdown">
+        <summary>Show each independent set</summary>
+        <div id="indep" style="overflow-x:auto"></div>
+      </details>
+    </section>
+
+    <div class="grid2">
+      <section class="panel" aria-labelledby="h-blind">
+        <div class="panel-head">
+          <div>
+            <h2 id="h-blind">Blind set</h2>
+            <p class="sub">Written outside the training pipeline and never seen by the model.</p>
+          </div>
+          <div class="meta" id="blind-n"></div>
+        </div>
+        <div id="blind"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-o1">
+        <div class="panel-head">
+          <div>
+            <h2 id="h-o1">Self-written O-1 cases, not a headline</h2>
+            <p class="sub">Written by our own team for the demo matters. Shown for completeness only.</p>
+          </div>
+          <div class="meta" id="o1-n"></div>
+        </div>
+        <div id="o1"></div>
+      </section>
     </div>
 
-    <script>
-        const params = new URLSearchParams(window.location.search);
-        const useSample = params.has('sample');
-        const resultsUrl = params.get('src') || (useSample ? './sample_results.json' : '../results/results.json');
 
-        async function loadAndRender() {
-            try {
-                const response = await fetch(resultsUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                const data = await response.json();
-                render(data);
-            } catch (error) {
-                document.getElementById('content').innerHTML = `
-                    <div class="no-results">
-                        Unable to load results. ${useSample ? '(Sample mode)' : '(Make sure results.json exists at ../results/)'}<br/>
-                        <small>${error.message}</small>
-                    </div>
-                `;
-            }
-            updateTimestamp();
-        }
+    <section class="panel" style="margin-top:20px" aria-labelledby="h-cost" id="cost-panel" hidden>
+      <div class="panel-head">
+        <div>
+          <h2 id="h-cost">Cost and speed</h2>
+          <p class="sub" id="cost-sub"></p>
+        </div>
+      </div>
+      <div id="cost"></div>
+    </section>
+  </div>
+</main>
 
-        function updateTimestamp() {
-            const now = new Date();
-            document.getElementById('updateTime').textContent = now.toLocaleTimeString();
-        }
+<script>
+(function () {
+  "use strict";
+  var DETECTORS = [
+    { id: "regex", name: "Regex rules", desc: "Pattern match on client names and identifiers" },
+    { id: "carryover", name: "Carryover check", desc: "Exact phrases copied from the other matter" },
+    { id: "base_judge", name: "Base Qwen judge", desc: "Open model, no firm training" },
+    { id: "prompt_judge", name: "Claude Sonnet 5 prompt judge", desc: "Frontier model with a written instruction" },
+    { id: "river_judge", name: "River-tuned judge", desc: "Qwen fine-tuned on the firm's past petitions", ours: true }
+  ];
+  var INDEP_LABELS = {
+    "independent": "All independent sets",
+    "indep_i1-mixups": "Client mix-ups",
+    "indep_i2-formats": "Unusual formats",
+    "indep_i3-paraphrase": "Heavy paraphrase",
+    "indep_i4-adversarial": "Adversarial wording",
+    "indep_i5-immigration": "Immigration matters"
+  };
 
-        function render(data) {
-            if (!data || Object.keys(data).length === 0) {
-                document.getElementById('content').innerHTML = '<div class="no-results">No results yet</div>';
-                return;
-            }
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function pct(x) { return x == null || isNaN(x) ? "–" : (Math.round(x * 1000) / 10).toFixed(x === 0 || x === 1 ? 0 : 1) + "%"; }
+  function pct0(x) { return x == null || isNaN(x) ? "–" : Math.round(x * 100) + "%"; }
 
-            // Separate blind results from other eval sets
-            const blindResults = {};
-            const regularResults = {};
+  function wilson(k, n) {
+    if (!n) return null;
+    var z = 1.959964, p = k / n, d = 1 + z * z / n;
+    var c = (p + z * z / (2 * n)) / d, h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d;
+    return [Math.max(0, c - h), Math.min(1, c + h)];
+  }
+  // Prefer ci.json, but only when it matches the current counts; a stale file would put the point outside its own interval.
+  function interval(ci, det, set, key, k, n) {
+    var v = ci && ci[det] && ci[det][set] && ci[det][set][key], w = wilson(k, n);
+    return Array.isArray(v) && w && Math.abs(v[0] - w[0]) < 0.005 && Math.abs(v[1] - w[1]) < 0.005 ? v : w;
+  }
 
-            for (const [detector, evalSets] of Object.entries(data)) {
-                regularResults[detector] = {};
-                blindResults[detector] = null;
+  function bar(p, lo, hi, cls) {
+    if (p == null) return "";
+    var L = (lo * 100).toFixed(1), W = Math.max(0.6, (hi - lo) * 100).toFixed(1), P = (p * 100).toFixed(1);
+    return '<div class="ci ' + cls + '" role="img" aria-label="' + pct(p) + ', 95% interval ' + pct(lo) + ' to ' + pct(hi) + '">' +
+      '<div class="track"></div><div class="band" style="left:' + L + '%;width:' + W + '%"></div><div class="pt" style="left:' + P + '%"></div></div>' +
+      '<div class="ci-lbl">' + pct(lo) + ' to ' + pct(hi) + '</div>';
+  }
 
-                for (const [evalSet, result] of Object.entries(evalSets)) {
-                    if (evalSet === 'blind') {
-                        blindResults[detector] = result;
-                    } else {
-                        regularResults[detector][evalSet] = result;
-                    }
-                }
-            }
+  function headline(data, ci, set) {
+    var rows = DETECTORS.filter(function (d) { return data[d.id] && data[d.id][set]; });
+    if (!rows.length) return null;
+    var html = '<table class="board"><thead><tr><th>Detector</th><th>Caught</th><th class="col-bar"><div class="axis"><span>Recall, 0%</span><span>100%</span></div></th><th>False alarms</th><th class="col-bar"><div class="axis"><span>False-alarm rate, 0%</span><span>100%</span></div></th></tr></thead><tbody>';
+    rows.forEach(function (d) {
+      var r = data[d.id][set];
+      var rec = r.leaks ? r.caught / r.leaks : null, fa = r.clean ? r.false_alarms / r.clean : null;
+      var rci = interval(ci, d.id, set, "recall", r.caught, r.leaks) || [0, 0];
+      var fci = interval(ci, d.id, set, "false_alarm", r.false_alarms, r.clean) || [0, 0];
+      html += '<tr' + (d.ours ? ' class="ours"' : '') + '><td><div class="name">' + esc(d.name) + (d.ours ? '<span class="tag">Ours</span>' : '') + '</div><div class="desc">' + esc(d.desc) + '</div></td>' +
+        '<td><div class="num recall">' + pct(rec) + '</div><div class="frac">' + r.caught + ' of ' + r.leaks + ' leaks</div></td>' +
+        '<td>' + bar(rec, rci[0], rci[1], "rec") + '</td>' +
+        '<td><div class="num">' + pct(fa) + '</div><div class="frac">' + r.false_alarms + ' of ' + r.clean + ' clean</div></td>' +
+        '<td>' + bar(fa, fci[0], fci[1], "fa") + '</td></tr>';
+    });
+    return { html: html + '</tbody></table>', n: rows[0] && data[rows[0].id][set] };
+  }
 
-            // Order of detectors to display
-            const detectorOrder = ['regex', 'carryover', 'prompt_judge', 'base_judge', 'river_judge'];
-            const orderedDetectors = detectorOrder.filter(d => Object.keys(regularResults).includes(d));
+  function mini(data, set) {
+    var rows = DETECTORS.filter(function (d) { return data[d.id] && data[d.id][set]; });
+    if (!rows.length) return null;
+    var html = '<table class="mini"><thead><tr><th>Detector</th><th>Recall</th><th>Caught</th><th>False alarms</th></tr></thead><tbody>';
+    rows.forEach(function (d) {
+      var r = data[d.id][set];
+      html += '<tr' + (d.ours ? ' class="ours"' : '') + '><td>' + esc(d.name) + '</td><td>' + pct(r.leaks ? r.caught / r.leaks : null) + '</td><td>' + r.caught + ' of ' + r.leaks + '</td><td>' + r.false_alarms + ' of ' + r.clean + '</td></tr>';
+    });
+    return { html: html + '</tbody></table>', n: data[rows[0].id][set] };
+  }
 
-            // Order of eval sets
-            const allEvalSets = new Set();
-            for (const evalSets of Object.values(regularResults)) {
-                Object.keys(evalSets).forEach(e => allEvalSets.add(e));
-            }
-            const evalSetOrder = ['hard', 'standard', 'demo'];
-            const orderedEvalSets = evalSetOrder.filter(e => allEvalSets.has(e));
-            const otherEvalSets = Array.from(allEvalSets).filter(e => !evalSetOrder.includes(e));
-            const sortedEvalSets = [...orderedEvalSets, ...otherEvalSets];
+  function nLabel(r) { return r ? r.leaks + " leaks, " + r.clean + " clean drafts" : ""; }
 
-            let html = '';
+  function indep(data) {
+    var sets = {};
+    DETECTORS.forEach(function (d) { Object.keys(data[d.id] || {}).forEach(function (s) { if (s === "independent" || s.indexOf("indep_") === 0) sets[s] = 1; }); });
+    var keys = Object.keys(sets).sort(function (a, b) { return a === "independent" ? 1 : b === "independent" ? -1 : a < b ? -1 : 1; });
+    if (!keys.length) return '<div class="pending"><span class="pill">Pending</span><p>No independent set has been scored yet.</p></div>';
+    var dets = DETECTORS.filter(function (d) { return keys.some(function (s) { return data[d.id] && data[d.id][s]; }); });
+    var html = '<table class="mini"><thead><tr><th>Set</th><th>n</th>' + dets.map(function (d) { return '<th' + (d.ours ? ' class="ours"' : '') + '>' + esc(d.name) + '</th>'; }).join("") + '</tr></thead><tbody>';
+    keys.forEach(function (s) {
+      var any = null;
+      dets.forEach(function (d) { if (!any && data[d.id] && data[d.id][s]) any = data[d.id][s]; });
+      var total = s === "independent";
+      html += '<tr><td' + (total ? ' class="total"' : '') + '>' + esc(INDEP_LABELS[s] || s.replace(/^indep_/, "")) + '</td><td>' + (any ? any.leaks + " + " + any.clean : "") + '</td>' +
+        dets.map(function (d) {
+          var r = data[d.id] && data[d.id][s];
+          if (!r) return '<td' + (d.ours ? ' class="ours"' : '') + '>–</td>';
+          var fa = r.clean ? r.false_alarms / r.clean : 0;
+          return '<td' + (d.ours ? ' class="ours"' : '') + (total ? ' style="font-weight:600"' : '') + '>' + pct0(r.leaks ? r.caught / r.leaks : null) +
+            ' <span class="fa' + (fa >= 0.1 ? ' hi' : '') + '">' + r.false_alarms + ' FA</span></td>';
+        }).join("") + '</tr>';
+    });
+    return html + '</tbody></table><div class="legend"><span>n is leaking drafts plus clean drafts. FA is the number of clean drafts wrongly flagged; shown in orange at 10% or more.</span></div>';
+  }
 
-            // Main scoreboard
-            html += '<div class="scoreboard">';
-            html += '<table><thead><tr>';
-            html += '<th>Detector</th>';
+  function cost(c) {
+    if (!c || !c.detector) return;
+    var d = DETECTORS.filter(function (x) { return x.id === c.detector; })[0];
+    $("cost-sub").textContent = "Measured on " + c.n + " live judgments" + (c.model ? " with " + c.model : "") + ".";
+    var html = '<table class="mini"><thead><tr><th>Detector</th><th>Cost per 1,000 judgments</th><th>Median latency</th><th>95th percentile latency</th></tr></thead><tbody>' +
+      '<tr><td>' + esc(d ? d.name : c.detector) + '</td><td>$' + Number(c.cost_per_1000_judgments_usd).toFixed(2) + '</td><td>' + c.latency_s.p50.toFixed(2) + ' s</td><td>' + c.latency_s.p95.toFixed(2) + ' s</td></tr>';
+    if (typeof c.river_judge === "string") html += '<tr class="ours"><td>River-tuned judge</td><td colspan="3" style="text-align:left;font-weight:400">Not measured yet</td></tr>';
+    $("cost").innerHTML = html + '</tbody></table>';
+    $("cost-panel").hidden = false;
+  }
 
-            // Header for each eval set
-            for (const evalSet of sortedEvalSets) {
-                html += `<th class="eval-set-header" colspan="3">${evalSet.charAt(0).toUpperCase() + evalSet.slice(1)}</th>`;
-            }
+  // Honest framing: the hard-set result is always paired with the independent sets.
+  function heroText(data) {
+    function g(d, set) { return data[d] && data[d][set]; }
+    var rh = g("regex", "hard"), ri = g("regex", "independent"), vi = g("river_judge", "independent"), pi = g("prompt_judge", "independent"), bi = g("base_judge", "independent");
+    if (!vi || !pi) return null;
+    var parts = [];
+    if (rh && ri) parts.push("Pattern matching fails on paraphrase: regex caught " + rh.caught + " of " + rh.leaks + " hard leaks and " + ri.caught + " of " + ri.leaks + " independent ones.");
+    if (bi) parts.push("Model judges work: " + Math.min(bi.caught, pi.caught, vi.caught) + " to " + Math.max(bi.caught, pi.caught, vi.caught) + " of " + vi.leaks + " on independent data.");
+    parts.push("<b>The River-tuned judge we own matches Claude Sonnet 5 on recall, " + vi.caught + " of " + vi.leaks + " against " + pi.caught + ",</b> but over-flags: " +
+      vi.false_alarms + " false alarms on " + vi.clean + " clean drafts against " + pi.false_alarms + ". Calibration is the next step.");
+    return parts.join(" ");
+  }
 
-            html += '</tr><tr><th>Detector</th>';
+  function getJSON(url) { return fetch(url, { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); }
 
-            // Sub-headers for each metric
-            for (const evalSet of sortedEvalSets) {
-                html += '<th style="text-align: center; font-size: 0.9rem;">Leaks Caught</th>';
-                html += '<th style="text-align: center; font-size: 0.9rem;">False Alarms</th>';
-                html += '<th style="text-align: center; font-size: 0.9rem;">n</th>';
-            }
+  function load() {
+    Promise.all([
+      getJSON("/results/results.json"),
+      getJSON("/results/ci.json").catch(function () { return {}; })
+    ]).then(function (res) {
+      var data = res[0], ci = res[1];
+      var h = headline(data, ci, "hard");
+      $("hard").innerHTML = h ? h.html : '<div class="err">No hard-set results recorded yet.</div>';
+      $("hard-n").textContent = h ? "n = " + nLabel(h.n) : "";
+      var hero = heroText(data);
+      if (hero) { $("hero").innerHTML = hero; $("hero").hidden = false; }
 
-            html += '</tr></thead>';
-            html += '<tbody>';
+      var ind = headline(data, ci, "independent");
+      $("indep-head").innerHTML = ind ? ind.html : "";
+      $("indep-n").textContent = ind ? "n = " + nLabel(ind.n) : "";
 
-            // Data rows
-            for (const detector of orderedDetectors) {
-                html += '<tr>';
-                html += `<td class="detector-name">${detector}</td>`;
+      var b = headline(data, ci, "blind");
+      $("blind").innerHTML = b ? b.html : '<div class="pending"><span class="pill">Pending</span><p>No detector has been scored on the blind set yet. Results appear here as soon as a run is recorded.</p></div>';
+      $("blind-n").textContent = b ? "n = " + nLabel(b.n) : "";
 
-                for (const evalSet of sortedEvalSets) {
-                    const result = regularResults[detector][evalSet];
+      var o = mini(data, "o1_demo");
+      $("o1").innerHTML = o ? o.html : '<div class="pending"><span class="pill">Pending</span><p>No self-written O-1 results recorded yet.</p></div>';
+      $("o1-n").textContent = o ? "n = " + nLabel(o.n) : "";
 
-                    if (!result) {
-                        html += '<td>-</td><td>-</td><td>-</td>';
-                    } else {
-                        // Determine if this cell should be highlighted
-                        const isHighlighted = detector === 'river_judge' && evalSet === 'hard' ||
-                                              (detector === 'prompt_judge' && evalSet === 'hard' && !regularResults['river_judge']);
-
-                        const cellClass = isHighlighted ? 'highlighted' : '';
-
-                        // Leaks caught
-                        const caughtTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">Caught</div><div class="metric-value caught">${result.caught}</div><div class="metric-label" style="font-size: 0.65rem;">${result.caught}/${result.leaks}</div></div></td>`;
-
-                        // False alarms
-                        const falseAlarmTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">False Alarms</div><div class="metric-value false-alarm">${result.false_alarms}</div><div class="metric-label" style="font-size: 0.65rem;">${result.false_alarms}/${result.clean}</div></div></td>`;
-
-                        // n (sample size)
-                        const nTd = `<td class="${cellClass}"><div class="metric"><div class="metric-label">n</div><div class="metric-value neutral">${result.n}</div></div></td>`;
-
-                        html += caughtTd + falseAlarmTd + nTd;
-                    }
-                }
-
-                html += '</tr>';
-            }
-
-            html += '</tbody></table>';
-            html += '</div>';
-
-            // Blind evaluation set in separate box
-            if (Object.values(blindResults).some(r => r !== null)) {
-                html += '<div class="blind-section">';
-                html += '<div class="blind-title">Blind Evaluation Set</div>';
-                html += '<div class="blind-detectors">';
-
-                for (const detector of orderedDetectors) {
-                    const result = blindResults[detector];
-                    if (!result) continue;
-
-                    html += '<div class="blind-detector">';
-                    html += `<div class="blind-detector-name">${detector}</div>`;
-                    html += '<div class="blind-metrics">';
-
-                    html += '<div class="blind-metric">';
-                    html += '<div class="blind-metric-label">Leaks Caught</div>';
-                    html += `<div class="blind-metric-value caught">${result.caught}/${result.leaks}</div>`;
-                    html += '</div>';
-
-                    html += '<div class="blind-metric">';
-                    html += '<div class="blind-metric-label">False Alarms</div>';
-                    html += `<div class="blind-metric-value false-alarm">${result.false_alarms}/${result.clean}</div>`;
-                    html += '</div>';
-
-                    html += '<div class="blind-metric">';
-                    html += '<div class="blind-metric-label">Sample Size</div>';
-                    html += `<div class="blind-metric-value neutral">${result.n}</div>`;
-                    html += '</div>';
-
-                    html += '<div class="blind-metric">';
-                    html += '<div class="blind-metric-label">Accuracy</div>';
-                    const accuracy = result.n > 0 ? Math.round((result.caught + (result.clean - result.false_alarms)) / result.n * 100) : 0;
-                    html += `<div class="blind-metric-value">${accuracy}%</div>`;
-                    html += '</div>';
-
-                    html += '</div>';
-                    html += '</div>';
-                }
-
-                html += '</div>';
-                html += '</div>';
-            }
-
-            document.getElementById('content').innerHTML = html;
-        }
-
-        // Initial load and set up auto-refresh
-        loadAndRender();
-        setInterval(loadAndRender, 5000);
-    </script>
+      $("indep").innerHTML = indep(data);
+      var t = new Date();
+      $("stamp").textContent = "Results read " + t.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    }).catch(function () {
+      $("hard").innerHTML = '<div class="err">Could not load /results/results.json. Start the API on port 8788 and reload.</div>';
+      $("stamp").textContent = "Results unavailable";
+    });
+    getJSON("/evals/cost/results.json").then(cost).catch(function () {});
+  }
+  load();
+})();
+</script>
 </body>
 </html>

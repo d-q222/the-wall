@@ -62,6 +62,10 @@
   form.add textarea { font-family: var(--font-doc); min-height: 84px; resize: vertical; }
   form.add .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
   .err { color: var(--risk); font-size: var(--fs-13); }
+  .next-step { display: flex; align-items: center; gap: 16px; margin-top: 24px; padding: 16px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); }
+  .next-step p { color: var(--text-2); font-size: var(--fs-13); }
+  .next-step strong { display: block; font-size: var(--fs-15); }
+  .next-step .btn { margin-left: auto; }
   @media (max-width: 1360px) { .grid { grid-template-columns: minmax(0, 1fr) 320px; } }
 </style>
 </head>
@@ -78,7 +82,7 @@
     <div class="loop-step" id="step-corr"><div class="loop-n" id="n-corr">0</div><div class="loop-label">Attorney corrections</div><div class="loop-sub" id="s-corr">Missed or wrongly redacted identifiers</div></div>
     <div class="loop-step" id="step-ex"><div class="loop-n" id="n-ex">0</div><div class="loop-label">Training examples</div><div class="loop-sub" id="s-ex">Firm data plus corrections</div></div>
     <div class="loop-step" id="step-job"><div class="loop-n word" id="n-job">Waiting</div><div class="loop-label">River retrain</div><div class="loop-sub" id="s-job">Fine-tune on River GPUs</div></div>
-    <div class="loop-step" id="step-score"><div class="loop-n" id="n-score">&ndash;</div><div class="loop-label" id="l-score">Recall on unseen matters</div><div class="loop-sub" id="s-score">Four O-1 matters it never saw</div></div>
+    <div class="loop-step" id="step-score"><div class="loop-n word" id="n-score">Not scored</div><div class="loop-label" id="l-score">Recall on unseen matters</div><div class="loop-sub" id="s-score">Four O-1 matters it never saw</div></div>
   </section>
 
   <div class="grid">
@@ -138,6 +142,11 @@
       </div>
     </aside>
   </div>
+
+  <section class="next-step" aria-label="Next step">
+    <div><strong>Next: see the wall hold</strong><p>Each matter's agent can read only its own matter. Watch a live cross-matter read get refused.</p></div>
+    <a class="btn btn-secondary" href="/demo/wall.html">Open Access wall</a>
+  </section>
 </main>
 
 <script>
@@ -150,7 +159,7 @@
 
   var KINDS = { name: "[PERSON]", org: "[ORG]", amount: "[AMOUNT]", award: "[AWARD]", year: "[YEAR]", publication: "[PUBLICATION]", id_number: "[ID_NUMBER]", location: "[LOCATION]", quasi_identifier: "[QUASI_IDENTIFIER]" };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-  function pct(x) { return x == null ? "–" : Math.round(x * 100) + "%"; }
+  function pct(x) { return x == null ? "Not scored" : Math.round(x * 100) + "%"; }
   function when(ts) { if (!ts) return ""; var d = new Date(ts * 1000); return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
   function modelName(st, plan) {
     if (st.status === "done") return "Retrained with attorney corrections";

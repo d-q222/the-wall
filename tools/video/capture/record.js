@@ -167,9 +167,16 @@ const BEATS = {
   7: ['evaluation', 'Evaluation: scoreboard comparison table', async p => {
     await p.goto(BASE + '/scoreboard/', { waitUntil: 'networkidle' });
     await sleep(2500);
-    const row = p.getByText(/river_judge/i).first();
-    if (await row.count()) { await moveTo(p, row); await sleep(1500); await glideRight(p, row); }
-    await sleep(7000);
+    const row = p.getByText(/River-tuned judge|river_judge/).first();
+    if (await row.count()) { await moveTo(p, row); await sleep(1500); await glideRight(p, row); mark('river judge row'); }
+    await sleep(4000);
+    const indep = p.getByText('Independent sets', { exact: true }).first();
+    if (await indep.count()) {
+      const b = await indep.boundingBox();
+      await scrollBy(p, b.y - 120, 40);
+      mark('independent sets');
+      await sleep(5000);
+    }
   }],
   8: ['present', 'Presenter: cover slide', async p => {
     await p.goto(BASE + '/demo/present.html', { waitUntil: 'networkidle' });
@@ -185,6 +192,9 @@ const BEATS = {
     await sleep(3000);
   }],
 };
+
+let manifest = [];
+const manifestEntry = n => manifest.find(m => m.beat === n);
 
 async function record(browser, n) {
   const [name, notes, run] = BEATS[n];
@@ -213,7 +223,9 @@ async function record(browser, n) {
   await ctx.storageState({ path: STATE });
   await ctx.close();
   const src = await video.path();
-  const base = path.join(OUT, `${n}-${name}`);
+  // A failed take never replaces a good clip: it is written aside as <n>-<name>.failed.*
+  const prev = manifestEntry(n);
+  const base = path.join(OUT, `${n}-${name}` + (!ok && prev && prev.ok ? '.failed' : ''));
   const ss = String(start.toFixed(2));
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', ss, '-i', src, '-c:v', 'libvpx-vp9', '-b:v', '4M', '-deadline', 'realtime', '-cpu-used', '8', '-row-mt', '1', '-an', base + '.tmp.webm']);
   fs.renameSync(base + '.tmp.webm', base + '.webm');
@@ -231,11 +243,15 @@ async function record(browser, n) {
   const want = process.argv.slice(2).map(Number);
   const beats = want.length ? want : Object.keys(BEATS).map(Number);
   const manifestPath = path.join(OUT, 'clips.json');
-  const manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath)) : [];
+  manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath)) : [];
   const browser = await chromium.launch();
+  const load = () => fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath)) : [];
   for (const n of beats) {
+    manifest = load();  // re-read: another recorder run may have updated it
     const entry = await record(browser, n);
+    manifest = load();
     if (!entry) continue;
+    if (!entry.ok && manifestEntry(n)?.ok) { console.log(`beat ${n}: kept previous good clip`); continue; }
     const i = manifest.findIndex(m => m.beat === n);
     if (i >= 0) manifest[i] = entry; else manifest.push(entry);
     manifest.sort((a, b) => a.beat - b.beat);
