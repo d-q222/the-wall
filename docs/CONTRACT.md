@@ -45,6 +45,16 @@ Need a dependency? Add it with `uv add` and say so in your handoff; the coordina
 | C5 O-1 eval | `c5-o1-eval` | `evals/o1/` | Synthetic O-1 leak set scored for regex, carryover, prompt judge (+ River when ready) as eval set `o1_demo` |
 | C6 pitch | `c6-pitch` | `docs/pitch/` | 2-minute script, slides, say/don't-say and Q&A for the O-1 framing |
 
+| E1 redteam | `e1-redteam` | `redteam/` | Injection + evasion attacks reported honestly |
+| E2 cost | `e2-cost` | `evals/cost/` | Measured cost per 1k judgments and latency, prompt vs River |
+| E3 docs | `e3-docs` | `README.md`, `docs/ARCHITECTURE.md` | Repo reads like a product in 60 seconds |
+| E4 review | `e4-review` | nothing (read-only) | Blocker/major findings on main and lane branches |
+| E5 O-1 wall | `e5-o1-wall` | `walls/o1/` | O-1 beneficiaries walled in GBrain + O-1 attack script |
+| E6 stats | `e6-stats` | `evals/stats.py`, `tests/test_stats.py` | 95% Wilson intervals for every results row |
+| D1 integration | `d1-integration` | `scripts/`, `tests/test_e2e.py` | One-command demo + preflight + e2e tests |
+
+C4 (front-end) also owns `scoreboard/` from 15:05.
+
 Interfaces: `wall.pii.find(text) -> list[Span(start, end, kind)]`; `POST /deidentify` (DeidentifyRequest -> DeidentifyResponse in `wall/contract.py`).
 `o1_demo` numbers are self-written: never the headline. The headline stays the held-out hard set.
 
