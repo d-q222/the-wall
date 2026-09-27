@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ethical Wall Brain — the wall</title>
+<meta name="description" content="A live attack against the client wall: one matter's agent tries to reach another's facts, and fails.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14161d;
+    --bg-raised: #1b1e28;
+    --bg-room: #1e212c;
+    --paper: #eeeee6;
+    --muted: #8b8f9e;
+    --hair: #2c303d;
+    --wall: #e2452c;
+    --wall-dim: rgba(226, 69, 44, 0.35);
+    --ok: #49a67a;
+    --ok-dim: rgba(73, 166, 122, 0.35);
+    --radius-room: 10px;
+    --serif: "Source Serif 4", Georgia, serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--paper);
+    font-family: var(--serif);
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  a { color: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--paper);
+    outline-offset: 3px;
+  }
+
+  /* -- shared top nav (placeholder until demo/assets/theme.css + nav.js land from c4-demo-ui) -- */
+  nav.top {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+    padding: 1.1rem 2rem;
+    border-bottom: 1px solid var(--hair);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+  }
+  nav.top .brand {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-right: auto;
+    letter-spacing: 0.01em;
+  }
+  nav.top a {
+    text-decoration: none;
+    color: var(--muted);
+    padding: 0.3rem 0;
+    border-bottom: 2px solid transparent;
+  }
+  nav.top a:hover { color: var(--paper); }
+  nav.top a[aria-current="page"] {
+    color: var(--paper);
+    border-bottom-color: var(--wall);
+  }
+
+  main {
+    flex: 1;
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: 3rem 2rem 5rem;
+    width: 100%;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 2.75rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.1rem, 4vw, 3.1rem);
+    font-weight: 600;
+    line-height: 1.15;
+    margin: 0 0 0.75rem;
+  }
+
+  .hero p {
+    font-size: 1.15rem;
+    color: var(--muted);
+    max-width: 40rem;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  .hero p .who { color: var(--paper); }
+
+  /* -- controls -- */
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.25rem;
+  }
+
+  .picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  select {
+    font-family: var(--serif);
+    font-size: 1rem;
+    color: var(--paper);
+    background: var(--bg-raised);
+    border: 1px solid var(--hair);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    min-width: 13rem;
+  }
+
+  .versus {
+    font-family: var(--mono);
+    color: var(--muted);
+    font-size: 0.9rem;
+    padding-top: 1.1rem;
+  }
+
+  button.run {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.15rem;
+    color: var(--bg);
+    background: var(--paper);
+    border: none;
+    border-radius: 8px;
+    padding: 0.85rem 2.25rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  button.run:hover:not(:disabled) { background: #fff; }
+  button.run:active:not(:disabled) { transform: scale(0.98); }
+  button.run:disabled { opacity: 0.6; cursor: progress; }
+
+  .run-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 3rem;
+  }
+
+  /* -- the two rooms + wall -- */
+  .stage {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0;
+    align-items: stretch;
+    margin-bottom: 2.5rem;
+  }
+
+  .room {
+    background: var(--bg-room);
+    border: 1px solid var(--hair);
+    border-radius: var(--radius-room);
+    padding: 1.5rem;
+    min-height: 20rem;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .room.attacker { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+  .room.target { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+
+  .room h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 0.15rem;
+  }
+  .room .sub {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+  }
+
+  .lane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    justify-content: flex-start;
+  }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    background: var(--bg-raised);
+    border: 1px solid var(--hair);
+    border-radius: 6px;
+    padding: 0.55rem 0.8rem;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    width: fit-content;
+    max-width: 100%;
+  }
+  .chip.show { opacity: 1; transform: translateY(0); }
+  .chip.attacker-origin { align-self: flex-start; }
+  .chip.target-origin { align-self: flex-end; text-align: right; }
+
+  .chip.traveling {
+    transition: transform 0.55s cubic-bezier(.3,.6,.3,1), opacity 0.35s ease;
+  }
+  .chip.hit-wall {
+    border-color: var(--wall);
+    box-shadow: 0 0 0 1px var(--wall-dim);
+    animation: bump 0.32s ease;
+  }
+  .chip.passed-through {
+    border-color: var(--ok);
+    box-shadow: 0 0 0 1px var(--ok-dim);
+  }
+  @keyframes bump {
+    0% { transform: translateX(0); }
+    40% { transform: translateX(6px); }
+    100% { transform: translateX(0); }
+  }
+
+  .verdict {
+    display: inline-block;
+    margin-top: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.3s ease 0.15s;
+  }
+  .verdict.show { opacity: 1; }
+  .verdict.denied { background: var(--wall-dim); color: #ffb4a3; }
+  .verdict.ok { background: var(--ok-dim); color: #a9e3c6; }
+
+  .divider {
+    width: 2.75rem;
+    position: relative;
+    background:
+      repeating-linear-gradient(
+        180deg,
+        var(--wall-dim) 0 3px,
+        transparent 3px 14px
+      ),
+      var(--bg-raised);
+    border-top: 1px solid var(--hair);
+    border-bottom: 1px solid var(--hair);
+  }
+  .divider::before, .divider::after {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--wall);
+  }
+  .divider::before { left: 0; }
+  .divider::after { right: 0; }
+  .divider.active {
+    animation: pulse 1.1s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(226,69,44,0); }
+    50% { box-shadow: 0 0 22px var(--wall-dim); }
+  }
+
+  /* -- result -- */
+  .result {
+    text-align: center;
+  }
+  .result .tally {
+    font-size: clamp(2.6rem, 6vw, 4.2rem);
+    font-weight: 700;
+    line-height: 1;
+    margin: 0 0 0.5rem;
+    opacity: 0;
+    transform: scale(0.94);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .result .tally.show { opacity: 1; transform: scale(1); }
+  .result .tally.held { color: var(--ok); }
+  .result .tally.broken { color: var(--wall); }
+  .result .caption {
+    font-family: var(--mono);
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+  .result .replayed {
+    display: inline-block;
+    margin-top: 0.6rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    border: 1px solid var(--hair);
+    border-radius: 4px;
+    padding: 0.15rem 0.5rem;
+  }
+  .result .replayed[hidden] { display: none; }
+
+  /* -- detail log -- */
+  details.log {
+    margin-top: 2.5rem;
+    border-top: 1px solid var(--hair);
+    padding-top: 1.25rem;
+  }
+  details.log summary {
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .log-row {
+    display: grid;
+    grid-template-columns: 1.6fr 1.6fr 2fr auto;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--hair);
+    font-size: 0.85rem;
+  }
+  .log-row .name { color: var(--paper); }
+  .log-row .call, .log-row .res { font-family: var(--mono); color: var(--muted); font-size: 0.78rem; }
+  .log-row .pass-mark { font-family: var(--mono); font-size: 0.78rem; }
+  .log-row .pass-mark.pass { color: var(--ok); }
+  .log-row .pass-mark.fail { color: var(--wall); }
+
+  .status-line {
+    text-align: center;
+    font-family: var(--mono);
+    color: var(--muted);
+    font-size: 0.85rem;
+    min-height: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .status-line.error { color: var(--wall); }
+  .status-line button.retry {
+    font-family: var(--mono);
+    background: none;
+    border: 1px solid var(--wall);
+    color: var(--wall);
+    border-radius: 4px;
+    padding: 0.15rem 0.6rem;
+    margin-left: 0.5rem;
+    cursor: pointer;
+  }
+
+  @media (max-width: 720px) {
+    nav.top {
+      flex-wrap: wrap;
+      gap: 0.5rem 1.1rem;
+      padding: 1rem 1.25rem;
+    }
+    nav.top .brand { width: 100%; margin-right: 0; }
+    .stage { grid-template-columns: 1fr; }
+    .divider { width: 100%; height: 2.25rem; }
+    .divider::before, .divider::after { left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 2px; }
+    .divider::after { top: auto; bottom: 0; }
+    .room.attacker, .room.target { border-radius: var(--radius-room); }
+    .log-row { grid-template-columns: 1fr; gap: 0.15rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chip, .verdict, .result .tally, .divider.active { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top" aria-label="Demo sections">
+  <span class="brand">Ethical Wall Brain</span>
+  <a href="/demo/">Home</a>
+  <a href="/demo/">De-identify</a>
+  <a href="/demo/wall.html" aria-current="page">Wall</a>
+  <a href="/demo/compound.html">Compounding</a>
+  <a href="/scoreboard/">Scoreboard</a>
+  <a href="/demo/present.html">Present</a>
+</nav>
+
+<main>
+  <div class="hero">
+    <h1>Ask for everything anyway.</h1>
+    <p>
+      <span class="who" id="attackerLabel">Chen</span>'s agent can ask GBrain for anything it wants.
+      Watch what happens when it asks for <span class="who" id="targetLabel">Delmarva</span>.
+    </p>
+  </div>
+
+  <div class="controls">
+    <label class="picker">
+      attacker
+      <select id="attackerSelect"></select>
+    </label>
+    <span class="versus">vs.</span>
+    <label class="picker">
+      target
+      <select id="targetSelect"></select>
+    </label>
+  </div>
+
+  <div class="run-row">
+    <button class="run" id="runBtn" type="button">Run attack</button>
+  </div>
+
+  <p class="status-line" id="statusLine" aria-live="polite"></p>
+
+  <div class="stage">
+    <section class="room attacker">
+      <h2 id="attackerRoomTitle">Chen Family Trust</h2>
+      <div class="sub" id="attackerRoomSub">trusts_estates</div>
+      <div class="lane" id="attackerLane"></div>
+    </section>
+    <div class="divider" id="wallDivider"></div>
+    <section class="room target">
+      <h2 id="targetRoomTitle">Delmarva Logistics LLC</h2>
+      <div class="sub" id="targetRoomSub">litigation</div>
+      <div class="lane" id="targetLane"></div>
+    </section>
+  </div>
+
+  <div class="result">
+    <p class="tally" id="tally"></p>
+    <p class="caption" id="captionLine" style="visibility:hidden">Enforced by GBrain's permissions, not by the prompt.</p>
+    <span class="replayed" id="replayedTag" hidden>replayed from last live run</span>
+  </div>
+
+  <details class="log">
+    <summary>Show the 5 checks as raw calls and results</summary>
+    <div id="logRows"></div>
+  </details>
+</main>
+
+<script>
+(function () {
+  // Only matters with a live GBrain wall client are listed here; extend once
+  // e5-o1-wall registers clients for fixtures/matters/o1-*.
+  var MATTERS = [
+    { id: "chen", client: "Chen Family Trust", practice: "trusts_estates" },
+    { id: "delmarva", client: "Delmarva Logistics LLC", practice: "litigation" },
+    { id: "reyes", client: "Luisa Reyes", practice: "litigation" }
+  ];
+  var byId = {};
+  MATTERS.forEach(function (m) { byId[m.id] = m; });
+
+  var attackerSelect = document.getElementById("attackerSelect");
+  var targetSelect = document.getElementById("targetSelect");
+  var runBtn = document.getElementById("runBtn");
+  var statusLine = document.getElementById("statusLine");
+  var attackerLane = document.getElementById("attackerLane");
+  var targetLane = document.getElementById("targetLane");
+  var wallDivider = document.getElementById("wallDivider");
+  var tally = document.getElementById("tally");
+  var captionLine = document.getElementById("captionLine");
+  var replayedTag = document.getElementById("replayedTag");
+  var logRows = document.getElementById("logRows");
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function fillSelect(sel, defaultId) {
+    MATTERS.forEach(function (m) {
+      var opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = m.client + " (" + m.id + ")";
+      if (m.id === defaultId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+  fillSelect(attackerSelect, "chen");
+  fillSelect(targetSelect, "delmarva");
+
+  function renderRooms() {
+    var a = byId[attackerSelect.value], t = byId[targetSelect.value];
+    document.getElementById("attackerLabel").textContent = a.client.split(" ")[0];
+    document.getElementById("targetLabel").textContent = t.client.split(" ")[0];
+    document.getElementById("attackerRoomTitle").textContent = a.client;
+    document.getElementById("attackerRoomSub").textContent = a.practice;
+    document.getElementById("targetRoomTitle").textContent = t.client;
+    document.getElementById("targetRoomSub").textContent = t.practice;
+  }
+  attackerSelect.addEventListener("change", renderRooms);
+  targetSelect.addEventListener("change", renderRooms);
+  renderRooms();
+
+  function clearStage() {
+    attackerLane.innerHTML = "";
+    targetLane.innerHTML = "";
+    tally.className = "tally";
+    tally.textContent = "";
+    captionLine.style.visibility = "hidden";
+    replayedTag.hidden = true;
+    logRows.innerHTML = "";
+    wallDivider.classList.remove("active");
+  }
+
+  function humanize(check, attacker, target) {
+    // A short, spoken-language label for the traveling chip; the raw call
+    // stays visible in the detail log below.
+    if (check.name.indexOf("recalls its own facts") !== -1) return "search: its own matter";
+    if (check.name.indexOf("control") !== -1) return "search: its own file";
+    if (check.name.indexOf("searches for") !== -1) return "search: " + target;
+    if (check.name.indexOf("ALL sources") !== -1) return "search: all sources";
+    if (check.name.indexOf("opens") !== -1) return "open: " + target + "'s file";
+    return check.name;
+  }
+
+  function addChip(lane, origin, label) {
+    var chip = document.createElement("div");
+    chip.className = "chip " + origin + "-origin";
+    chip.textContent = label;
+    lane.appendChild(chip);
+    // force layout before adding .show so the transition runs
+    requestAnimationFrame(function () { chip.classList.add("show"); });
+    return chip;
+  }
+
+  function addVerdict(chip, ok, text) {
+    var v = document.createElement("div");
+    v.className = "verdict " + (ok ? "ok" : "denied");
+    v.textContent = text;
+    chip.appendChild(v);
+    requestAnimationFrame(function () { v.classList.add("show"); });
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, reduceMotion ? 0 : ms); });
+  }
+
+  function addLogRow(check) {
+    var row = document.createElement("div");
+    row.className = "log-row";
+    row.innerHTML =
+      '<div class="name">' + escapeHtml(check.name) + '</div>' +
+      '<div class="call">' + escapeHtml(check.call) + '</div>' +
+      '<div class="res">' + escapeHtml(check.result) + '</div>' +
+      '<div class="pass-mark ' + (check.passed ? "pass" : "fail") + '">' +
+        (check.passed ? "held" : "breached") + '</div>';
+    logRows.appendChild(row);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  async function animateChecks(checks, attacker, target) {
+    for (var i = 0; i < checks.length; i++) {
+      var c = checks[i];
+      var crossesWall = c.name.indexOf("searches for") !== -1 ||
+        c.name.indexOf("ALL sources") !== -1 || c.name.indexOf("opens") !== -1;
+      var originatesInTarget = c.name.indexOf("control") !== -1;
+      var lane = originatesInTarget ? targetLane : attackerLane;
+      var origin = originatesInTarget ? "target" : "attacker";
+      var chip = addChip(lane, origin, humanize(c, attacker, target));
+
+      await sleep(220);
+
+      if (crossesWall) {
+        wallDivider.classList.add("active");
+        await sleep(380);
+        chip.classList.add("hit-wall");
+        wallDivider.classList.remove("active");
+      } else {
+        chip.classList.add("passed-through");
+      }
+
+      addVerdict(chip, c.passed, c.result);
+      addLogRow(c);
+      await sleep(reduceMotion ? 0 : 260);
+    }
+  }
+
+  async function run() {
+    clearStage();
+    runBtn.disabled = true;
+    statusLine.className = "status-line";
+    statusLine.textContent = "Running the attack live against GBrain…";
+
+    var attacker = attackerSelect.value, target = targetSelect.value;
+    var url = "/demo/api/wall?matter=" + encodeURIComponent(attacker) +
+      "&target=" + encodeURIComponent(target);
+
+    try {
+      var res = await fetch(url, { method: "POST" });
+      if (!res.ok) throw new Error("http " + res.status);
+      var data = await res.json();
+
+      statusLine.textContent = "";
+      await animateChecks(data.checks, attacker, target);
+
+      var held = data.passed === data.total;
+      tally.textContent = "Wall held: " + data.passed + "/" + data.total;
+      tally.classList.add("show", held ? "held" : "broken");
+      captionLine.style.visibility = "visible";
+      if (data.replayed) replayedTag.hidden = false;
+    } catch (err) {
+      statusLine.className = "status-line error";
+      statusLine.textContent = "Couldn't reach the wall (" + err.message + ").";
+      var retry = document.createElement("button");
+      retry.className = "retry";
+      retry.type = "button";
+      retry.textContent = "Retry";
+      retry.addEventListener("click", run);
+      statusLine.appendChild(retry);
+    } finally {
+      runBtn.disabled = false;
+    }
+  }
+
+  runBtn.addEventListener("click", run);
+})();
+</script>
+</body>
+</html>
