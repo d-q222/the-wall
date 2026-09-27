@@ -79,6 +79,9 @@
   .landing { opacity: 0; transform: translateY(8px); }
   .landed { opacity: 1; transform: none; transition: opacity .35s ease, transform .45s cubic-bezier(.2,.7,.2,1); }
 
+  .tab-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 8px; vertical-align: 1px; }
+  .tab-dot.leak { background: var(--risk); }
+  .tab-dot.clean { background: var(--cleared); }
   .train-note { font-size: var(--fs-13); color: var(--text-2); margin-top: 8px; }
   .train-note a { font-weight: 600; }
   .error { font-size: var(--fs-13); color: var(--risk); }
@@ -198,12 +201,13 @@
     state.exhibits.forEach(function (ex, i) {
       var r = state.results[key(ex)];
       var meta = r ? plural(r.removed, "identifier removed", "identifiers removed") : "Not reviewed";
+      var dot = r && r.residual ? '<span class="tab-dot ' + (r.residual.verdict === "leak" ? "leak" : "clean") + '" title="' + (r.residual.verdict === "leak" ? "Residual identifier found" : "No residual identifiers") + '"></span>' : "";
       var b = document.createElement("button");
       b.type = "button";
       b.className = "binder-tab";
       b.setAttribute("role", "tab");
       b.setAttribute("aria-selected", i === state.active ? "true" : "false");
-      b.innerHTML = '<span class="tab-letter">' + ex.letter + '</span><span><span class="tab-title">' + esc(ex.label === ex.title ? ex.title : ex.label) +
+      b.innerHTML = '<span class="tab-letter">' + ex.letter + '</span><span><span class="tab-title">' + esc(ex.label === ex.title ? ex.title : ex.label) + dot +
         '</span><br><span class="tab-meta">' + esc(ex.label === ex.title ? meta : ex.title) + '</span>' +
         (ex.label !== ex.title ? '<br><span class="tab-meta">' + esc(meta) + '</span>' : "") + "</span>";
       b.addEventListener("click", function () { if (!state.running) select(i); });
@@ -307,7 +311,10 @@
       if (!groups[s.kind]) { groups[s.kind] = []; order.push(s.kind); }
       groups[s.kind].push(s);
     });
-    var html = '<div class="inspector-section"><div class="insp-title"><h3>Identifiers found</h3><span class="count">' +
+    var html = '<div class="inspector-section" id="verdict-section"><h3>Judge verdict</h3>' +
+      (pending ? '<p class="meta" id="verdict-wait">The judge\'s verdict appears once every identifier is replaced.</p>' : verdictHTML(r)) + "</div>";
+    html += '<div class="inspector-section" id="train-section"' + (pending ? " hidden" : "") + ">" + trainHTML(ex, r) + "</div>";
+    html += '<div class="inspector-section"><div class="insp-title"><h3>Identifiers found</h3><span class="count">' +
       plural(r.removed, "removed", "removed") + " in " + plural(order.length, "kind", "kinds") + "</span></div>";
     if (!order.length) html += '<p class="meta">No identifiers were found in this exhibit.</p>';
     order.forEach(function (k) {
@@ -320,8 +327,6 @@
       html += "</div>";
     });
     html += "</div>";
-    html += '<div class="inspector-section' + (pending ? " landing" : "") + '" id="verdict-section"><h3>Judge verdict</h3>' + verdictHTML(r) + "</div>";
-    html += '<div class="inspector-section' + (pending ? " landing" : "") + '" id="train-section">' + trainHTML(ex, r) + "</div>";
     insp.innerHTML = html;
     insp.querySelectorAll(".ident-row").forEach(function (row) {
       row.addEventListener("click", function () { focusIdent(row.getAttribute("data-i")); });
@@ -457,10 +462,14 @@
     var idents = Array.prototype.slice.call(sheet.querySelectorAll(".ident"));
     var rows = $("inspector");
     function land() {
-      ["verdict-section", "train-section"].forEach(function (id, k) {
-        var n = $(id);
-        if (n) setTimeout(function () { n.classList.add("landed"); }, k * 180);
-      });
+      var ex = state.exhibits[state.active], r = state.results[key(ex)];
+      var v = $("verdict-section"), t = $("train-section");
+      v.innerHTML = "<h3>Judge verdict</h3>" + verdictHTML(r);
+      var card = v.querySelector(".verdict");
+      card.classList.add("landing");
+      void card.offsetWidth;
+      card.classList.add("landed");
+      t.hidden = false;
       done();
     }
     if (reduceMotion || !idents.length) { setView("clean"); land(); return; }
