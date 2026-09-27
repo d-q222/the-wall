@@ -200,7 +200,7 @@
     btn.textContent = running ? "Retraining in progress" : "Retrain with " + plan.n_feedback + " correction" + (plan.n_feedback === 1 ? "" : "s");
 
     $("counts").innerHTML =
-      "<span>Firm training set</span><span class=\"n\">" + plan.n_base + "</span>" +
+      "<span>Firm examples replayed</span><span class=\"n\">" + plan.n_base + "</span>" +
       "<span>Missed identifiers</span><span class=\"n\">" + (last.summary.by_kind.missed || 0) + "</span>" +
       "<span>Wrongly redacted</span><span class=\"n\">" + (last.summary.by_kind.wrong || 0) + "</span>" +
       '<span class="meta">Each correction is weighted ×4 in the retrain set</span><span></span>';
@@ -252,7 +252,7 @@
         }
         return '<div class="metric"><div class="v">' + pct(x.recall) + '</div><div class="d">' + esc(names[x.det] || x.det) + "</div>" +
           '<div class="d num">' + x.r.caught + " of " + x.r.leaks + " identifiers caught</div>" +
-          '<div class="d num">' + x.r.false_alarms + " over-redactions in " + x.r.clean + " clean spans</div>" + delta + "</div>";
+          '<div class="d num">' + x.r.false_alarms + " of " + x.r.clean + " clean tokens over-redacted</div>" + delta + "</div>";
       }).join("") + "</div>";
       var river = rows.filter(function (x) { return /^river_deid/.test(x.det); });
       var best = river[river.length - 1] || rows[rows.length - 1];
