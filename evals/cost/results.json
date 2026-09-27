@@ -1,0 +1,26 @@
+{
+  "detector": "prompt_judge",
+  "model": "claude-sonnet-5",
+  "n": 20,
+  "input_tokens": {
+    "mean": 419.1,
+    "p50": 419.5,
+    "p95": 436.05
+  },
+  "output_tokens": {
+    "mean": 50.5,
+    "p50": 57.5,
+    "p95": 68.00000000000001
+  },
+  "latency_s": {
+    "mean": 1.67,
+    "p50": 1.628,
+    "p95": 1.898
+  },
+  "cost_per_1000_judgments_usd": 1.3437,
+  "price_per_mtok_usd": {
+    "input": 2.0,
+    "output": 10.0
+  },
+  "river_judge": "not measured: no deployment or sampling path on main as of this run"
+}
