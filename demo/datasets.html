@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,42 +9,26 @@
 <link rel="stylesheet" href="/demo/assets/theme.css">
 <script src="/demo/assets/nav.js" defer></script>
 <style>
-  /* Page-scoped v2 tokens (docs/DESIGN.md). Falls back to these if theme.css has not defined them. */
+  /* Bound to the shared v2 tokens in /demo/assets/theme.css; fallbacks are the DESIGN.md light values. */
   .ds {
     --ds-paper: var(--paper, #FBFBF9);
+    --ds-surface: var(--surface, #FFFFFF);
     --ds-canvas: var(--canvas, #E6E9ED);
-    --ds-ink: var(--ink, #14213D);
-    --ds-ink-2: #4A5468;
-    --ds-ink-3: #6E7788;
-    --ds-line: #D3D8DF;
-    --ds-line-soft: #E4E7EC;
-    --ds-blue: var(--form-blue, #1F4E9E);
-    --ds-blue-soft: #E7EEF8;
-    --ds-found: var(--found, #FFE58A);
+    --ds-ink: var(--text, #14213D);
+    --ds-ink-2: var(--text-2, #4A5468);
+    --ds-ink-3: var(--text-3, #6E7788);
+    --ds-line: var(--line, #D3D8E0);
+    --ds-line-soft: color-mix(in srgb, var(--ds-line) 60%, transparent);
+    --ds-blue: var(--blue, #1F4E9E);
+    --ds-blue-soft: var(--blue-soft, #E4ECF8);
     --ds-risk: var(--risk, #C2410C);
-    --ds-risk-soft: #FBEDE5;
+    --ds-risk-soft: var(--risk-soft, #FBE7DC);
     --ds-cleared: var(--cleared, #1E7B4F);
-    --ds-cleared-soft: #E4F2EA;
-    font-family: "Public Sans", -apple-system, "Segoe UI", sans-serif;
+    font-family: var(--font-ui, "Public Sans", sans-serif);
     font-size: 15px;
     line-height: 1.45;
     color: var(--ds-ink);
     font-variant-numeric: tabular-nums;
-    padding: 28px 40px 64px;
-    max-width: 1320px;
-  }
-  body:has(.ds) { background: var(--canvas, #E6E9ED); }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .ds {
-      --ds-paper: #1B2233; --ds-canvas: #111726; --ds-ink: #E8ECF3; --ds-ink-2: #B4BCCB; --ds-ink-3: #8993A5;
-      --ds-line: #2E374B; --ds-line-soft: #252D3F; --ds-blue: #7FA6E8; --ds-blue-soft: #1D2B47;
-      --ds-risk-soft: #3A2218; --ds-cleared-soft: #17311F;
-    }
-  }
-  :root[data-theme="dark"] .ds {
-    --ds-paper: #1B2233; --ds-canvas: #111726; --ds-ink: #E8ECF3; --ds-ink-2: #B4BCCB; --ds-ink-3: #8993A5;
-    --ds-line: #2E374B; --ds-line-soft: #252D3F; --ds-blue: #7FA6E8; --ds-blue-soft: #1D2B47;
-    --ds-risk-soft: #3A2218; --ds-cleared-soft: #17311F;
   }
 
   .ds-head { display: flex; align-items: flex-end; gap: 24px; margin-bottom: 20px; }
@@ -54,10 +38,10 @@
   .ds-actions { display: flex; gap: 8px; flex: none; }
   .ds-btn {
     font: 600 15px/1 "Public Sans", sans-serif; border-radius: 4px; padding: 11px 16px; cursor: pointer;
-    border: 1px solid var(--ds-blue); background: var(--ds-blue); color: #fff;
+    border: 1px solid var(--ds-blue); background: var(--ds-blue); color: var(--on-blue, #fff);
   }
   .ds-btn:hover:not(:disabled) { filter: brightness(1.08); }
-  .ds-btn.quiet { background: var(--ds-paper); color: var(--ds-blue); border-color: var(--ds-line); }
+  .ds-btn.quiet { background: var(--ds-surface); color: var(--ds-blue); border-color: var(--ds-line); }
   .ds-btn.quiet:hover:not(:disabled) { border-color: var(--ds-blue); filter: none; }
   .ds-btn:disabled { opacity: 0.45; cursor: not-allowed; }
   .ds :focus-visible { outline: 2px solid var(--ds-blue); outline-offset: 2px; }
@@ -65,7 +49,7 @@
   /* Summary strip: one panel, four fields, divided by rules */
   .ds-summary {
     display: grid; grid-template-columns: 1fr 2.3fr 1fr 1.4fr;
-    background: var(--ds-paper); border: 1px solid var(--ds-line); border-radius: 8px; margin-bottom: 16px;
+    background: var(--ds-surface); border: 1px solid var(--ds-line); border-radius: 8px; margin-bottom: 16px;
   }
   .ds-summary > div { padding: 14px 18px; border-left: 1px solid var(--ds-line-soft); min-width: 0; }
   .ds-summary > div:first-child { border-left: 0; }
@@ -79,7 +63,7 @@
   .v.risk { color: var(--ds-risk); }
 
   /* Table */
-  .ds-table-wrap { background: var(--ds-paper); border: 1px solid var(--ds-line); border-radius: 8px; overflow: hidden; }
+  .ds-table-wrap { background: var(--ds-surface); border: 1px solid var(--ds-line); border-radius: 8px; overflow: hidden; }
   table.ds-table { width: 100%; border-collapse: collapse; }
   .ds-table th {
     text-align: left; font-size: 13px; font-weight: 600; color: var(--ds-ink-2);
@@ -130,9 +114,9 @@
   .sheet {
     background: var(--ds-paper); border-radius: 2px; box-shadow: 0 1px 2px rgba(20,33,61,.12), 0 6px 18px rgba(20,33,61,.08);
     padding: 28px 40px; max-width: 78ch; margin: 0 auto;
-    font-family: "Source Serif 4", Georgia, serif; font-size: 16px; line-height: 1.65; white-space: pre-wrap;
+    font-family: var(--font-doc, "Source Serif 4", Georgia, serif); font-size: 16px; line-height: 1.65; white-space: pre-wrap; color: var(--ink, #14213D);
   }
-  .sheet .ph { font-size: 12.5px; }
+  .sheet .ph { font-size: 12.5px; color: var(--ink, #14213D); background: #E4ECF8; border-color: #B9CBEA; }
   .sheet mark.resid { background: none; color: inherit; border-bottom: 2px solid var(--ds-risk); }
   .detail-meta { max-width: 78ch; margin: 0 auto 10px; font-size: 13px; color: var(--ds-ink-2); display: flex; gap: 16px; }
   .detail-meta .grow { flex: 1; }
@@ -146,15 +130,13 @@
     .doc-name .caret { transition: none; }
   }
   @media (max-width: 1100px) {
-    .ds { padding: 20px; }
     .ds-summary { grid-template-columns: 1fr 1fr; }
     .ds-summary > div:nth-child(3) { border-left: 0; }
   }
 </style>
 </head>
-<body>
-<div id="site-nav"></div>
-<main class="ds" id="datasets">
+<body data-screen="datasets" data-crumb="Datasets">
+<main class="app-main ds" id="datasets">
   <header class="ds-head">
     <div class="grow">
       <h1>Training set: O-1 petitions</h1>
