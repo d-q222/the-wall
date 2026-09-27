@@ -1,0 +1,46 @@
+{
+  "session_id": "b3-scrub-delmarva-procedure-001",
+  "task_description": "Firm-wide litigation procedure (scrubbed): open with the breached contract clause, quantify damages in documented vs projected buckets, attach the exhibit index, set a cure deadline",
+  "prompt": "Turn the counterparty's demand-letter session into a matter-agnostic, scrubbed procedure any matter can reuse",
+  "tool_calls": [
+    {
+      "name": "read",
+      "input": {
+        "file_path": "matter/session-demand-letter.md",
+        "description": "read the raw session log for this matter"
+      },
+      "result": {
+        "ok": true
+      }
+    },
+    {
+      "name": "search",
+      "input": {
+        "pattern": "Exhibit|Section|cure deadline",
+        "path": "matter/"
+      },
+      "result": {
+        "ok": true
+      }
+    },
+    {
+      "name": "write",
+      "input": {
+        "file_path": "matter/drafts/demand_letter_procedure.md",
+        "description": "Draft a demand letter procedure (scrubbed, matter-agnostic): 1. open with the contract clause and cure/breach date from the relevant section of the counterparty agreement; 2. quantify damages in two buckets, documented first then projected, using [amount] placeholders; 3. attach the evidence index as the exhibit before the demand; 4. give a cure deadline and name the forum-selection clause."
+      },
+      "result": {
+        "ok": true
+      }
+    },
+    {
+      "name": "execute",
+      "input": {
+        "command": "wc -l matter/drafts/demand_letter_procedure.md"
+      },
+      "result": {
+        "ok": true
+      }
+    }
+  ]
+}
