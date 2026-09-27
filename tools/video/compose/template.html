@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=block" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root { --paper:#FBFBF9; --canvas:#E6E9ED; --ink:#14213D; --blue:#1F4E9E; --found:#FFE58A; --risk:#C2410C; --cleared:#1E7B4F; --muted:#5B6478; }
+      * { margin:0; padding:0; box-sizing:border-box; }
+      html, body { width:1920px; height:1080px; overflow:hidden; background:var(--canvas); }
+      #root { position:relative; width:1920px; height:1080px; font-family:"Public Sans", system-ui, sans-serif; color:var(--ink); font-variant-numeric:tabular-nums; }
+      .scene { position:absolute; inset:0; }
+      .card { background:var(--paper); display:flex; flex-direction:column; justify-content:center; padding:0 220px 120px; }
+      .brand { position:absolute; top:64px; left:220px; font-weight:600; font-size:24px; color:var(--blue); letter-spacing:-0.01em; }
+      .brand::before { content:""; display:inline-block; width:14px; height:28px; background:var(--ink); margin-right:14px; vertical-align:-5px; border-radius:2px; }
+      .ttl { font-family:"Source Serif 4", Georgia, serif; font-weight:600; font-size:104px; line-height:1.08; letter-spacing:-0.02em; max-width:1400px; }
+      .close .ttl { font-size:120px; }
+      mark { color:inherit; background:linear-gradient(var(--found), var(--found)) no-repeat 0 0 / 100% 100%; padding:0 10px; border-radius:4px; }
+      .sub { margin-top:40px; font-size:34px; line-height:1.4; color:var(--muted); max-width:1300px; }
+      .close .sub { color:var(--blue); font-weight:600; font-size:40px; }
+      .label { position:absolute; top:40px; left:220px; font-size:34px; font-weight:600; letter-spacing:-0.01em; display:flex; align-items:center; gap:16px; }
+      .label .n { display:inline-flex; width:44px; height:44px; border-radius:8px; background:var(--ink); color:var(--paper); font-size:24px; align-items:center; justify-content:center; }
+      .frame { position:absolute; top:112px; left:220px; width:1480px; height:833px; border-radius:8px; overflow:hidden; background:var(--paper); box-shadow:0 18px 50px rgba(20,33,61,.18), 0 2px 6px rgba(20,33,61,.12); }
+      .vframe { position:absolute; z-index:5; top:112px; left:220px; width:1480px; height:833px; border-radius:8px; object-fit:cover; object-position:top left; background:var(--paper); box-shadow:0 18px 50px rgba(20,33,61,.18), 0 2px 6px rgba(20,33,61,.12); }
+      .vframe.narrow, .frame.narrow { left:120px; width:1100px; height:619px; top:160px; }
+      .frame-media { width:100%; height:100%; object-fit:cover; object-position:top left; transform-origin:30% 20%; display:block; }
+      .spanel { position:absolute; top:160px; left:1270px; width:540px; background:var(--paper); border-radius:8px; padding:36px 36px 30px; box-shadow:0 2px 6px rgba(20,33,61,.12); }
+      .spanel h3 { font-size:24px; font-weight:600; margin-bottom:22px; }
+      .spanel .h3b { margin-top:34px; }
+      .srow { display:grid; grid-template-columns:1fr; gap:6px; margin-bottom:18px; }
+      .sname { font-size:21px; color:var(--muted); }
+      .sbar { height:18px; background:var(--canvas); border-radius:4px; overflow:hidden; margin-right:170px; }
+      .sfill { height:100%; width:var(--w); background:var(--blue); border-radius:4px; }
+      .srow { position:relative; }
+      .snum { position:absolute; right:0; bottom:-6px; font-size:36px; font-weight:700; }
+      .snum span { font-size:22px; color:var(--muted); font-weight:500; }
+      .snote { font-size:19px; line-height:1.45; color:var(--muted); margin-top:6px; }
+      .snote b { color:var(--risk); }
+      .cap { position:absolute; left:0; right:0; bottom:26px; display:flex; justify-content:center; z-index:10; }
+      .cap span { max-width:1560px; background:rgba(20,33,61,.92); color:#fff; font-size:33px; line-height:1.3; padding:12px 26px; border-radius:8px; text-align:center; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="{{TOTAL}}" data-width="1920" data-height="1080">
+      {{BODY}}
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      {{JS}}
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
