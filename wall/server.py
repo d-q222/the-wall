@@ -1,5 +1,6 @@
 """HTTP surface for the contract. Routes delegate to modules owned by one branch each."""
 
+import os
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -51,9 +52,10 @@ def compound_(source: str = "delmarva", target: str = "chen") -> dict:
 
 
 # Web demo (C4 shell + F-lane pages), same origin as the API.
-_demo = Path(__file__).resolve().parent.parent / "demo"
+# WALL_DEMO_DIR lets a live preview serve in-progress pages without touching the repo.
+_demo = Path(os.environ.get("WALL_DEMO_DIR", Path(__file__).resolve().parent.parent / "demo"))
 _demo.mkdir(exist_ok=True)
 app.mount("/demo", StaticFiles(directory=_demo, html=True), name="demo")
-app.mount("/scoreboard", StaticFiles(directory=_demo.parent / "scoreboard", html=True), name="scoreboard")
+app.mount("/scoreboard", StaticFiles(directory=Path(__file__).resolve().parent.parent / "scoreboard", html=True), name="scoreboard")
 results.RESULTS.parent.mkdir(parents=True, exist_ok=True)
 app.mount("/results", StaticFiles(directory=results.RESULTS.parent), name="results")
