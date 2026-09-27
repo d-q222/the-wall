@@ -1,0 +1,17 @@
+{
+  "id": "o1-achterberg",
+  "client": "Halcyon Vision Labs, Inc.",
+  "practice": "immigration",
+  "facts": {
+    "names": ["Dr. Simone Achterberg", "Dr. Yusuf Tanaka-Whitfield", "Priya Chandrasekhar", "Naomi Castellanos-Reyes"],
+    "orgs": ["Halcyon Vision Labs, Inc.", "Kestrel Robotics Institute", "Meridian AI Society", "The Compute Dispatch"],
+    "amounts": ["$215,000", "$4,200,000"],
+    "distinctive": [
+      "the only researcher to win the Halvorsen Prize twice",
+      "led the team that built the first open-source model to pass the Meridian reasoning benchmark",
+      "A128-773-410",
+      "IOE0912345671",
+      "PA3847562"
+    ]
+  }
+}
