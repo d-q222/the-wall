@@ -10,3 +10,5 @@ data/*
 *.token
 .env
 results/results.json
+# scripts/demo.sh symlinks the shared results dir in here so the static server can reach it
+/results
