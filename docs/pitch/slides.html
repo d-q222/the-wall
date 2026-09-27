@@ -4,22 +4,26 @@
 <meta charset="utf-8">
 <title>Ethical Wall Brain — O-1 de-identification</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0b0f14;
-    --bg2: #10161d;
-    --fg: #f2f5f7;
-    --dim: #9fb0bd;
-    --accent: #5ad1a8;
-    --warn: #e8a33d;
-    --bad: #e8615a;
-    --rule: #24313c;
+    --paper: #FBFBF9;
+    --canvas: #E6E9ED;
+    --ink: #14213D;
+    --form-blue: #1F4E9E;
+    --found: #FFE58A;
+    --risk: #C2410C;
+    --cleared: #1E7B4F;
+    --muted: #5A6478;
+    --rule: #D5D9E0;
   }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; height: 100%;
-    background: var(--bg); color: var(--fg);
-    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--canvas); color: var(--ink);
+    font-family: "Public Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
     overflow: hidden;
   }
   .deck { position: relative; width: 100vw; height: 100vh; }
@@ -28,217 +32,227 @@
     display: none;
     flex-direction: column;
     justify-content: center;
-    padding: 6vw 8vw;
+    padding: 64px 96px 96px 96px;
     opacity: 0;
     transition: opacity .25s ease;
   }
   .slide.active { display: flex; opacity: 1; }
-  .kicker {
-    color: var(--accent);
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    font-size: 1.4vw;
-    font-weight: 600;
-    margin-bottom: 1.2vw;
+  .firm {
+    font-size: 15px; font-weight: 600; color: var(--form-blue);
+    margin-bottom: 20px;
   }
   h1 {
-    font-size: 4.6vw;
-    line-height: 1.05;
-    margin: 0 0 1.4vw 0;
-    font-weight: 700;
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 64px; line-height: 1.08; font-weight: 600;
+    margin: 0 0 24px 0; max-width: 16em;
   }
   h2 {
-    font-size: 2.6vw;
-    line-height: 1.15;
-    margin: 0 0 2vw 0;
-    font-weight: 600;
-    color: var(--fg);
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 40px; line-height: 1.15; font-weight: 600;
+    margin: 0 0 28px 0;
   }
-  p, li { font-size: 1.7vw; line-height: 1.45; color: var(--dim); }
-  .lede { font-size: 2.1vw; color: var(--fg); line-height: 1.4; max-width: 46em; }
+  p, li { font-size: 21px; line-height: 1.5; color: var(--ink); }
+  .lede { font-size: 24px; line-height: 1.45; max-width: 44em; margin: 0 0 16px 0; }
+  .lede.small { font-size: 21px; color: var(--muted); }
   ul { padding-left: 1.4em; margin: 0; }
-  li { margin-bottom: .6vw; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; align-items: start; }
-  .card {
-    background: var(--bg2);
+  li { margin-bottom: 10px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+  .sheet {
+    background: var(--paper);
     border: 1px solid var(--rule);
-    border-radius: 12px;
-    padding: 2vw 2.2vw;
+    border-radius: 2px;
+    box-shadow: 0 2px 10px rgba(20, 33, 61, .12);
+    padding: 28px 32px;
   }
-  .mono {
-    font-family: "SF Mono", Menlo, Consolas, monospace;
-    font-size: 1.35vw;
-    line-height: 1.55;
-    white-space: pre-wrap;
-    word-break: break-word;
+  .sheet h3, .panel h3 {
+    font-size: 17px; font-weight: 700; margin: 0 0 12px 0;
   }
-  .redact {
-    background: var(--warn);
-    color: #201400;
-    border-radius: 4px;
-    padding: 0 .3em;
-    font-weight: 700;
+  .sheet p, .panel p { font-size: 19px; margin: 0 0 10px 0; }
+  .panel {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-left: 6px solid var(--form-blue);
+    border-radius: 8px;
+    padding: 28px 32px;
+  }
+  .panel.warn { border-left-color: var(--risk); }
+  .doc { font-family: "Source Serif 4", Georgia, serif; font-size: 20px; line-height: 1.6; }
+  .hl { background: var(--found); border-radius: 4px; padding: 0 .3em; font-weight: 600; }
+  .chip {
+    background: var(--canvas); border: 1px solid var(--rule); border-radius: 4px;
+    padding: 0 .45em; font-family: "Public Sans", sans-serif; font-size: .82em; font-weight: 700;
+    color: var(--form-blue); white-space: nowrap;
   }
   .flag {
-    background: var(--bad);
-    color: #2a0000;
-    border-radius: 4px;
-    padding: 0 .3em;
-    font-weight: 700;
+    background: #FBE9DC; color: var(--risk);
+    border-radius: 4px; padding: 0 .3em; font-weight: 600;
   }
-  table { width: 100%; border-collapse: collapse; font-size: 1.6vw; }
-  th, td { text-align: left; padding: .9vw 1vw; border-bottom: 1px solid var(--rule); }
-  th { color: var(--accent); font-weight: 600; text-transform: uppercase; font-size: 1.1vw; letter-spacing: .06em; }
-  td.num { font-variant-numeric: tabular-nums; color: var(--fg); font-weight: 600; }
-  .blank { color: var(--warn); }
-  .n { color: var(--dim); font-size: 1.2vw; margin-top: 1vw; }
+  .term {
+    background: var(--ink); color: #EFF3FA;
+    border-radius: 8px; padding: 28px 32px;
+    font-family: Menlo, Consolas, monospace; font-size: 19px; line-height: 1.65;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .term .pass { color: #7BD9A8; font-weight: 700; }
+  .term .hold { color: var(--found); font-weight: 700; }
+  table.score { width: 100%; border-collapse: collapse; background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+  table.score th, table.score td {
+    text-align: left; padding: 14px 20px; border-bottom: 1px solid var(--rule);
+    font-size: 20px;
+  }
+  table.score tr:last-child th, table.score tr:last-child td { border-bottom: none; }
+  table.score th { font-size: 15px; font-weight: 700; color: var(--muted); background: var(--paper); }
+  td.num { font-variant-numeric: tabular-nums; font-weight: 700; }
+  td .sub { display: block; font-size: 15px; font-weight: 400; color: var(--muted); }
+  .note { font-size: 17px; color: var(--muted); margin-top: 18px; max-width: 60em; }
+  .say { color: var(--cleared); font-weight: 700; }
+  .dont-label { color: var(--risk); font-weight: 700; }
+  .dont { color: var(--risk); text-decoration: line-through; text-decoration-color: var(--risk); }
   .foot {
-    position: absolute; bottom: 3vh; left: 8vw; right: 8vw;
-    display: flex; justify-content: space-between;
-    color: var(--dim); font-size: 1.1vw;
-    border-top: 1px solid var(--rule); padding-top: 1vh;
+    position: absolute; bottom: 28px; left: 96px; right: 96px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    color: var(--muted); font-size: 15px;
+    border-top: 1px solid var(--rule); padding-top: 12px;
   }
-  .dots { position: absolute; bottom: 2vh; right: 8vw; display: flex; gap: .5vw; }
-  .dot { width: .6vw; height: .6vw; border-radius: 50%; background: var(--rule); }
-  .dot.on { background: var(--accent); }
-  .say { color: var(--accent); }
-  .dont { color: var(--bad); text-decoration: line-through; text-decoration-color: var(--bad); }
+  .dots { position: absolute; bottom: 30px; right: 96px; display: none; }
+  .bar { height: 10px; border-radius: 4px; background: var(--canvas); border: 1px solid var(--rule); position: relative; overflow: hidden; min-width: 220px; }
+  .bar > span { position: absolute; inset: 0; right: auto; background: var(--form-blue); border-radius: 4px; }
+  .bar.zero > span { width: 0; }
+  .numrow { display: flex; align-items: center; gap: 14px; }
 </style>
 </head>
 <body>
 <div class="deck" id="deck">
 
   <section class="slide active">
-    <div class="kicker">Ethical Wall Brain</div>
+    <div class="firm">Okafor &amp; Lind Immigration</div>
     <h1>Compound the how.<br>Wall the who.</h1>
-    <p class="lede">A small immigration firm's win rate on O-1 petitions should compound with
-    every case it wins. Right now, no one lets it — because every petition is built entirely
-    out of one person's identity.</p>
-    <p class="lede">A few of you in this room have filed one of these yourselves.</p>
+    <p class="lede">A small immigration firm&rsquo;s win rate on O-1 petitions should compound with
+    every case it wins. Right now, nothing lets it &mdash; because every petition is built entirely
+    out of one person&rsquo;s identity.</p>
+    <p class="lede small">Ethical Wall Brain: de-identified know-how the firm can reuse, with the
+    residual risk measured, not assumed away.</p>
   </section>
 
   <section class="slide">
-    <div class="kicker">The problem</div>
-    <h2>AI that forgets, vs. AI that learns</h2>
-    <div class="grid2">
-      <div class="card">
-        <p style="color:var(--fg); font-size:1.9vw; margin-top:0;">ABA Formal Opinion 512</p>
-        <p>A self-learning tool that lets one client's facts surface in another client's
-        work needs <em>specific</em> informed consent. Boilerplate in an engagement letter
-        is not enough.</p>
+    <div class="firm">The problem</div>
+    <h2>AI that forgets, versus AI that learns</h2>
+    <div class="cols">
+      <div class="panel">
+        <h3>The duty: ABA Formal Opinion 512</h3>
+        <p>A self-learning tool that lets one client&rsquo;s facts surface in another
+        client&rsquo;s work needs <em>specific</em> informed consent. Boilerplate in an
+        engagement letter is not enough.</p>
       </div>
-      <div class="card">
-        <p style="color:var(--fg); font-size:1.9vw; margin-top:0;">Today's workaround</p>
-        <p>Zero-retention configs. Don't train on client input. The tool stays safe by
-        learning nothing — so a firm's twentieth O-1 win teaches the AI nothing about the
-        first nineteen.</p>
+      <div class="panel warn">
+        <h3>Today&rsquo;s workaround</h3>
+        <p>Zero-retention configs. Don&rsquo;t train on client input. The tool stays safe by
+        learning nothing &mdash; so the firm&rsquo;s twentieth O-1 win teaches the AI nothing
+        about the first nineteen.</p>
       </div>
     </div>
-    <p class="lede" style="margin-top:2vw;">We built memory that compounds the firm's
-    know-how — how a strong O-1 case is built — without carrying any one beneficiary's
-    identity into the next case.</p>
+    <p class="lede" style="margin-top:28px;">Memory that compounds how a strong O-1 case is built,
+    without carrying any one beneficiary&rsquo;s identity into the next case.</p>
   </section>
 
   <section class="slide">
-    <div class="kicker">Live · walls/attack.py</div>
+    <div class="firm">Isolation, demonstrated live</div>
     <h2>The wall holds</h2>
-    <div class="card mono" style="font-size:1.5vw;">
-== ETHICAL WALL ATTACK: agent for matter 'chen' vs matter 'delmarva' ==
+    <div class="term"><span class="pass">PASS</span>  1. chen searches its own fact
+<span class="pass">PASS</span>  2. chen searches for another matter  -&gt;  0 hits
+<span class="pass">PASS</span>  3. chen asks for all sources  -&gt;  clamped to its grant
+<span class="pass">PASS</span>  4. chen reads another matter&rsquo;s page  -&gt;  permission denied
 
-  PASS  1. chen searches its OWN fact 'Harborview'
-  PASS  2. chen searches for 'Delmarva'          -&gt; 0 hits
-  PASS  3. chen asks for ALL sources ('__all__')  -&gt; clamped to chen's grant
-  PASS  4. chen reads delmarva's page directly    -&gt; permission_denied
-
-##### WALL HOLDS: 4/4 checks PASS #####
-    </div>
-    <p class="lede" style="margin-top:2vw;">A matter agent is scoped to one matter, full
-    stop — before we ever get to what it's allowed to learn from.</p>
+<span class="hold">WALL HOLDS: 4 of 4 checks pass</span></div>
+    <p class="note">A matter agent is scoped to one matter, full stop &mdash; before we ever get to
+    what it is allowed to learn from. Synthetic matter names.</p>
   </section>
 
   <section class="slide">
-    <div class="kicker">Live · /demo → POST /deidentify</div>
-    <h2>De-identifying a petition draft</h2>
-    <div class="grid2">
-      <div class="card">
-        <p style="color:var(--fg); margin-top:0;">Before (synthetic)</p>
-        <div class="mono">The beneficiary, <span class="redact">[name]</span>, led
-engineering at <span class="redact">[employer]</span> at a
-<span class="redact">[salary]</span> base, and holds
-<span class="redact">[a-number]</span>...</div>
+    <div class="firm">De-identifying a petition draft</div>
+    <h2>Names out, know-how kept</h2>
+    <div class="cols">
+      <div class="sheet">
+        <h3>Before (synthetic)</h3>
+        <p class="doc">The beneficiary, <span class="hl">Adaeze Okafor</span>, led engineering at
+        <span class="hl">Harborview Systems</span> at a <span class="hl">$185,000</span> base, and
+        holds <span class="hl">A-042-981-337</span>. She gave the closing keynote at the
+        <span class="hl">2023 Meridian Summit</span>.</p>
       </div>
-      <div class="card">
-        <p style="color:var(--fg); margin-top:0;">After + residual flag</p>
-        <div class="mono">The beneficiary, <span class="redact">[NAME]</span>, led
-engineering at <span class="redact">[EMPLOYER]</span> at a
-<span class="redact">[SALARY]</span> base, and holds
-<span class="redact">[A-NUMBER]</span>...
-
-<span class="flag">"the only person who gave that
-keynote at that conference that year"</span> ← judge
-flags this as a residual identifier. Regex sees no
-name, no number — nothing to match.</div>
+      <div class="sheet">
+        <h3>After, with residual flag</h3>
+        <p class="doc">The beneficiary, <span class="chip">[NAME]</span>, led engineering at
+        <span class="chip">[EMPLOYER]</span> at a <span class="chip">[SALARY]</span> base, and holds
+        <span class="chip">[A-NUMBER]</span>. <span class="flag">She gave the closing keynote at
+        the 2023 Meridian Summit</span> &mdash; the judge flags this as a residual identifier.
+        Pattern matching sees no name, no number, nothing to match.</p>
       </div>
     </div>
-    <p class="n">Illustrative example — not drawn from petition text.</p>
+    <p class="note">Illustrative example, not drawn from petition text.</p>
   </section>
 
   <section class="slide">
-    <div class="kicker">The honest scoreboard</div>
-    <h2>102 held-out paraphrased leaks, held-out legal drafts (not O-1 petitions)</h2>
-    <table>
-      <tr><th>Detector</th><th>Caught</th><th>n</th></tr>
-      <tr><td>Regex fingerprint</td><td class="num">0 / 102</td><td class="num">200</td></tr>
-      <tr><td>Prompt-only judge</td><td class="num blank">__ / 102</td><td class="num">200</td></tr>
-      <tr><td>River-tuned judge</td><td class="num blank">__ / 102</td><td class="num">200</td></tr>
+    <div class="firm">The honest scoreboard</div>
+    <h2>Held-out leaks, stated with n</h2>
+    <table class="score">
+      <tr><th>Detector</th><th>Caught (of 102 leaks)</th><th>False alarms (of 98 clean)</th></tr>
+      <tr><td>Regex fingerprint</td>
+        <td class="num"><span class="numrow">0 / 102 <span class="bar zero"><span></span></span></span></td>
+        <td class="num">0 / 98</td></tr>
+      <tr><td>Base judge</td>
+        <td class="num"><span class="numrow">39 / 102 <span class="bar"><span style="width:38%"></span></span></span></td>
+        <td class="num">5 / 98</td></tr>
+      <tr><td>Prompt-only judge</td>
+        <td class="num"><span class="numrow">59 / 102 <span class="bar"><span style="width:58%"></span></span></span></td>
+        <td class="num">7 / 98</td></tr>
+      <tr><td>River-tuned judge</td>
+        <td class="num"><span class="numrow">102 / 102 <span class="bar"><span style="width:100%"></span></span></span></td>
+        <td class="num">0 / 98</td></tr>
     </table>
-    <p class="n">Every number stated with n. If a detector misses something, it's on this
-    slide, not hidden from it.</p>
+    <p class="note">Each row: n = 200 (102 held-out leaks plus 98 clean drafts). The hard set is
+    held-out legal drafts, not O-1 petitions. If a detector misses something, it is on this slide,
+    not hidden from it.</p>
   </section>
 
   <section class="slide">
-    <div class="kicker">Close</div>
-    <h2>What we're claiming — and not</h2>
-    <p class="lede"><span class="say">Say:</span> identifiers removed, residual leakage
-    measured at <span class="blank">X</span>/<span class="blank">n</span> on held-out data.</p>
-    <p class="lede"><span class="dont">Don't say:</span> "de-identified," "anonymized,"
-    "HIPAA-compliant," "GDPR-compliant."</p>
-    <p class="lede" style="margin-top:1.5vw;">Consent duties under ABA 512 remain. What
-    changes is that a two-lawyer immigration practice can start compounding its own win
-    rate instead of starting from zero on every O-1 — with the residual risk measured, not
-    assumed away.</p>
+    <div class="firm">Close</div>
+    <h2>What we claim, and what we don&rsquo;t</h2>
+    <p class="lede"><span class="say">Say:</span> identifiers removed, residual leakage measured at
+    59 of 102 held-out leaks caught with the prompt judge, 102 of 102 with the River-tuned judge
+    (n = 200 each).</p>
+    <p class="lede"><span class="dont-label">Don&rsquo;t say:</span> <span class="dont">&ldquo;de-identified,&rdquo;
+    &ldquo;anonymized,&rdquo; &ldquo;HIPAA-compliant,&rdquo; &ldquo;GDPR-compliant.&rdquo;</span></p>
+    <p class="lede" style="margin-top:20px;">Consent duties under ABA 512 remain. What changes is
+    that a two-lawyer immigration practice can start compounding its own win rate instead of
+    starting from zero on every O-1 &mdash; with the residual risk measured, not assumed away.</p>
   </section>
 
 </div>
 
 <div class="foot">
-  <span>Ethical Wall Brain — O-1 de-identification</span>
+  <span>Ethical Wall Brain &mdash; O-1 de-identification</span>
   <span id="pos">1 / 6</span>
 </div>
-<div class="dots" id="dots"></div>
 
 <script>
 (function () {
   var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
   var pos = document.getElementById('pos');
-  var dotsEl = document.getElementById('dots');
   var i = 0;
-
-  slides.forEach(function (_, idx) {
-    var d = document.createElement('div');
-    d.className = 'dot' + (idx === 0 ? ' on' : '');
-    dotsEl.appendChild(d);
-  });
-  var dots = Array.prototype.slice.call(dotsEl.children);
 
   function show(n) {
     n = Math.max(0, Math.min(slides.length - 1, n));
     slides[i].classList.remove('active');
-    dots[i].classList.remove('on');
     i = n;
     slides[i].classList.add('active');
-    dots[i].classList.add('on');
     pos.textContent = (i + 1) + ' / ' + slides.length;
+    try { history.replaceState(null, '', '#' + (i + 1)); } catch (e) {}
+  }
+
+  function fromHash() {
+    var m = parseInt((location.hash || '').replace('#', ''), 10);
+    if (m >= 1 && m <= slides.length) show(m - 1);
   }
 
   document.addEventListener('keydown', function (e) {
@@ -252,6 +266,8 @@ name, no number — nothing to match.</div>
     var w = window.innerWidth;
     if (e.clientX > w / 2) show(i + 1); else show(i - 1);
   });
+
+  fromHash();
 })();
 </script>
 </body>
