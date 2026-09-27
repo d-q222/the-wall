@@ -24,11 +24,14 @@ scripts/demo.sh
 
 | URL | What |
 |---|---|
-| `http://localhost:8788/demo/wall.html` | Live wall attack, two rooms side by side |
-| `http://localhost:8788/demo/compound.html` | A procedure learned on one matter improving another, facts stripped |
-| `http://localhost:8788/demo/policy.html`, `/demo/audit.html`, `/demo/training.html`, `/demo/datasets.html` | Practice-policy editor, audit log, attorney-correction/retrain loop, dataset browser |
-| `http://localhost:8788/scoreboard/` | Leak-detection scoreboard, reads `results/results.json` live |
-| `http://localhost:8788/results/results.json` | Raw numbers behind the scoreboard |
+| `http://localhost:8788/demo/` | Review workspace — paste an O-1 draft, see it de-identified and judge-verified |
+| `http://localhost:8788/demo/wall.html` | Live wall attack ("Access wall"), two rooms side by side |
+| `http://localhost:8788/demo/compound.html` | A procedure learned on one matter improving another ("Know-how"), facts stripped |
+| `http://localhost:8788/demo/matters.html`, `/demo/policy.html`, `/demo/audit.html`, `/demo/datasets.html` | Firm overview, practice-policy editor, audit log, dataset browser |
+| `http://localhost:8788/demo/training.html` | Attorney-correction → River retrain loop ("Model"; direct link, not yet in the sidebar) |
+| `http://localhost:8788/demo/present.html` | Full-screen guided story mode through every beat |
+| `http://localhost:8788/scoreboard/` | Leak-detection scoreboard ("Evaluation"), reads `results/results.json` live |
+| `http://localhost:8788/results/results.json`, `/results/ci.json` | Raw numbers and 95% Wilson intervals behind the scoreboard |
 
 Live wall attack from a terminal (prints `permission_denied` for a cross-matter read):
 
@@ -60,6 +63,8 @@ Headline is the **hard** held-out set (`judge_eval_hard.jsonl`, n=200: 102 parap
 Cost (n=20, live `claude-sonnet-5` calls): prompt judge runs **$1.34 per 1,000 judgments**, p50 latency 1.6s. River judge cost is not yet measured — no deployment/pricing path confirmed as of this run. Method and caveats: [`evals/cost/README.md`](evals/cost/README.md).
 
 Adversarial testing (self-written, n reported per attack, never the headline): the wall held **6/6** against prompt-injection attempts that tried to talk a live LLM call into crossing matters — refused at the scoped GBrain client regardless of what the model said. The regex + scrub layers alone missed **5/10** hand-written evasion formats (worded amounts, initials, split names, paraphrase) — exactly the gap the judge exists to close. Full breakdown: [`redteam/README.md`](redteam/README.md).
+
+De-identifier bake-off (held-out O-1 beneficiaries never used in training, identifier-occurrence recall, n=123 identifier occurrences across 2,376 word tokens): rules-only `wall.pii` catches 88/123; adding the matter's own fact sheet (the ceiling case) catches 123/123 by construction; untuned Qwen sampled on River catches 117/123, at a higher over-redaction rate than either rules-based option. The River-tuned de-identifier is still training. Method: [`evals/deid/README.md`](evals/deid/README.md).
 
 ## Hosts
 
