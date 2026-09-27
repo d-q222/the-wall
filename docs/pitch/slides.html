@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ethical Wall Brain — O-1 de-identification</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #0b0f14;
+    --bg2: #10161d;
+    --fg: #f2f5f7;
+    --dim: #9fb0bd;
+    --accent: #5ad1a8;
+    --warn: #e8a33d;
+    --bad: #e8615a;
+    --rule: #24313c;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--fg);
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  .deck { position: relative; width: 100vw; height: 100vh; }
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: 6vw 8vw;
+    opacity: 0;
+    transition: opacity .25s ease;
+  }
+  .slide.active { display: flex; opacity: 1; }
+  .kicker {
+    color: var(--accent);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-size: 1.4vw;
+    font-weight: 600;
+    margin-bottom: 1.2vw;
+  }
+  h1 {
+    font-size: 4.6vw;
+    line-height: 1.05;
+    margin: 0 0 1.4vw 0;
+    font-weight: 700;
+  }
+  h2 {
+    font-size: 2.6vw;
+    line-height: 1.15;
+    margin: 0 0 2vw 0;
+    font-weight: 600;
+    color: var(--fg);
+  }
+  p, li { font-size: 1.7vw; line-height: 1.45; color: var(--dim); }
+  .lede { font-size: 2.1vw; color: var(--fg); line-height: 1.4; max-width: 46em; }
+  ul { padding-left: 1.4em; margin: 0; }
+  li { margin-bottom: .6vw; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; align-items: start; }
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 2vw 2.2vw;
+  }
+  .mono {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 1.35vw;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .redact {
+    background: var(--warn);
+    color: #201400;
+    border-radius: 4px;
+    padding: 0 .3em;
+    font-weight: 700;
+  }
+  .flag {
+    background: var(--bad);
+    color: #2a0000;
+    border-radius: 4px;
+    padding: 0 .3em;
+    font-weight: 700;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 1.6vw; }
+  th, td { text-align: left; padding: .9vw 1vw; border-bottom: 1px solid var(--rule); }
+  th { color: var(--accent); font-weight: 600; text-transform: uppercase; font-size: 1.1vw; letter-spacing: .06em; }
+  td.num { font-variant-numeric: tabular-nums; color: var(--fg); font-weight: 600; }
+  .blank { color: var(--warn); }
+  .n { color: var(--dim); font-size: 1.2vw; margin-top: 1vw; }
+  .foot {
+    position: absolute; bottom: 3vh; left: 8vw; right: 8vw;
+    display: flex; justify-content: space-between;
+    color: var(--dim); font-size: 1.1vw;
+    border-top: 1px solid var(--rule); padding-top: 1vh;
+  }
+  .dots { position: absolute; bottom: 2vh; right: 8vw; display: flex; gap: .5vw; }
+  .dot { width: .6vw; height: .6vw; border-radius: 50%; background: var(--rule); }
+  .dot.on { background: var(--accent); }
+  .say { color: var(--accent); }
+  .dont { color: var(--bad); text-decoration: line-through; text-decoration-color: var(--bad); }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <section class="slide active">
+    <div class="kicker">Ethical Wall Brain</div>
+    <h1>Compound the how.<br>Wall the who.</h1>
+    <p class="lede">A small immigration firm's win rate on O-1 petitions should compound with
+    every case it wins. Right now, no one lets it — because every petition is built entirely
+    out of one person's identity.</p>
+    <p class="lede">A few of you in this room have filed one of these yourselves.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The problem</div>
+    <h2>AI that forgets, vs. AI that learns</h2>
+    <div class="grid2">
+      <div class="card">
+        <p style="color:var(--fg); font-size:1.9vw; margin-top:0;">ABA Formal Opinion 512</p>
+        <p>A self-learning tool that lets one client's facts surface in another client's
+        work needs <em>specific</em> informed consent. Boilerplate in an engagement letter
+        is not enough.</p>
+      </div>
+      <div class="card">
+        <p style="color:var(--fg); font-size:1.9vw; margin-top:0;">Today's workaround</p>
+        <p>Zero-retention configs. Don't train on client input. The tool stays safe by
+        learning nothing — so a firm's twentieth O-1 win teaches the AI nothing about the
+        first nineteen.</p>
+      </div>
+    </div>
+    <p class="lede" style="margin-top:2vw;">We built memory that compounds the firm's
+    know-how — how a strong O-1 case is built — without carrying any one beneficiary's
+    identity into the next case.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Live · walls/attack.py</div>
+    <h2>The wall holds</h2>
+    <div class="card mono" style="font-size:1.5vw;">
+== ETHICAL WALL ATTACK: agent for matter 'chen' vs matter 'delmarva' ==
+
+  PASS  1. chen searches its OWN fact 'Harborview'
+  PASS  2. chen searches for 'Delmarva'          -&gt; 0 hits
+  PASS  3. chen asks for ALL sources ('__all__')  -&gt; clamped to chen's grant
+  PASS  4. chen reads delmarva's page directly    -&gt; permission_denied
+
+##### WALL HOLDS: 4/4 checks PASS #####
+    </div>
+    <p class="lede" style="margin-top:2vw;">A matter agent is scoped to one matter, full
+    stop — before we ever get to what it's allowed to learn from.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Live · /demo → POST /deidentify</div>
+    <h2>De-identifying a petition draft</h2>
+    <div class="grid2">
+      <div class="card">
+        <p style="color:var(--fg); margin-top:0;">Before (synthetic)</p>
+        <div class="mono">The beneficiary, <span class="redact">[name]</span>, led
+engineering at <span class="redact">[employer]</span> at a
+<span class="redact">[salary]</span> base, and holds
+<span class="redact">[a-number]</span>...</div>
+      </div>
+      <div class="card">
+        <p style="color:var(--fg); margin-top:0;">After + residual flag</p>
+        <div class="mono">The beneficiary, <span class="redact">[NAME]</span>, led
+engineering at <span class="redact">[EMPLOYER]</span> at a
+<span class="redact">[SALARY]</span> base, and holds
+<span class="redact">[A-NUMBER]</span>...
+
+<span class="flag">"the only person who gave that
+keynote at that conference that year"</span> ← judge
+flags this as a residual identifier. Regex sees no
+name, no number — nothing to match.</div>
+      </div>
+    </div>
+    <p class="n">Illustrative example — not drawn from petition text.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The honest scoreboard</div>
+    <h2>102 held-out paraphrased leaks, held-out legal drafts (not O-1 petitions)</h2>
+    <table>
+      <tr><th>Detector</th><th>Caught</th><th>n</th></tr>
+      <tr><td>Regex fingerprint</td><td class="num">0 / 102</td><td class="num">200</td></tr>
+      <tr><td>Prompt-only judge</td><td class="num blank">__ / 102</td><td class="num">200</td></tr>
+      <tr><td>River-tuned judge</td><td class="num blank">__ / 102</td><td class="num">200</td></tr>
+    </table>
+    <p class="n">Every number stated with n. If a detector misses something, it's on this
+    slide, not hidden from it.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Close</div>
+    <h2>What we're claiming — and not</h2>
+    <p class="lede"><span class="say">Say:</span> identifiers removed, residual leakage
+    measured at <span class="blank">X</span>/<span class="blank">n</span> on held-out data.</p>
+    <p class="lede"><span class="dont">Don't say:</span> "de-identified," "anonymized,"
+    "HIPAA-compliant," "GDPR-compliant."</p>
+    <p class="lede" style="margin-top:1.5vw;">Consent duties under ABA 512 remain. What
+    changes is that a two-lawyer immigration practice can start compounding its own win
+    rate instead of starting from zero on every O-1 — with the residual risk measured, not
+    assumed away.</p>
+  </section>
+
+</div>
+
+<div class="foot">
+  <span>Ethical Wall Brain — O-1 de-identification</span>
+  <span id="pos">1 / 6</span>
+</div>
+<div class="dots" id="dots"></div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var pos = document.getElementById('pos');
+  var dotsEl = document.getElementById('dots');
+  var i = 0;
+
+  slides.forEach(function (_, idx) {
+    var d = document.createElement('div');
+    d.className = 'dot' + (idx === 0 ? ' on' : '');
+    dotsEl.appendChild(d);
+  });
+  var dots = Array.prototype.slice.call(dotsEl.children);
+
+  function show(n) {
+    n = Math.max(0, Math.min(slides.length - 1, n));
+    slides[i].classList.remove('active');
+    dots[i].classList.remove('on');
+    i = n;
+    slides[i].classList.add('active');
+    dots[i].classList.add('on');
+    pos.textContent = (i + 1) + ' / ' + slides.length;
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { show(i + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { show(i - 1); e.preventDefault(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+  });
+
+  document.addEventListener('click', function (e) {
+    var w = window.innerWidth;
+    if (e.clientX > w / 2) show(i + 1); else show(i - 1);
+  });
+})();
+</script>
+</body>
+</html>

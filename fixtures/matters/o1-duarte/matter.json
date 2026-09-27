@@ -1,0 +1,17 @@
+{
+  "id": "o1-duarte",
+  "client": "Salt & Timber Hospitality Group, LLC",
+  "practice": "immigration",
+  "facts": {
+    "names": ["Ines Duarte-Kowalski", "Desmond Okwuosa", "Marguerite Halloway", "Naomi Castellanos-Reyes"],
+    "orgs": ["Salt & Timber Hospitality Group, LLC", "Copper Kettle Bistro", "Continental Guild of Culinary Arts", "Plate & Province"],
+    "amounts": ["$185,000", "$25,000"],
+    "distinctive": [
+      "the only chef to receive the Guild's Emberstone Medal in two consecutive years",
+      "designed the tasting menu the guild called the year's most technically ambitious",
+      "A119-284-556",
+      "IOE0912345693",
+      "LK9302847"
+    ]
+  }
+}
