@@ -162,7 +162,7 @@ document.getElementById('runDeid').onclick = async () => {
   try {
     const r = await (await fetch('/deidentify', { method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ text, practice: 'immigration', matter_id: 'o1-achterberg' }) })).json();
-    const label = k => ({ NAME: 'name', ORG: 'company', A_NUMBER: 'ID number', RECEIPT: 'case number', PASSPORT: 'passport number', AMOUNT: 'amount', DATE: 'date', QUASI_IDENTIFIER: 'clue', EMAIL: 'email', PHONE: 'phone' })[k.replace(/_\d+$/, '')] || 'hidden';
+    const label = k => { const b = k.replace(/_\d+$/, ''); return ({ NAME: 'name', PERSON: 'name', ORG: 'company', A_NUMBER: 'ID number', RECEIPT: 'case number', PASSPORT: 'passport number', AMOUNT: 'amount', DATE: 'date', QUASI_IDENTIFIER: 'clue', EMAIL: 'email', PHONE: 'phone' })[b] || b.toLowerCase().replace(/_/g, ' '); };
     doc.innerHTML = esc(r.text).replace(/\[([A-Z_0-9]+)\]/g, (m, k) => `<span class="ph">${label(k)}</span>`);
     [...doc.querySelectorAll('.ph')].forEach((el, k) => later(() => el.classList.add('lit'), 120 + k * 300));
     const res = r.residual;

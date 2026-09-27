@@ -178,9 +178,21 @@ def _merge(candidates: list[tuple[int, int, str, str]]) -> list[tuple[int, int, 
 def _assign_placeholders(spans: list[tuple[int, int, str, str]]) -> dict[str, str]:
     """Same entity -> same placeholder; typed by kind, numbered when a kind
     covers more than one distinct entity."""
+    clue_names: dict[str, str] = {}
+    if os.environ.get("WALL_PII_LABELS") == "1":
+        # River names each clue's kind ("accomplishment", "job title", ...) for a clearer placeholder.
+        from wall import pii_labels
+
+        clues = [m for _, _, k, m in spans if k in ("quasi_identifier", "judge_flag")]
+        if clues:
+            clue_names = pii_labels.labels(clues)
+
     by_base: dict[str, list[str]] = {}
     for _, _, kind, matched in spans:
-        base = "QUASI_IDENTIFIER" if kind == "judge_flag" else kind.upper()
+        if matched in clue_names:
+            base = clue_names[matched].upper().replace(" ", "_")
+        else:
+            base = "QUASI_IDENTIFIER" if kind == "judge_flag" else kind.upper()
         values = by_base.setdefault(base, [])
         if matched not in values:
             values.append(matched)
