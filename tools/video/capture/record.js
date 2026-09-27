@@ -110,6 +110,8 @@ const BEATS = {
     mark('rows processing (speed-ramp candidate)');
     await p.waitForFunction(() => !document.querySelector('#run').disabled, null, { timeout: 180000, polling: 500 }).catch(() => {});
     mark('all rows complete');
+    const failed = await p.getByText('Failed, run again').count();
+    if (failed) throw new Error(`${failed} rows failed live`);
     await sleep(2500);
     await moveTo(p, p.locator('#export'));
     mark('hover export');
@@ -198,7 +200,7 @@ const manifestEntry = n => manifest.find(m => m.beat === n);
 
 async function record(browser, n) {
   const [name, notes, run] = BEATS[n];
-  const dir = path.join(RAW, String(n));
+  const dir = path.join(RAW, `${n}-${process.pid}`);
   fs.rmSync(dir, { recursive: true, force: true });
   const ctx = await browser.newContext({
     viewport: { width: W, height: H }, colorScheme: 'light',
@@ -234,7 +236,7 @@ async function record(browser, n) {
   const dur = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', base + '.mp4']).toString().trim());
   console.log(`beat ${n} ${name}: ${dur.toFixed(1)}s ${ok ? 'ok' : 'INCOMPLETE'}`);
   return { file: `${n}-${name}.webm`, mp4: `${n}-${name}.mp4`, beat: n, name, duration_s: Math.round(dur * 10) / 10,
-           notes: ok ? notes : notes + ' (INCOMPLETE: interaction failed, check clip)', recorded_at: new Date().toISOString(), ok,
+           notes: ok ? notes : notes + ' (INCOMPLETE: interaction failed, check clip)', recorded_at: new Date().toISOString(), origin: BASE, ok,
            marks: marks.map(m => ({ t: Math.max(0, Math.round((m.t - start) * 10) / 10), label: m.label })) };
 }
 
