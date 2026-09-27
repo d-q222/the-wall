@@ -33,6 +33,7 @@
   .replay { background: var(--found-soft); color: #7A5A00; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
   table.sc { border-collapse: collapse; font-size: var(--fs-13); font-variant-numeric: tabular-nums; margin-top: 4px; }
   table.sc th, table.sc td { text-align: left; padding: 3px 12px 3px 0; border-bottom: 1px solid var(--line); }
+  table.sc tr.ours td { color: var(--ink); font-weight: 600; background: var(--found-soft); }
   table.sc th { white-space: nowrap; font-weight: 600; color: var(--text-2); }
   .footer-note { margin-top: 20px; padding: 16px 24px; border: 1px dashed var(--line-strong); border-radius: 8px; color: var(--text-2); }
   .footer-note b { color: var(--ink); }
@@ -140,7 +141,7 @@
       (hasBlind ? "<th>Blind</th>" : "") + "</tr></thead><tbody>";
     rows.forEach(function (r) {
       var s = r[1] || {};
-      t += "<tr><td>" + r[0] + "</td><td>" + frac(s.hard) + "</td><td>" + frac(s.independent) + "</td><td>" + fa(s.independent) + "</td>" +
+      t += "<tr" + (r[0].indexOf("ours") >= 0 ? ' class="ours"' : "") + "><td>" + r[0] + "</td><td>" + frac(s.hard) + "</td><td>" + frac(s.independent) + "</td><td>" + fa(s.independent) + "</td>" +
         (hasBlind ? "<td>" + frac(s.blind) + "</td>" : "") + "</tr>";
     });
     t += "</tbody></table>";
