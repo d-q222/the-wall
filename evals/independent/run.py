@@ -93,6 +93,9 @@ def run_detector(det: str, raws: list[dict], cache_stem: str) -> list[bool | Non
     cases = [run_judges._flat_row_to_case(raw) for raw in raws]
     cache = run_judges.CACHE_DIR / f"indep_{det}_{cache_stem}.jsonl"
     run_judges.CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    if cache.exists():  # drop cached errors so they're retried
+        kept = [line for line in cache.read_text().splitlines() if json.loads(line)["verdict"] is not None]
+        cache.write_text("".join(line + "\n" for line in kept))
     if det == "prompt":
         verdicts = run_judges.run_prompt(cases, cache)
     else:
