@@ -17,9 +17,12 @@
     content: ""; position: absolute; right: -8px; top: 50%; width: 14px; height: 14px; margin-top: -7px;
     background: var(--surface); border-top: 1px solid var(--line); border-right: 1px solid var(--line); transform: rotate(45deg); z-index: 1;
   }
-  .loop-n { font-size: var(--fs-40); font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .loop-n { font-size: var(--fs-40); font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ink); }
   .loop-label { font-size: var(--fs-15); font-weight: 600; margin-top: 6px; }
   .loop-sub { font-size: var(--fs-13); color: var(--text-3); margin-top: 2px; }
+  .loop-n.word { font-size: var(--fs-28); line-height: 1.5; letter-spacing: -0.01em; }
+  .page-head p, .empty p, .passage { text-wrap: pretty; }
+  .btn:active:not([disabled]) { transform: translateY(1px); }
   .loop-step.live { background: var(--blue-soft); }
   .loop-step.live .loop-n { color: var(--blue); }
   .loop-step.gain .loop-n { color: var(--cleared); }
@@ -32,12 +35,17 @@
   .passage { font-family: var(--font-doc); font-size: var(--fs-15); color: var(--text-2); max-width: 52ch; margin-top: 4px; }
   .corrections td:first-child, .corrections td.meta, .corrections td.n { white-space: nowrap; }
 
-  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0; }
-  .metric { padding: 14px 16px; border-right: 1px solid var(--line); }
-  .metric:last-child { border-right: 0; }
-  .metric .v { font-size: var(--fs-28); font-weight: 600; font-variant-numeric: tabular-nums; }
-  .metric .d { font-size: var(--fs-13); color: var(--text-3); }
-  .metric .delta { font-size: var(--fs-13); font-weight: 600; color: var(--cleared); }
+  .bars { display: grid; grid-template-columns: minmax(170px, auto) minmax(0, 1fr) 56px minmax(150px, auto); gap: 0 16px; align-items: center; padding: 6px 16px 12px; }
+  .bars .h { font-size: var(--fs-13); color: var(--text-3); padding: 8px 0 4px; }
+  .bars .h.r { text-align: right; }
+  .bar-name { font-size: var(--fs-15); padding: 9px 0; }
+  .bar-name .delta { display: block; font-size: var(--fs-13); font-weight: 600; color: var(--cleared); }
+  .bar-track { height: 10px; background: var(--surface-2); border-radius: 2px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+  .bar-fill { height: 100%; background: var(--line-strong); border-radius: 2px; }
+  .bar-fill.river { background: var(--blue); }
+  .bar-v { font-size: var(--fs-17); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .bar-d { font-size: var(--fs-13); color: var(--text-3); text-align: right; font-variant-numeric: tabular-nums; }
+  .bar-name.river { font-weight: 600; }
 
   .progress { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; margin: 10px 0 6px; }
   .progress > span { display: block; height: 100%; background: var(--blue); width: 0; transition: width .4s; }
@@ -69,7 +77,7 @@
   <section class="loop" aria-label="How the model improves">
     <div class="loop-step" id="step-corr"><div class="loop-n" id="n-corr">0</div><div class="loop-label">Attorney corrections</div><div class="loop-sub" id="s-corr">Missed or wrongly redacted identifiers</div></div>
     <div class="loop-step" id="step-ex"><div class="loop-n" id="n-ex">0</div><div class="loop-label">Training examples</div><div class="loop-sub" id="s-ex">Firm data plus corrections</div></div>
-    <div class="loop-step" id="step-job"><div class="loop-n" id="n-job">Idle</div><div class="loop-label">River retrain</div><div class="loop-sub" id="s-job">LoRA fine-tune on River</div></div>
+    <div class="loop-step" id="step-job"><div class="loop-n word" id="n-job">Idle</div><div class="loop-label">River retrain</div><div class="loop-sub" id="s-job">LoRA fine-tune on River</div></div>
     <div class="loop-step" id="step-score"><div class="loop-n" id="n-score">&ndash;</div><div class="loop-label">Held-out recall</div><div class="loop-sub" id="s-score">Unseen O-1 beneficiaries</div></div>
   </section>
 
@@ -81,7 +89,7 @@
       </section>
 
       <section class="panel">
-        <div class="panel-head"><h3>Corrections pending</h3><span class="badge badge-found" id="pending-badge">0 pending</span></div>
+        <div class="panel-head"><h3>Attorney corrections</h3><span class="badge badge-found" id="pending-badge">0 pending</span></div>
         <div id="corrections"><div class="panel-body"><span class="skeleton"></span><span class="skeleton" style="width:70%"></span></div></div>
       </section>
     </div>
@@ -116,7 +124,11 @@
           <label>Passage from the de-identified document<textarea name="passage" required></textarea></label>
           <div class="two">
             <label>Correction<select name="kind"><option value="missed">Missed identifier</option><option value="wrong">Wrongly redacted</option></select></label>
-            <label>Placeholder<input name="replacement" placeholder="[PERSON]"></label>
+            <label>Identifier type<select name="span_kind">
+              <option value="name">Person</option><option value="org">Organization</option><option value="award">Award</option>
+              <option value="publication">Publication</option><option value="year">Year</option><option value="amount">Amount</option>
+              <option value="location">Location</option><option value="id_number">ID number</option><option value="quasi_identifier">Quasi-identifier</option>
+            </select></label>
           </div>
           <label>Exact text<input name="span_text" required></label>
           <label>Note<input name="note" placeholder="Optional"></label>
@@ -136,10 +148,11 @@
   var last = null;
   var poll = null;
 
+  var KINDS = { name: "[PERSON]", org: "[ORG]", amount: "[AMOUNT]", award: "[AWARD]", year: "[YEAR]", publication: "[PUBLICATION]", id_number: "[ID_NUMBER]", location: "[LOCATION]", quasi_identifier: "[QUASI_IDENTIFIER]" };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function pct(x) { return x == null ? "–" : Math.round(x * 100) + "%"; }
   function when(ts) { if (!ts) return ""; var d = new Date(ts * 1000); return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
-  function shortCkpt(p) { if (!p) return "Base model (no fine-tune yet)"; var parts = p.split("/"); return parts.slice(-3).join("/"); }
+  function shortCkpt(p) { if (!p) return "Base model (no fine-tune yet)"; var m = /^river:\/\/([0-9a-f]{8})[^/]*\/(?:.*\/)?([^/]+)$/.exec(p); return m ? "River checkpoint " + m[1] + ", " + m[2] : p; }
 
   function snippet(passage, span) {
     var i = passage.indexOf(span);
@@ -155,7 +168,7 @@
       $("corrections").innerHTML = '<div class="empty"><h3>No corrections yet</h3><p>When an attorney marks an identifier the model missed, or one it should have left alone, it appears here and becomes a training example.</p></div>';
       return;
     }
-    var html = '<table class="table corrections"><thead><tr><th>Correction</th><th>In context</th><th>Placeholder</th><th>Matter</th><th class="n">Added</th></tr></thead><tbody>';
+    var html = '<table class="table corrections"><thead><tr><th>Correction</th><th>In context</th><th>Target</th><th>Matter</th><th class="n">Added</th></tr></thead><tbody>';
     rows.slice().reverse().forEach(function (r, idx) {
       var isLearned = rows.length - 1 - idx < learned;
       var badge = r.kind === "missed" ? '<span class="badge badge-risk">Missed</span>' : '<span class="badge badge-info">Wrongly redacted</span>';
@@ -163,7 +176,7 @@
       if (r.kind === "wrong") ctx = ctx.replace('class="span-text"', 'class="span-text wrong"');
       html += "<tr><td>" + badge + (isLearned ? '<div class="meta" style="margin-top:4px">Learned</div>' : "") + "</td>" +
         '<td><div class="passage">' + ctx + "</div>" + (r.note ? '<div class="meta">' + esc(r.note) + "</div>" : "") + "</td>" +
-        "<td>" + (r.kind === "missed" ? '<span class="chip">' + esc(r.replacement || "[REDACTED]") + "</span>" : '<span class="meta">Keep as written</span>') + "</td>" +
+        "<td>" + (r.kind === "missed" ? '<span class="chip">' + esc(r.replacement || KINDS[r.span_kind] || "[QUASI_IDENTIFIER]") + "</span>" : '<span class="meta" style="white-space:nowrap">Keep as written</span>') + "</td>" +
         '<td class="meta">' + esc(r.matter_id) + '</td><td class="n meta">' + when(r.ts) + "</td></tr>";
     });
     $("corrections").innerHTML = html + "</tbody></table>";
@@ -195,7 +208,7 @@
     btn.textContent = running ? "Retraining in progress" : "Retrain with " + plan.n_feedback + " correction" + (plan.n_feedback === 1 ? "" : "s");
 
     $("counts").innerHTML =
-      "<span>Firm training set</span><span class=\"n\">" + plan.n_base + "</span>" +
+      "<span>Firm examples replayed</span><span class=\"n\">" + plan.n_base + "</span>" +
       "<span>Missed identifiers</span><span class=\"n\">" + (last.summary.by_kind.missed || 0) + "</span>" +
       "<span>Wrongly redacted</span><span class=\"n\">" + (last.summary.by_kind.wrong || 0) + "</span>" +
       '<span class="meta">Each correction is weighted ×4 in the retrain set</span><span></span>';
@@ -225,28 +238,38 @@
 
   function loadScores() {
     fetch("/results/results.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (all) {
+      var ORDER = ["deid_rules", "deid_rules_with_facts", "prompt_judge", "river_deid_base", "river_deid", "river_deid_retrained"];
+      var names = { deid_rules: "Rules only", deid_rules_with_facts: "Rules plus matter facts", prompt_judge: "Claude prompt",
+        river_deid_base: "River, untrained base", river_deid: "River, trained on firm data", river_deid_retrained: "River, after corrections" };
       var rows = [];
       Object.keys(all || {}).forEach(function (det) {
         var r = all[det] && all[det].o1_deid_heldout;
         if (r) rows.push({ det: det, r: r, recall: r.leaks ? r.caught / r.leaks : null });
       });
+      rows.sort(function (x, y) { var i = ORDER.indexOf(x.det), j = ORDER.indexOf(y.det); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j); });
       if (!rows.length) {
         $("metrics").innerHTML = '<div class="empty"><h3>No held-out score yet</h3><p>The before and after comparison appears once the de-identifier is scored on the held-out O-1 beneficiaries.</p></div>';
         return;
       }
-      var names = { regex: "Regex", carryover: "Known facts", prompt_judge: "Claude prompt", river_deid: "River, before corrections", river_deid_retrained: "River, after corrections" };
-      var base = null;
-      $("metrics").innerHTML = '<div class="metrics">' + rows.map(function (x) {
-        var delta = "";
-        if (/river/.test(x.det) && base != null && x.recall != null && x.recall > base) delta = '<div class="delta">+' + Math.round((x.recall - base) * 100) + " pts</div>";
-        if (/river/.test(x.det) && base == null) base = x.recall;
-        return '<div class="metric"><div class="v">' + pct(x.recall) + '</div><div class="d">' + esc(names[x.det] || x.det) + "</div>" +
-          '<div class="d num">' + x.r.caught + " of " + x.r.leaks + " identifiers, " + x.r.false_alarms + " false alarms</div>" + delta + "</div>";
-      }).join("") + "</div>";
-      var best = rows.filter(function (x) { return /river/.test(x.det); }).pop() || rows[rows.length - 1];
+      var base = rows.filter(function (x) { return x.det === "river_deid_base"; })[0];
+            var html = '<div class="bars"><span class="h">Detector</span><span class="h">Identifiers caught</span><span class="h r">Recall</span><span class="h r">Over-redacted</span>';
+      rows.forEach(function (x) {
+        var isRiver = /^river_deid/.test(x.det), delta = "";
+        if (base && /^river_deid(_retrained)?$/.test(x.det) && x.recall != null && base.recall != null) {
+          var d = Math.round((x.recall - base.recall) * 100);
+          delta = '<span class="delta"' + (d < 0 ? ' style="color:var(--risk)"' : "") + ">" + (d >= 0 ? "+" : "\u2212") + Math.abs(d) + " pts vs untrained</span>";
+        }
+        html += '<div class="bar-name' + (isRiver ? " river" : "") + '">' + esc(names[x.det] || x.det) + delta + "</div>" +
+          '<div class="bar-track" title="' + x.r.caught + " of " + x.r.leaks + '"><div class="bar-fill' + (isRiver ? " river" : "") + '" style="width:' + (x.recall == null ? 0 : Math.round(x.recall * 100)) + '%"></div></div>' +
+          '<div class="bar-v">' + pct(x.recall) + "</div>" +
+          '<div class="bar-d">' + x.r.caught + "/" + x.r.leaks + " caught, " + x.r.false_alarms + "/" + x.r.clean + " tokens</div>";
+      });
+      $("metrics").innerHTML = html + "</div>";
+      var river = rows.filter(function (x) { return /^river_deid/.test(x.det); });
+      var best = river[river.length - 1] || rows[rows.length - 1];
       $("n-score").textContent = pct(best.recall);
-      $("s-score").textContent = (names[best.det] || best.det) + ", n=" + best.r.n;
-      $("step-score").classList.toggle("gain", rows.length > 1);
+      $("s-score").textContent = (names[best.det] || best.det) + ", " + best.r.caught + " of " + best.r.leaks;
+      $("step-score").classList.toggle("gain", !!(base && best !== base && best.recall > base.recall));
     });
   }
 
@@ -272,7 +295,7 @@
     var f = ev.target, body = {
       matter_id: (window.WallShell && WallShell.matter()) || "o1-umeh", practice: "immigration",
       passage: f.passage.value, kind: f.kind.value, span_text: f.span_text.value,
-      replacement: f.replacement.value || null, note: f.note.value || null
+      span_kind: f.kind.value === "missed" ? f.span_kind.value : null, note: f.note.value || null
     };
     $("add-err").textContent = "";
     fetch(API + "/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
