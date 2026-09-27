@@ -12,7 +12,7 @@
   .page-head h1 { font-family: var(--font-doc); }
   .hosts { display: grid; gap: 16px; }
   .host {
-    display: grid; grid-template-columns: 200px minmax(0, 1fr) minmax(0, 360px); gap: 24px;
+    display: grid; grid-template-columns: 140px minmax(0, 1fr) minmax(0, 380px); gap: 24px;
     background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 20px 24px;
   }
   .host-name { font-family: var(--font-doc); font-size: var(--fs-21); font-weight: 600; }
@@ -33,7 +33,7 @@
   .replay { background: var(--found-soft); color: #7A5A00; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
   table.sc { border-collapse: collapse; font-size: var(--fs-13); font-variant-numeric: tabular-nums; margin-top: 4px; }
   table.sc th, table.sc td { text-align: left; padding: 3px 12px 3px 0; border-bottom: 1px solid var(--line); }
-  table.sc th { font-weight: 600; color: var(--text-2); }
+  table.sc th { white-space: nowrap; font-weight: 600; color: var(--text-2); }
   .footer-note { margin-top: 20px; padding: 16px 24px; border: 1px dashed var(--line-strong); border-radius: 8px; color: var(--text-2); }
   .footer-note b { color: var(--ink); }
   @media (max-width: 1100px) { .host { grid-template-columns: 1fr; } .proof { border-left: 0; padding-left: 0; } }
@@ -57,7 +57,7 @@
         <div class="facts" id="gbrain-facts"></div>
       </dl>
       <div class="proof">
-        <button class="btn btn-primary" id="run-wall">Attack the wall</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" id="run-wall">Attack the wall</button><button class="btn btn-secondary" id="run-wall-o1" hidden>O-1 pair: Almeida vs Brandt</button></div>
         <div class="out" id="out-wall" aria-live="polite"><span class="muted">Five live requests from Chen's client against Delmarva's source.</span></div>
       </div>
     </section>
@@ -136,7 +136,7 @@
     var rows = [["Pattern matching (regex)", sc.regex], ["Base Qwen, not tuned", sc.base_judge],
                 ["Claude Sonnet 5 prompt judge", sc.prompt_judge], ["River-tuned judge (ours)", sc.river_judge]];
     var hasBlind = rows.some(function (r) { return r[1] && r[1].blind; });
-    var t = '<table class="sc"><thead><tr><th>Detector</th><th>Hard set</th><th>Independent caught</th><th>Independent false alarms</th>' +
+    var t = '<table class="sc"><thead><tr><th>Detector</th><th>Hard set</th><th>Independent: caught</th><th>False alarms</th>' +
       (hasBlind ? "<th>Blind</th>" : "") + "</tr></thead><tbody>";
     rows.forEach(function (r) {
       var s = r[1] || {};
@@ -157,13 +157,13 @@
       : '<span class="muted">No recorded QM run found.</span>';
   }).catch(function () {});
 
-  $("run-wall").addEventListener("click", function () {
-    run(this, $("out-wall"), "/demo/api/wall?matter=chen&target=delmarva", function (d) {
-      var all = d.passed === d.total;
-      return '<div class="big ' + (all ? "ok" : "bad") + '">' + d.passed + "/" + d.total + " held</div>" +
-        (d.checks || []).map(function (c) { return (c.passed ? "✓ " : "✗ ") + esc(c.name); }).join("<br>") + "<br>" + when(d.at || new Date().toISOString(), d.replayed);
-    });
-  });
+  function wallView(d) {
+    var all = d.passed === d.total;
+    return '<div class="big ' + (all ? "ok" : "bad") + '">' + d.passed + "/" + d.total + " held</div>" +
+      (d.checks || []).map(function (c) { return (c.passed ? "✓ " : "✗ ") + esc(c.name); }).join("<br>") + "<br>" + when(d.at || new Date().toISOString(), d.replayed);
+  }
+  $("run-wall").addEventListener("click", function () { run(this, $("out-wall"), "/demo/api/wall?matter=chen&target=delmarva", wallView); });
+  $("run-wall-o1").addEventListener("click", function () { run(this, $("out-wall"), "/demo/api/wall?matter=o1-almeida&target=o1-brandt", wallView); });
   $("run-judge").addEventListener("click", function () {
     run(this, $("out-judge"), "/demo/api/stack/judge", function (d) {
       if (!d.ok && !d.verdict) return '<span class="bad">Judge unavailable: ' + esc(d.error) + "</span>";
