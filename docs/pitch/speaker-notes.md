@@ -1,41 +1,44 @@
 # Speaker notes — Daniel, live demo (2:00 + 3:00 versions)
 
-Present from `/demo/present.html` (API on port 8788, served live). 8 tabs:
-Cover → Access wall → Review → Datasets → Model (optional) → Know-how →
-Evaluation → Close. The built-in clock budgets 2:00 total; each tab shows
-its own time. Keys: Right-arrow/Space = next tab, click a tab = jump,
-`r` = run the embedded demo again, `f` = fullscreen, `h` = hide the clock.
-Each embed auto-runs when its tab opens.
-
-Numbers below read from `/Users/dqi26/the-wall/results/results.json` and
-`evals/cost/results.json` at ~16:00 PDT. Re-check both files at 16:05; every
-number is stated with n. Say/don't-say per `docs/pitch/claims.md`.
+Present from `/demo/present.html` (API on port 8788, served live). 6 slides:
+1 problem, 2 wall live, 3 de-identify live, 4 numbers, 5 sponsors/built-on,
+6 close. Advance with Right-arrow/Space, `#n` hash jumps, footer shows n/6.
+Slides 2–4 are live: click the on-screen button, never paste into a
+terminal. The numbers slide reads live from `/results/results.json` — say
+the numbers ON THE SCREEN; the values below are correct as of ~16:05 PDT.
+Re-check `results.json` before stage time. Every number stated with n.
+Say/don't-say per `docs/pitch/claims.md`.
 
 ## Pre-talk checklist (5 min before)
 
-1. Open `/demo/present.html`, confirm 8 tabs and clock `0:00 / 2:00`.
-2. Click through all 8 tabs once; every embed must auto-run, none may show
-   the "isn't being served" panel. Start the API first if any does.
-3. Evaluation tab ledger matches `results.json` hard rows right now:
-   regex 0/102 (0/98 FA), base Qwen 39/102 (5/98 FA), prompt judge 59/102
-   (7/98 FA), River 102/102 (0/98 FA), n = 200 each.
-4. Screen recording of the wall run + review pass captured in a background
-   tab. Note its timestamp here: ____:____.
-5. `f` for fullscreen, `h` to hide the clock before the audience sees it.
+1. Open `/demo/present.html`, confirm 6 slides, footer `1 / 6`.
+2. Slide 2: click "Run the attack live", confirm refusal rows appear (no
+   "GBrain did not answer"). Slide 3: click "De-identify", confirm
+   placeholders + judge verdict appear (no "did not answer"). Re-click both
+   buttons to reset to the pre-run state before the talk.
+3. Slide 4: read the three big numbers and confirm they match the values
+   under Beat 4 below. If a blind-set cell has appeared, use its numbers
+   off the screen instead.
+4. Screen recording of both live runs captured in a background tab. Note its
+   timestamp here: ____:____.
 
 ## Recovery lines (use verbatim if a live call fails)
 
-- Any embed fails: "The live run isn't cooperating, so this is replayed
-  from the last live run at <time> — same checks, same screen."
-- Scoreboard doubt: "Every number on this screen is held-out, stated with
-  n. If a detector missed something, it's on this slide."
+- Wall button fails ("GBrain did not answer", or rows don't hold): "The
+  live run isn't cooperating, so this is replayed from the last live run
+  at <time> — same checks, same screen." Run `walls/attack.py` in a
+  terminal, or cut to the recording.
+- De-identify button fails: "The API is down, so this is replayed from the
+  last live run at <time> — synthetic draft in, placeholders out, same as
+  you see here." Cut to the recording.
+- Any scoreboard doubt: "Every number on this screen is held-out, stated
+  with n. If a detector missed something, it's on this slide."
 
-## 2-minute version (the default — skip the Model tab)
+## 2-minute version (the default)
 
-### Tab 1 — Cover, 0:00–0:10
+### Slide 1 — Problem, 0:00–0:20
 
-SCREEN: cover sheet, synthetic achterberg excerpt with highlighted
-identifiers and one residual span.
+SCREEN: "Law firms can't let AI learn from past cases."
 
 Say:
 "A few of you have an O-1 petition sitting somewhere. The visa a lot of
@@ -44,80 +47,75 @@ out of one person's identity. Name. Employer. Salary. Awards. Press.
 A firm that's won twenty of these has real know-how in that stack. But ABA
 Formal Opinion 512 says a self-learning tool that lets one client's facts
 surface in another client's file needs specific informed consent.
-Boilerplate isn't enough. So today the safe advice is: don't train on
-client matters at all. Firms stay safe with AI that forgets. We built AI
-that remembers the argument and walls off the person."
+Boilerplate in an engagement letter isn't enough. So today the safe advice
+is: don't train on client matters at all. Firms stay safe with AI that
+forgets. We built AI that learns from past petitions without carrying any
+one beneficiary's identity into the next one."
 
-### Tab 2 — Access wall, 0:10–0:25
+### Slide 2 — Wall holds, 0:20–0:40
 
-CLICK: next tab; the wall attack auto-runs. Press `r` if it stalls.
-SCREEN: `/demo/wall.html` refusing a cross-matter request, refusals in the
-audit log.
-
-Say:
-"The base layer, before training data. One matter's agent asks for another
-matter's file — and the wall refuses. Every refusal is written to the
-audit log."
-RECOVERY: use the replay line, never claim a live pass you didn't get.
-
-### Tab 3 — Review, 0:25–0:50
-
-CLICK: next tab; the de-identification auto-runs on sample o1-achterberg.
-SCREEN: identifiers become typed placeholders; the judge flags what is left.
+CLICK: advance, then click "Run the attack live".
+SCREEN: per-check rows; final row "Wall held n of n", GBrain.
 
 Say:
-"This is a synthetic O-1 exhibit. Not a real client, never will be. Watch
-what comes out the other side. Name, employer, salary, A-number, receipt
-number. Gone, replaced with typed placeholders. A lawyer can still read
-the argument. That's what goes into training. Here's the part regex can't
-do. There's no name and no number left in that sentence. It's a
-description specific enough to re-identify the beneficiary anyway. Regex
-has no pattern for that. Our judge reads it as a paraphrase of an identity
-and flags it. That's the difference between pattern-matching and a trained
-reader."
+"Before training data, the base layer. Chen's agent asks for another
+client's file — and it's refused. Every refusal is written to the audit
+log."
+[Let it run. Say "Wall held" only with the exact n on screen; if it
+doesn't hold live, use the recovery line and move on.]
+"That's the base layer everything else sits on. Now the new piece."
 
-### Tab 4 — Datasets, 0:50–1:05 (fast)
+### Slide 3 — Live de-identification, 0:40–1:10
 
-CLICK: next tab.
-SCREEN: batch de-identification; only judge-cleared exhibits enter the set.
+CLICK: advance, then click "De-identify".
+SCREEN: yellow identifiers become blue placeholders; underlined residual
+span; verdict line with judge name.
 
 Say:
-"Past petitions become a training set one cleared exhibit at a time. Only
-exhibits the judge clears go in. Anything flagged stays out."
+"This is a synthetic O-1 draft. Not a real client, never will be. Watch
+what comes out the other side."
+[Click. Pause one beat.]
+"Name, employer, salary, A-number. Gone, replaced with typed placeholders.
+A lawyer can still read the argument. That's what goes into training.
+Here's the part regex can't do. There's no name and no number left in that
+underlined sentence. It's a description specific enough to re-identify the
+beneficiary anyway. Regex has no pattern for that. Our judge reads it as a
+paraphrase of an identity and flags it. That's the difference between
+pattern-matching and a trained reader."
 
-### Tabs 5–6 — Model skipped, Know-how, 1:05–1:20
+### Slide 4 — Numbers, 1:10–1:40
 
-CLICK: skip Model (optional tab), land on Know-how.
-SCREEN: a procedure learned on one matter, applied to another.
+CLICK: advance. Point at each big number as you name it. Read the screen;
+values below are as of 16:05.
+SCREEN: three big numbers + note line (all rendered live from results.json).
 
 Say:
-"What worked on one petition improves the next. The facts stay behind.
-What compounds is how a strong O-1 case is built. Not whose case it is."
+"Here's the number that matters. Pattern matching catches 0 of 102
+paraphrased leaks on the held-out hard set, n = 200 with 98 clean.
+Our small River-tuned model, which the firm owns, catches 100 of 100
+against Claude's 99 of 100 on the larger agent-written set — but it
+over-flags more, 12 false alarms in 100 clean against Claude's 3, and the
+slide says so: calibrating that is next. The hard-set caveat is the same
+as ever: it shares its generator with training, so familiar phrasing
+helps. The hand-written 40-case blind set is the stronger test."
+[If a blind-set cell is on screen, read it instead: "On the hand-written
+blind set — the stronger test — Claude catches X, the River model catches
+Y." If the over-flag sentence is gone from the note line, drop the
+calibration sentence.]
 
-### Tab 7 — Evaluation, 1:20–1:50
+### Slide 5 — Built on, 1:40–1:50 (fast)
 
-CLICK: next tab. Point at each ledger row as you name it.
-SCREEN: ledger table plus bars, caveat visible underneath.
+CLICK: advance. Don't linger; one breath per row, or cut to two rows.
 
 Say:
-"Here's the number that matters. And it's not from O-1 petitions. It's
-from a held-out set of 102 paraphrased leaks across held-out legal drafts,
-n = 200 with 98 clean. Synonyms the detectors never saw in training.
-Regex catches 0 of 102. The base model catches 39 of 102 at 5 false alarms
-in 98. Our prompt-only judge catches 59 of 102 at 7 false alarms in 98 —
-that false-alarm rate is over our 5 percent target, and it's on the slide.
-The River-tuned judge, trained on synthetic data with zero real client
-facts, catches 102 of 102 at zero false alarms in 98. Every number on this
-screen is held-out. If a detector missed something, it's on this slide.
-One caveat, also on the slide: the hard set shares its generator with
-training — 69 of 200 drafts share more than half their 8-grams — so this
-is an easy test for a tuned model. The hand-written blind set, 40 cases,
-is the stronger one, and no detector scores are reported on it yet."
+"Built on four pieces. GBrain, the wall. River, the models the firm owns.
+Memorable, the know-how after scrubbing. QM, a room per matter. Built by
+forty-plus coding agents in parallel."
 
-### Tab 8 — Close, 1:50–2:00
+### Slide 6 — Close, 1:50–2:00
 
-CLICK: next tab. Leave it up through applause and Q&A.
-SCREEN: "Compound the how. Wall the what."
+CLICK: advance. Leave it up through applause and Q&A.
+SCREEN: "Compound the how. Wall the what." + repo URL.
 
 Say:
 "We're not claiming this makes anyone HIPAA-compliant or GDPR-compliant.
@@ -130,28 +128,30 @@ every O-1."
 
 ## 3-minute version (extra 60 seconds)
 
-- Cover (+15s): after "walls off the person," point at the residual span in
-  the excerpt — "That last highlighted line has no name and no number, and
-  it still points to one person. Remember it; it comes back in Review."
-- Include the Model tab (+20s): "Every correction an attorney makes teaches
-  the firm's own model. Fixes become training examples, and the River model
-  retrains on them."
-- Evaluation (+25s), after the River number: cost line — "The prompt judge
-  costs about a dollar thirty-four per thousand judgments, about a second
-  and a half each, measured over 20 calls. River-judge cost isn't measured
-  yet, and I'm telling you that instead of hiding it."
+- Slide 1 (+15s): after "walls off the person" — "What compounds is how a
+  strong O-1 case is built. Not whose case it is."
+- Slide 3 (+20s): after the residual flag — "We strip identifiers. Name,
+  employer, salary, exact award year, A-number, receipt and passport
+  numbers. Not the argument structure, not the criteria mapping, not the
+  legal reasoning."
+- Slide 4 (+25s): cost line — "The prompt judge costs about a dollar
+  thirty-four per thousand judgments, about a second and a half each,
+  measured over 20 calls. River-judge cost isn't measured yet, and I'm
+  telling you that instead of hiding it."
 
 ## Never say (claims.md, verbatim bans)
 
 De-identified, anonymized, HIPAA-compliant, GDPR-compliant, "satisfies
 512" / "512-compliant", "download the tuned model", "no client data ever
 leaves the firm", "eliminates risk" / "guarantees privacy", any number
-without n, or the 102-case headline as O-1 data.
+without n, or the headline as O-1 data. The hard-set caveat and the
+River over-flagging sentence stay in — they are on the slide.
 
 ## 5 most likely judge questions (1-line answers; see docs/pitch/qa-drill.md)
 
-1. What does 102/102 actually mean? — River judge flagged all 102 held-out
-   paraphrased leaks at 0/98 false alarms, n = 200, in `results.json`.
+1. What does the headline number actually mean? — Read the slide: regex
+   0/102 hard; River model 100/100 vs Claude 99/100 on the independent set,
+   n stated, all in `results.json`.
 2. Is the hard set really held out? — Held out by file with held-out
    synonyms, but same generator as training, so familiar phrasing helps;
    the 40-case hand-written blind set is the stronger test.
