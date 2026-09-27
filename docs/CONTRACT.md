@@ -45,6 +45,29 @@ Need a dependency? Add it with `uv add` and say so in your handoff; the coordina
 | C5 O-1 eval | `c5-o1-eval` | `evals/o1/` | Synthetic O-1 leak set scored for regex, carryover, prompt judge (+ River when ready) as eval set `o1_demo` |
 | C6 pitch | `c6-pitch` | `docs/pitch/` | 2-minute script, slides, say/don't-say and Q&A for the O-1 framing |
 
+| E1 redteam | `e1-redteam` | `redteam/` | Injection + evasion attacks reported honestly |
+| E2 cost | `e2-cost` | `evals/cost/` | Measured cost per 1k judgments and latency, prompt vs River |
+| E3 docs | `e3-docs` | `README.md`, `docs/ARCHITECTURE.md` | Repo reads like a product in 60 seconds |
+| E4 review | `e4-review` | nothing (read-only) | Blocker/major findings on main and lane branches |
+| E5 O-1 wall | `e5-o1-wall` | `walls/o1/` | O-1 beneficiaries walled in GBrain + O-1 attack script |
+| E6 stats | `e6-stats` | `evals/stats.py`, `tests/test_stats.py` | 95% Wilson intervals for every results row |
+| D1 integration | `d1-integration` | `scripts/`, `tests/test_e2e.py` | One-command demo + preflight + e2e tests |
+
+C4 (front-end) also owns `scoreboard/` from 15:05.
+
+### Web demo (15:10; Daniel: "the demo is the most important part; it doesn't need to work perfectly, it has to be amazing")
+
+One product, served at http://localhost:8788/demo/. C4 owns the design system (`demo/assets/`) and the app shell + de-identify page (`demo/index.html`); every other page imports `demo/assets/theme.css` and uses the shared nav.
+
+| Lane | Owns | Page |
+|---|---|---|
+| C4 front-end | `demo/index.html`, `demo/assets/`, `demo/samples.json`, `scoreboard/` | Shell + O-1 de-identify workspace |
+| F1 wall page | `demo/wall.html`, `wall/walldemo.py` | Live wall attack, two rooms side by side (POST /demo/api/wall) |
+| F2 compound page | `demo/compound.html`, `wall/compound.py` | Procedure learned on one matter improves another, facts don't cross (POST /demo/api/compound) |
+| F3 presenter | `demo/present.html` | Full-screen guided 2-minute story mode through all beats |
+
+Demo-safe rule: every backend demo function caches its last successful result under `.runtime/demo_cache/<name>.json` and, if the live call fails, returns the cached one with `"replayed": true`; the UI shows a small "replayed" tag. Never fake a result that was never produced live.
+
 Interfaces: `wall.pii.find(text) -> list[Span(start, end, kind)]`; `POST /deidentify` (DeidentifyRequest -> DeidentifyResponse in `wall/contract.py`).
 `o1_demo` numbers are self-written: never the headline. The headline stays the held-out hard set.
 
