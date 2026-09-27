@@ -127,7 +127,27 @@
   .ds-foot .grow { flex: 1; }
   .ds-error { background: var(--ds-risk-soft); color: var(--ds-risk); border-radius: 4px; padding: 10px 14px; margin-bottom: 12px; }
 
+  /* segmented progress: after GitHub Primer's ProgressBar with Items
+     (primer/react packages/react/src/ProgressBar/ProgressBar.tsx, ProgressBar.module.css) */
+  .ds-progress { background: var(--ds-surface); border: 1px solid var(--ds-line); border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; }
+  .ds-progress .top { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+  .ds-progress .top b { font-size: 21px; font-weight: 600; }
+  .ds-progress .top span { color: var(--ds-ink-2); font-size: 13px; }
+  .pbar { display: flex; gap: 2px; height: 10px; overflow: hidden; border-radius: 3px; background: var(--surface-2); outline: 1px solid var(--ds-line); outline-offset: -1px; }
+  .pbar > span { display: block; height: 100%; transition: width .4s ease; }
+  .seg-ready { background: var(--ds-cleared); } .seg-flag { background: var(--ds-risk); } .seg-unver { background: var(--line-strong); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 10px; font-size: 13px; color: var(--ds-ink-2); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .legend b { color: var(--ds-ink); font-weight: 600; margin-left: 4px; }
+  .include { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ds-ink-2); margin-top: 10px; }
+  .include[hidden] { display: none; }
+  tr.doc.added td { box-shadow: inset 0 0 0 9999px color-mix(in srgb, var(--found) 30%, transparent); }
+  .next-step { display: flex; align-items: center; gap: 16px; margin-top: 24px; padding: 16px 20px; background: var(--ds-surface); border: 1px solid var(--ds-line); border-radius: 8px; }
+  .next-step p { color: var(--ds-ink-2); font-size: 13px; margin: 0; }
+  .next-step strong { display: block; font-size: 15px; }
+  .next-step a { margin-left: auto; text-decoration: none; }
   @media (prefers-reduced-motion: reduce) {
+    .pbar > span { transition: none; }
     tr.running .progress::after, .status.running .dot { animation: none; width: 60%; }
     .doc-name .caret { transition: none; }
   }
@@ -146,7 +166,7 @@
     </div>
     <div class="ds-actions">
       <button class="ds-btn quiet" id="export" disabled>Export training JSONL</button>
-      <button class="ds-btn" id="run" disabled>De-identify all</button>
+      <button class="ds-btn" id="run" data-present-run disabled>De-identify all</button>
     </div>
   </header>
 
@@ -157,6 +177,13 @@
     <div><div class="k">Identifiers removed</div><div class="v" id="s-removed">0</div><div class="ds-kinds" id="s-kinds"></div></div>
     <div><div class="k">Residual flags</div><div class="v" id="s-flags">0</div></div>
     <div><div class="k">Residual judge</div><div class="v" id="s-judge"><span class="muted" style="font-size:15px;font-weight:400">Not run yet</span></div></div>
+  </section>
+
+  <section class="ds-progress" aria-label="Export progress">
+    <div class="top"><b id="p-ready">0 of 0</b><span id="p-note">documents ready to export</span></div>
+    <div class="pbar" id="pbar" role="img" aria-label="Export progress"></div>
+    <div class="legend" id="legend"></div>
+    <label class="include" id="include-wrap" hidden><input type="checkbox" id="include-unver"> <span id="include-text"></span></label>
   </section>
 
   <div class="ds-table-wrap">
@@ -174,6 +201,11 @@
     </table>
   </div>
   <div class="ds-foot"><span class="grow" id="foot"></span><span>Select a row to read its de-identified text.</span></div>
+
+  <section class="next-step" aria-label="Next step">
+    <div><strong>Next: improve the model</strong><p>When an attorney finds an identifier the de-identifier missed, the correction becomes a training example for the next River retrain.</p></div>
+    <a class="ds-btn quiet" href="/demo/training.html">Open Model</a>
+  </section>
 </main>
 
 <script>
@@ -183,6 +215,7 @@
   var docs = [];                              // {id, label, petitioner, matter_id, beneficiary, text, state, result, error, source}
   var openId = null;
   var running = false;
+  var ADDED = new URLSearchParams(location.search).get("added");
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -251,6 +284,7 @@
       });
       $("run").disabled = docs.length === 0;
       render();
+      if (ADDED) setTimeout(function () { var tr = document.querySelector("tr.doc.added"); if (tr) tr.scrollIntoView({ block: "center" }); }, 50);
       if (/[?&]run=1/.test(location.search)) runAll();
     }).catch(function (e) {
       $("rows").innerHTML = "";
@@ -265,7 +299,8 @@
     var tag = d.result.replayed ? '<span class="replayed" title="The live call failed; showing the last live result">Replayed</span>' : "";
     if (isOpenFlag(d))
       return '<span class="status flag"><span class="dot"></span>Residual flagged</span>' + tag;
-    return '<span class="status clean"><span class="dot"></span>De-identified</span>' + tag;
+    if (!d.result.residual) return '<span class="status idle"><span class="dot"></span>Not verified</span>' + tag;
+    return '<span class="status clean"><span class="dot"></span>Ready</span>' + tag;
   }
 
   // c2's 4th stage: the judge's first catch is redacted and reported as spans of kind "judge_flag";
@@ -276,9 +311,9 @@
   function isOpenFlag(d) { return !!(d.result && d.result.residual && d.result.residual.verdict === "leak"); }
 
   function verdictCell(d) {
-    if (d.state !== "done") return '<span class="muted">—</span>';
+    if (d.state !== "done") return '<span class="muted">Not run</span>';
     var r = d.result.residual, jf = judgeFlags(d);
-    if (!r) return '<span class="muted">Judge unavailable</span>';
+    if (!r) return '<span class="muted">No judge checked this text, so it is held back</span>';
     if (r.verdict !== "leak" && jf.length) {
       var caught = d.text.slice(jf[0].start, jf[0].end);
       return '<div class="verdict"><span class="who">Judge caught ' + jf.length + ', redacted</span><q class="fixed" title="' + esc(caught) + '">' + esc(caught) + "</q></div>";
@@ -313,8 +348,8 @@
       var ph = beneficiaryPlaceholder(d);
       var benef = ph ? '<span class="ph">' + esc(ph) + "</span>"
         : d.state === "done" ? '<span class="muted">Removed</span>'
-        : (d.beneficiary ? '<span class="benef-raw">' + esc(d.beneficiary) + "</span>" : '<span class="muted">—</span>');
-      var cls = "doc" + (d.state === "running" ? " running" : "") + (d.justDone ? " done" : "") + (openId === d.id ? " open" : "");
+        : (d.beneficiary ? '<span class="benef-raw">' + esc(d.beneficiary) + "</span>" : '<span class="muted">Not run</span>');
+      var cls = "doc" + (d.state === "running" ? " running" : "") + (d.justDone ? " done" : "") + (openId === d.id ? " open" : "") + (d.id === ADDED ? " added" : "");
       html += '<tr class="' + cls + '" data-id="' + esc(d.id) + '" tabindex="0" aria-expanded="' + (openId === d.id) + '"' +
         (d.state === "running" ? ' style="--delay:-' + ((Date.now() - d.startedAt) / 1000).toFixed(2) + 's"' : "") + ">" +
         '<td><div class="doc-name"><span class="caret" aria-hidden="true">&#9656;</span>' + esc(d.label) +
@@ -322,7 +357,7 @@
         (d.source === "review" ? '<div class="doc-sub"><span class="src-tag">Added from Review</span></div>' : "") + "</td>" +
         "<td>" + benef + "</td>" +
         "<td>" + statusCell(d) + "</td>" +
-        '<td class="num">' + (d.state === "done" ? '<span class="removed">' + d.result.removed + "</span>" : '<span class="muted">—</span>') + "</td>" +
+        '<td class="num">' + (d.state === "done" ? '<span class="removed">' + d.result.removed + "</span>" : '<span class="muted">Not run</span>') + "</td>" +
         "<td>" + verdictCell(d) + '<div class="progress"></div></td></tr>';
       if (openId === d.id) {
         html += '<tr class="detail"><td colspan="5">';
@@ -361,10 +396,30 @@
     $("s-flags").className = "v" + (flags ? " risk" : "");
     var j = Object.keys(judges);
     if (j.length) { $("s-judge").textContent = j.map(judgeName).join(", "); $("s-judge").title = j.join(", "); }
-    var ready = exportable().length, held = done.length - ready;
+    if (!j.length && done.length) $("s-judge").innerHTML = '<span class="muted" style="font-size:15px;font-weight:400">No judge on this server</span>';
+    var cleared = done.filter(function (d) { return d.result.residual && !isOpenFlag(d); }).length;
+    var unver = done.filter(function (d) { return !d.result.residual; }).length;
+    var failed = docs.filter(function (d) { return d.state === "error"; }).length;
+    var todo = docs.length - done.length - failed;
+    var ready = exportable().length, held = flags + unver + failed - (includeUnver() ? unver : 0);
+    var tot = docs.length || 1;
+    function seg(cls, n, label) { return n ? '<span class="' + cls + '" style="width:' + (100 * n / tot) + '%" title="' + label + ": " + n + '"></span>' : ""; }
+    $("pbar").innerHTML = seg("seg-ready", cleared, "Judge cleared") + seg("seg-unver", unver, "Not verified") + seg("seg-flag", flags + failed, "Held back");
+    $("pbar").setAttribute("aria-label", ready + " of " + docs.length + " documents ready to export, " + held + " held back, " + todo + " not processed");
+    $("p-ready").textContent = ready + " of " + docs.length;
+    $("p-note").textContent = "documents ready to export" + (held ? ", " + held + " held back" : "");
+    $("legend").innerHTML =
+      '<span><i class="seg-ready"></i>Cleared by the judge<b>' + cleared + "</b></span>" +
+      '<span><i class="seg-unver"></i>Not verified, no judge ran<b>' + unver + "</b></span>" +
+      '<span><i class="seg-flag"></i>Residual flagged or failed<b>' + (flags + failed) + "</b></span>" +
+      '<span><i style="background:var(--surface-2);outline:1px solid var(--ds-line)"></i>Not processed<b>' + todo + "</b></span>";
+    $("include-wrap").hidden = !unver;
+    $("include-text").textContent = "Include the " + unver + (unver === 1 ? " document" : " documents") + " no judge checked (marked judge_verified: false in the file)";
     $("export").disabled = ready === 0;
+    $("export").textContent = ready ? "Export " + ready + " as JSONL" : "Export training JSONL";
     $("foot").textContent = done.length ? (ready + (ready === 1 ? " document" : " documents") + " ready to export" +
-      (held ? ", " + held + " held back until a reviewer clears the residual flag" : "") +
+      (flags ? ", " + flags + " held back until a reviewer clears the residual flag" : "") +
+      (unver && !includeUnver() ? ", " + unver + " held back because no judge verified them" : "") +
       (replayed ? ", " + replayed + " replayed from the last live run" : "")) : "";
   }
 
@@ -403,12 +458,14 @@
   }
 
   // Residual-flagged documents stay out of training until a reviewer clears them (same rule as Review).
+  // Documents no judge checked are held back too, unless the reviewer explicitly includes them.
+  function includeUnver() { var c = $("include-unver"); return !!(c && c.checked); }
   function exportable() {
-    return docs.filter(function (d) { return d.state === "done" && !isOpenFlag(d); });
+    return docs.filter(function (d) { return d.state === "done" && !isOpenFlag(d) && (d.result.residual || includeUnver()); });
   }
 
   function exportJSONL() {
-    var lines = exportable().map(function (d) { return JSON.stringify({ text: d.result.text }); });
+    var lines = exportable().map(function (d) { return JSON.stringify({ text: d.result.text, source: d.id, judge: d.result.judge || null, judge_verified: !!d.result.residual }); });
     var blob = new Blob([lines.join("\n") + "\n"], { type: "application/jsonl" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob); a.download = "o1-training-set.jsonl";
@@ -431,6 +488,7 @@
   });
   $("run").addEventListener("click", runAll);
   $("export").addEventListener("click", exportJSONL);
+  $("include-unver").addEventListener("change", summarize);
   load();
 })();
 </script>
