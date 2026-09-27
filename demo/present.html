@@ -12,6 +12,24 @@
   html, body { margin:0; height:100%; background:var(--paper); color:var(--ink); font-family:"Public Sans", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
   .slide { position:absolute; inset:0; display:none; flex-direction:column; justify-content:center; padding:0 9vw; }
   .slide.on { display:flex; }
+  .slide.entering { display:flex; z-index:2; background:var(--paper); animation: turn-in 420ms cubic-bezier(.6, 0, .2, 1) both; }
+  .slide.entering.back { animation-name: turn-in-back; }
+  @keyframes turn-in { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
+  @keyframes turn-in-back { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+  .doc mark { background:transparent; transition: background-color 260ms ease; }
+  .doc mark.lit { background:var(--found); }
+  .doc .flag { text-decoration-color:transparent !important; transition: text-decoration-color 400ms ease; }
+  .doc .flag.lit { text-decoration-color:var(--risk) !important; }
+  #verdict { opacity:0; transition: opacity 300ms ease; } #verdict.lit { opacity:1; }
+  .doc .ph { opacity:0; transform: translateY(4px); transition: opacity 240ms ease, transform 240ms ease; display:inline-block; }
+  .doc .ph.lit { opacity:1; transform:none; }
+  .bar { height:6px; background:var(--line); border-radius:3px; margin-top:1.6vh; overflow:hidden; }
+  .bar i { display:block; height:100%; width:0; background:var(--blue); transition: width 900ms cubic-bezier(.2, .7, .2, 1); }
+  .req { opacity:0; transform: translateX(-12px); transition: opacity 260ms ease, transform 260ms ease; }
+  .req.lit { opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce) {
+    .slide.entering { animation:none; } .doc mark, .doc .flag, #verdict, .doc .ph, .bar i, .req { transition:none; }
+  }
   h1 { font:600 clamp(40px, 5.2vw, 76px)/1.08 "Source Serif 4", Georgia, serif; margin:0 0 3vh; max-width:18ch; }
   p.lead { font-size:clamp(20px, 1.8vw, 28px); line-height:1.45; color:var(--muted); margin:0; max-width:46ch; }
   .rows { display:grid; gap:2.2vh; margin-top:4vh; max-width:1100px; }
@@ -87,24 +105,43 @@
 <script>
 const slides = [...document.querySelectorAll('.slide')];
 let i = Math.min(Math.max(parseInt(location.hash.slice(1), 10) || 0, 0), slides.length - 1);
-function show(n) {
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let timers = [];
+const later = (fn, ms) => timers.push(setTimeout(fn, reduced ? 0 : ms));
+function enter(slide) {
+  timers.forEach(clearTimeout); timers = [];
+  const marks = [...slide.querySelectorAll('.doc mark')], flag = slide.querySelector('.doc .flag'), v = slide.querySelector('#verdict');
+  if (marks.length) {
+    marks.forEach(m => m.classList.remove('lit')); flag && flag.classList.remove('lit'); v && v.classList.remove('lit');
+    marks.forEach((m, k) => later(() => m.classList.add('lit'), 500 + k * 380));
+    later(() => { flag && flag.classList.add('lit'); v && v.classList.add('lit'); }, 500 + marks.length * 380 + 300);
+  }
+  slide.querySelectorAll('.bar i').forEach(b => { b.style.width = '0'; later(() => b.style.width = b.dataset.w, 450); });
+}
+function show(n, first) {
+  const prev = i;
   i = Math.min(Math.max(n, 0), slides.length - 1);
-  slides.forEach((s, k) => s.classList.toggle('on', k === i));
+  const next = slides[i];
+  if (!first && prev !== i && !reduced) {
+    next.classList.add('entering'); if (i < prev) next.classList.add('back');
+    setTimeout(() => { slides.forEach((s, k) => s.classList.toggle('on', k === i)); next.classList.remove('entering', 'back'); }, 420);
+  } else slides.forEach((s, k) => s.classList.toggle('on', k === i));
   document.getElementById('foot').textContent = `${i + 1} / ${slides.length}`;
   history.replaceState(null, '', '#' + i);
+  enter(next);
 }
 addEventListener('keydown', e => {
   if (e.target.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')) return;
   if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) show(i + 1);
   if (['ArrowLeft', 'PageUp'].includes(e.key)) show(i - 1);
 });
-show(i);
+show(i, true);
 
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
 document.getElementById('runWall').onclick = async () => {
   const box = document.getElementById('wall');
-  box.innerHTML = '<div class="req"><span>Sending requests to GBrain...</span></div>';
+  box.innerHTML = '<div class="req lit"><span>Sending requests to GBrain...</span></div>';
   try {
     const r = await (await fetch('/demo/api/wall?matter=chen&target=delmarva', { method: 'POST' })).json();
     const plain = { 'search': 'Search', 'get_page': 'Open' };
@@ -112,7 +149,8 @@ document.getElementById('runWall').onclick = async () => {
       const own = /own|control/i.test(c.name);
       return `<div class="req"><span>${esc(c.name)}</span><span class="out ${own ? 'ok' : 'held'}">${esc(c.result)}</span></div>`;
     }).join('') + `<div class="req"><span><b>Wall held ${r.passed} of ${r.total}</b>${r.replayed ? '<span class="tag">replayed from last live run</span>' : ''}</span><span class="out ok">GBrain</span></div>`;
-  } catch { box.innerHTML = '<div class="req"><span>GBrain did not answer. Run walls/attack.py.</span></div>'; }
+    [...box.querySelectorAll('.req')].forEach((el, k) => later(() => el.classList.add('lit'), 150 + k * 420));
+  } catch { box.innerHTML = '<div class="req lit"><span>GBrain did not answer. Run walls/attack.py.</span></div>'; }
 };
 
 document.getElementById('runDeid').onclick = async () => {
@@ -123,6 +161,7 @@ document.getElementById('runDeid').onclick = async () => {
     const r = await (await fetch('/deidentify', { method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ text, practice: 'immigration', matter_id: 'o1-achterberg' }) })).json();
     doc.innerHTML = esc(r.text).replace(/\[([A-Z_0-9]+)\]/g, '<span class="ph">$1</span>');
+    [...doc.querySelectorAll('.ph')].forEach((el, k) => later(() => el.classList.add('lit'), 120 + k * 300));
     const res = r.residual;
     v.innerHTML = `${r.removed} identifiers replaced. ` + (res ? (res.verdict === 'leak'
       ? `The judge still flags: <b>${esc(res.evidence || 'a remaining identifier')}</b>`
@@ -136,11 +175,12 @@ document.getElementById('runDeid').onclick = async () => {
     const f = (det, set) => d[det] && d[det][set];
     const hard = f('regex', 'hard'), bR = f('regex', 'blind'), bP = f('prompt_judge', 'blind'), bRv = f('river_judge', 'blind'), iP = f('prompt_judge', 'independent'), iRv = f('river_judge', 'independent');
     const cells = [];
-    if (hard) cells.push(`<div class="num"><strong>${hard.caught}/${hard.leaks}</strong><span>Paraphrased leaks caught by pattern matching</span></div>`);
-    if (bP) cells.push(`<div class="num"><strong>${bP.caught}/${bP.leaks}</strong><span>Leaks Claude caught on a blind set written by a different model family${bR ? ` (patterns: ${bR.caught}/${bR.leaks})` : ''}</span></div>`);
+    if (hard) cells.push(`<div class="num"><strong>${hard.caught}/${hard.leaks}</strong><div class="bar"><i data-w="${100 * hard.caught / hard.leaks}%"></i></div><span>Paraphrased leaks caught by pattern matching</span></div>`);
+    if (bP) cells.push(`<div class="num"><strong>${bP.caught}/${bP.leaks}</strong><div class="bar"><i data-w="${100 * bP.caught / bP.leaks}%"></i></div><span>Leaks Claude caught on a blind set written by a different model family${bR ? ` (patterns: ${bR.caught}/${bR.leaks})` : ''}</span></div>`);
     const riv = bRv || iRv, rivCmp = bRv ? bP : iP;
-    if (riv) cells.push(`<div class="num"><strong>${riv.caught}/${riv.leaks}</strong><span>Our small River-tuned model, which the firm owns${rivCmp ? `, vs Claude's ${rivCmp.caught}/${rivCmp.leaks}` : ''}. False alarms: ${riv.false_alarms}/${riv.clean}${rivCmp ? ` vs ${rivCmp.false_alarms}/${rivCmp.clean}` : ''}.</span></div>`);
+    if (riv) cells.push(`<div class="num"><strong>${riv.caught}/${riv.leaks}</strong><div class="bar"><i data-w="${100 * riv.caught / riv.leaks}%"></i></div><span>Our small River-tuned model, which the firm owns${rivCmp ? `, vs Claude's ${rivCmp.caught}/${rivCmp.leaks}` : ''}. False alarms: ${riv.false_alarms}/${riv.clean}${rivCmp ? ` vs ${rivCmp.false_alarms}/${rivCmp.clean}` : ''}.</span></div>`);
     document.getElementById('nums').innerHTML = cells.join('');
+    if (slides[i].contains(document.getElementById('nums'))) enter(slides[i]);
     const over = (iRv && iP && iRv.false_alarms > iP.false_alarms) ? ` On larger agent-written test sets it over-flags more (${iRv.false_alarms}/${iRv.clean} false alarms vs Claude's ${iP.false_alarms}/${iP.clean}); calibrating that is next.` : '';
     document.getElementById('numnote').textContent = 'Every number is held out and read live from results.json.' + over + ' Synthetic data only; not a compliance guarantee.';
   } catch {}
