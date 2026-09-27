@@ -67,16 +67,20 @@ def test_attack_caches_last_success(tmp_path, monkeypatch):
     result = walldemo.attack("chen", "delmarva")
     assert result["replayed"] is False
     assert cache.exists()
-    cached = json.loads(cache.read_text())
+    cached = json.loads(cache.read_text())["chen|delmarva"]
     assert cached["passed"] == 5
     assert cached["replayed"] is False
 
 
-def test_attack_replays_cache_on_live_failure(tmp_path, monkeypatch):
+def test_attack_replays_legacy_single_result_cache(tmp_path, monkeypatch):
+    # caches written before per-pair keys held one bare chen|delmarva result
     cache = tmp_path / "wall.json"
     cache.write_text(json.dumps({
-        "checks": [{"name": "x", "call": "y", "result": "z", "passed": True}],
-        "passed": 1, "total": 1, "replayed": False,
+        "checks": [
+            {"name": "chen recalls its own facts", "call": "y", "result": "z", "passed": True},
+            {"name": "delmarva reads its own file (control)", "call": "y", "result": "z", "passed": False},
+        ],
+        "passed": 1, "total": 2, "replayed": False,
     }))
     monkeypatch.setattr(walldemo, "CACHE", cache)
 
@@ -87,3 +91,22 @@ def test_attack_replays_cache_on_live_failure(tmp_path, monkeypatch):
     result = walldemo.attack("chen", "delmarva")
     assert result["replayed"] is True
     assert result["passed"] == 1
+
+
+def test_attack_never_replays_another_pairs_result(tmp_path, monkeypatch):
+    cache = tmp_path / "wall.json"
+    monkeypatch.setattr(walldemo, "CACHE", cache)
+    monkeypatch.setattr(walldemo, "Client", FakeClient)
+    walldemo.attack("chen", "delmarva")
+
+    def boom(*_a, **_k):
+        raise RuntimeError("gbrain unreachable")
+
+    monkeypatch.setattr(walldemo, "_run_live", boom)
+    assert walldemo.attack("chen", "delmarva")["replayed"] is True
+    try:
+        walldemo.attack("chen", "reyes")
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("replayed chen|delmarva for chen|reyes")
