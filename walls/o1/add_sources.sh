@@ -13,6 +13,9 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 RT="${WALL_RUNTIME:-/Users/dqi26/.superset/projects/The-Wall/.runtime}"
 PORT="${GBRAIN_PORT:-3131}"
+# /token is rate-limited per IP (default 50 per 15 min) and every localhost lane shares
+# that bucket; the limit is read only at startup, so raise it for every serve we launch.
+export GBRAIN_OAUTH_TOKEN_RATE_LIMIT_MAX="${GBRAIN_OAUTH_TOKEN_RATE_LIMIT_MAX:-100000}"
 PIDFILE="$RT/gbrain-serve.pid"
 
 # Discover the O-1 matters landed by c1-o1-corpus; don't hardcode ids.
@@ -31,9 +34,11 @@ WAS_RUNNING=0
 if curl -fsS "http://localhost:$PORT/health" >/dev/null 2>&1; then
   WAS_RUNNING=1
   echo "stopping gbrain serve (pid $(cat "$PIDFILE" 2>/dev/null || echo '?')) to run CLI commands..."
-  kill "$(cat "$PIDFILE")" 2>/dev/null || true
+  pid="$(cat "$PIDFILE")"
+  kill "$pid" 2>/dev/null || true
+  # Wait for the process to exit, not just /health: it holds the PGLite lock until it does.
   for _ in $(seq 1 30); do
-    curl -fsS "http://localhost:$PORT/health" >/dev/null 2>&1 || break
+    kill -0 "$pid" 2>/dev/null || break
     sleep 1
   done
 fi
