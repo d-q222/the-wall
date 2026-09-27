@@ -2,7 +2,7 @@
 
 Release notes for tag `v0.1-demo` of `github.com/d-q222/the-wall`.
 Numbers below were read from `results/results.json` (shared results file,
-gitignored) at **16:00 PDT, Sept 27** and refreshed at the 16:05 merge.
+gitignored) at the **16:05 PDT, Sept 27** merge.
 The coordinator publishes this release.
 
 ## What it is
@@ -32,6 +32,7 @@ Every screen, one line:
 - Model (`/demo/training.html`) — attorney corrections become training examples; retrain status in plain language.
 - Blind-set entry (`/demo/blind.html`) — contribute held-out cases the models never trained on.
 - Present (`/demo/present.html`) — full-screen guided 2-minute story mode through all beats.
+- Built on (`/demo/stack.html`) — the four hosts and each one's job, on screen for the sponsors.
 - Evaluation (`/scoreboard/`) — held-out leak-detection numbers for every detector, with n and 95% intervals.
 
 ## How to run it
@@ -74,13 +75,13 @@ independent result. The hard set shares phrasing templates with the
 training generator; the independent sets were written by agents that
 never saw that generator.
 
-| Detector | Hard (102 leaks / 98 clean, n=200) | Independent (100 / 100, n=200) |
-|---|---|---|
-| regex | 0 caught, 0 false alarms | 38 caught, 1 false alarm |
-| carryover | 0 caught, 0 false alarms | 5 caught, 0 false alarms |
-| base Qwen judge | 39 caught, 5 false alarms | 97 caught, 2 false alarms |
-| Claude Sonnet 5 prompt judge | 59 caught, 7 false alarms | 99 caught, 3 false alarms |
-| River-tuned judge | 102 caught, 0 false alarms | 100 caught, 12 false alarms |
+| Detector | Hard (102 leaks / 98 clean, n=200) | Independent (100 / 100, n=200) | Blind (20 / 20, n=40) |
+|---|---|---|---|
+| regex | 0 caught, 0 false alarms | 38 caught, 1 false alarm | 12 caught, 0 false alarms |
+| carryover | 0 caught, 0 false alarms | 5 caught, 0 false alarms | 0 caught, 0 false alarms |
+| base Qwen judge | 39 caught, 5 false alarms | 97 caught, 2 false alarms | 19 caught, 1 false alarm |
+| Claude Sonnet 5 prompt judge | 59 caught, 7 false alarms | 99 caught, 3 false alarms | 19 caught, 1 false alarm |
+| River-tuned judge | 102 caught, 0 false alarms | 100 caught, 12 false alarms | 20 caught, 1 false alarm |
 
 Read it in this order:
 
@@ -92,9 +93,12 @@ Read it in this order:
    alarms); calibration is the next step.
 
 Blind set (`data/blind.jsonl`, 40 rows written by OpenAI Codex, a model
-family that never saw this repo or its data): installed, not yet scored
-at release-cut time. Scores land under eval set `blind` when ready.
-Blind rows are never used for training, prompting examples, or tuning.
+family that never saw this repo or its data — labeled everywhere as
+"written by a different model family, never seen by Claude or River"):
+scored above under eval set `blind`. It confirms the pattern on a third,
+unfamiliar distribution: judges catch 19–20/20 with 1 false alarm each,
+regex 12/20, carryover 0/20. Blind rows are never used for training,
+prompting examples, or tuning.
 
 ## Known limitations
 
