@@ -1,5 +1,7 @@
 # Making the demo video
 
+Target: **90 seconds (1–2 minutes max)**, explained so a 5-year-old follows it. Footage = the 6-slide presenter (`/demo/present.html`) with its live buttons, recorded at 1920×1080.
+
 ## Pipeline
 1. **Start the demo** from `main`: `uv run uvicorn wall.server:app --port 8788` (GBrain must be up on :3131; check with `uv run python walls/attack.py`).
 2. **Capture real footage**: `tools/video/capture/` (Playwright, 1920×1080, one clip per beat, output `.runtime/video/clips/` + `clips.json`). Re-capture any screen that changed.
