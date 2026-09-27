@@ -5,6 +5,7 @@ Credentials: /Users/dqi26/.superset/projects/The-Wall/.runtime/clients/<matter>.
 """
 import json
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -47,11 +48,21 @@ class Client:
             "client_secret": creds["client_secret"],
             "scope": "read",
         }).encode()
-        self._token = _token(matter, self.url.rsplit("/mcp", 1)[0] + "/token", body)
+        token_url = self.url.rsplit("/mcp", 1)[0] + "/token"
+        self._token = _token(matter, token_url, body)
         self._session = None
         self._n = 0
-        self._rpc("initialize", {"protocolVersion": "2025-06-18", "capabilities": {},
-                                 "clientInfo": {"name": f"{matter}-agent", "version": "0"}})
+        init = {"protocolVersion": "2025-06-18", "capabilities": {},
+                "clientInfo": {"name": f"{matter}-agent", "version": "0"}}
+        try:
+            self._rpc("initialize", init)
+        except urllib.error.HTTPError as e:
+            if e.code != 401:
+                raise
+            # A GBrain restart invalidates issued tokens: drop the cached one and retry once.
+            (TOKEN_CACHE / f"{matter}.json").unlink(missing_ok=True)
+            self._token = _token(matter, token_url, body)
+            self._rpc("initialize", init)
         self._rpc("notifications/initialized", None, notify=True)
 
     def __repr__(self):
