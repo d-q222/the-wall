@@ -116,7 +116,11 @@
           <label>Passage from the de-identified document<textarea name="passage" required></textarea></label>
           <div class="two">
             <label>Correction<select name="kind"><option value="missed">Missed identifier</option><option value="wrong">Wrongly redacted</option></select></label>
-            <label>Placeholder<input name="replacement" placeholder="[PERSON]"></label>
+            <label>Identifier type<select name="span_kind">
+              <option value="name">Person</option><option value="org">Organization</option><option value="award">Award</option>
+              <option value="publication">Publication</option><option value="year">Year</option><option value="amount">Amount</option>
+              <option value="location">Location</option><option value="id_number">ID number</option><option value="quasi_identifier">Quasi-identifier</option>
+            </select></label>
           </div>
           <label>Exact text<input name="span_text" required></label>
           <label>Note<input name="note" placeholder="Optional"></label>
@@ -136,6 +140,7 @@
   var last = null;
   var poll = null;
 
+  var KINDS = { name: "[PERSON]", org: "[ORG]", amount: "[AMOUNT]", award: "[AWARD]", year: "[YEAR]", publication: "[PUBLICATION]", id_number: "[ID_NUMBER]", location: "[LOCATION]", quasi_identifier: "[QUASI_IDENTIFIER]" };
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function pct(x) { return x == null ? "–" : Math.round(x * 100) + "%"; }
   function when(ts) { if (!ts) return ""; var d = new Date(ts * 1000); return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
@@ -155,7 +160,7 @@
       $("corrections").innerHTML = '<div class="empty"><h3>No corrections yet</h3><p>When an attorney marks an identifier the model missed, or one it should have left alone, it appears here and becomes a training example.</p></div>';
       return;
     }
-    var html = '<table class="table corrections"><thead><tr><th>Correction</th><th>In context</th><th>Placeholder</th><th>Matter</th><th class="n">Added</th></tr></thead><tbody>';
+    var html = '<table class="table corrections"><thead><tr><th>Correction</th><th>In context</th><th>Should become</th><th>Matter</th><th class="n">Added</th></tr></thead><tbody>';
     rows.slice().reverse().forEach(function (r, idx) {
       var isLearned = rows.length - 1 - idx < learned;
       var badge = r.kind === "missed" ? '<span class="badge badge-risk">Missed</span>' : '<span class="badge badge-info">Wrongly redacted</span>';
@@ -163,7 +168,7 @@
       if (r.kind === "wrong") ctx = ctx.replace('class="span-text"', 'class="span-text wrong"');
       html += "<tr><td>" + badge + (isLearned ? '<div class="meta" style="margin-top:4px">Learned</div>' : "") + "</td>" +
         '<td><div class="passage">' + ctx + "</div>" + (r.note ? '<div class="meta">' + esc(r.note) + "</div>" : "") + "</td>" +
-        "<td>" + (r.kind === "missed" ? '<span class="chip">' + esc(r.replacement || "[REDACTED]") + "</span>" : '<span class="meta">Keep as written</span>') + "</td>" +
+        "<td>" + (r.kind === "missed" ? '<span class="chip">' + esc(r.replacement || KINDS[r.span_kind] || "[QUASI_IDENTIFIER]") + "</span>" : '<span class="meta">Keep as written</span>') + "</td>" +
         '<td class="meta">' + esc(r.matter_id) + '</td><td class="n meta">' + when(r.ts) + "</td></tr>";
     });
     $("corrections").innerHTML = html + "</tbody></table>";
@@ -272,7 +277,7 @@
     var f = ev.target, body = {
       matter_id: (window.WallShell && WallShell.matter()) || "o1-umeh", practice: "immigration",
       passage: f.passage.value, kind: f.kind.value, span_text: f.span_text.value,
-      replacement: f.replacement.value || null, note: f.note.value || null
+      span_kind: f.kind.value === "missed" ? f.span_kind.value : null, note: f.note.value || null
     };
     $("add-err").textContent = "";
     fetch(API + "/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })

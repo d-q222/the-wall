@@ -44,10 +44,17 @@ def test_missed_becomes_chat_row_with_span_added():
     row = feedback.to_training_example(_missed(spans=[{"text": "Umeh", "replacement": "[PERSON]"}]))
     roles = [m["role"] for m in row["messages"]]
     assert roles == ["system", "user", "assistant"]
-    assert PASSAGE in row["messages"][1]["content"] and "immigration" in row["messages"][1]["content"]
+    assert row["messages"][1]["content"] == PASSAGE and "immigration" in row["messages"][0]["content"]
     spans = json.loads(row["messages"][2]["content"])["spans"]
-    assert {"text": "Adaeze", "replacement": "[PERSON]"} in spans
-    assert {"text": "Umeh", "replacement": "[PERSON]"} in spans
+    assert {"text": "Adaeze", "kind": "name", "replacement": "[PERSON]"} in spans
+    assert {"text": "Umeh", "kind": "name", "replacement": "[PERSON]"} in spans
+
+
+def test_numbered_placeholder_and_unknown_map_to_k3_kinds():
+    spans = json.loads(feedback.to_training_example(_missed(replacement="[ORG_2]", span_text="Terraform Labs"))["messages"][2]["content"])["spans"]
+    assert spans == [{"text": "Terraform Labs", "kind": "org", "replacement": "[ORG]"}]
+    spans = json.loads(feedback.to_training_example(_missed(replacement=None, span_text="Lagos"))["messages"][2]["content"])["spans"]
+    assert spans[0]["kind"] == "quasi_identifier"
 
 
 def test_wrong_removes_span_from_target():
