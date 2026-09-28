@@ -13,6 +13,6 @@ Rules: short words, one idea per scene, one picture per idea. No jargon on scree
 | 0:40–1:02 | 4. Hiding the names | Presenter slide 3: yellow highlights and the orange underline appear, then click "De-identify" and the placeholders pop in | "To learn from old cases, we hide everything that says who someone is: their name, their company, their numbers. Even a sneaky clue like 'the only person who won this prize twice'. The lesson stays. The person disappears." |
 | 1:02–1:20 | 5. Does it work? | Presenter slide 4: bars fill | "Simple rules miss most of the sneaky clues. Our own small AI, trained on River, caught 20 out of 20 on a test it had never seen. As good as the big AI models." |
 | 1:20–1:32 | 6. Who helped | Presenter slide 5 (Built on) | "GBrain builds the walls. River trains our AI. Memorable remembers the lessons. QM gives every client their own room." |
-| 1:32–1:38 | 7. The end | Presenter slide 6 | "Remember the lesson. Wall off the secret." |
+| 1:32–1:38 | 7. The end | Presenter slide 6 | "Learn from every case. Keep every secret." |
 
 Numbers used: blind set (40 cases written by a different AI that never saw our data): River-tuned 20/20 caught; Claude 19/20; patterns 12/20.

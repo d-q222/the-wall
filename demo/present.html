@@ -32,6 +32,9 @@
   }
   h1 { font:600 clamp(40px, 5.2vw, 76px)/1.08 "Source Serif 4", Georgia, serif; margin:0 0 3vh; max-width:18ch; }
   p.lead { font-size:clamp(20px, 1.8vw, 28px); line-height:1.45; color:var(--muted); margin:0; max-width:46ch; }
+  .bg { max-width:880px; margin:0 0 3vh; padding:2.2vh 26px; border-left:4px solid var(--blue); background:#fff; border-radius:0 8px 8px 0; font-size:clamp(19px, 1.6vw, 25px); line-height:1.45; }
+  .bg p { margin:0 0 1.2vh; } .bg p:last-child { margin:0; }
+  .bg .bg-label { font-weight:700; color:var(--blue); font-size:clamp(16px, 1.25vw, 19px); }
   .rows { display:grid; gap:2.2vh; margin-top:4vh; max-width:1100px; }
   .row { display:grid; grid-template-columns:230px 1fr; gap:28px; align-items:baseline; font-size:clamp(20px, 1.7vw, 26px); }
   .row b { font-weight:700; }
@@ -59,7 +62,12 @@
 
 <section class="slide on">
   <h1>Lawyers can't let AI learn from old cases.</h1>
-  <p class="lead">Every file belongs to a client. The rules say one client's private details must never end up in another client's work. So today, lawyers use AI that forgets everything.</p>
+  <div class="bg">
+    <p class="bg-label">Why: ABA Formal Opinion 512 (2024)</p>
+    <p>The American Bar Association warns that an AI tool that learns from one client's files can reveal them in another client's work, even inside the same firm.</p>
+    <p>Using a tool like that needs each client's informed consent, and fine print in the engagement letter isn't enough.</p>
+  </div>
+  <p class="lead">So today, most firms use AI that forgets everything.</p>
 </section>
 
 <section class="slide">
@@ -136,6 +144,7 @@ addEventListener('keydown', e => {
   if (['ArrowLeft', 'PageUp'].includes(e.key)) show(i - 1);
 });
 show(i, true);
+addEventListener('hashchange', () => { const n = parseInt(location.hash.slice(1), 10) || 0; if (n !== i) show(n); });
 
 const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
@@ -144,7 +153,8 @@ document.getElementById('runWall').onclick = async () => {
   box.innerHTML = '<div class="req lit"><span>Trying...</span></div>';
   try {
     const r = await (await fetch('/demo/api/wall?matter=chen&target=delmarva', { method: 'POST' })).json();
-    const say = c => /own|control/i.test(c.name) ? ['Looks at its own client\'s files', 'Allowed']
+    const say = c => /control/i.test(c.name) ? ['The other client\'s AI opens its own files', 'Allowed']
+      : /own/i.test(c.name) ? ['Looks at its own client\'s files', 'Allowed']
       : /permission|denied/i.test(c.result) ? ['Opens the other client\'s file directly', 'Blocked']
       : /all|every/i.test(c.name + c.call) ? ['Asks for every client\'s files', 'Nothing found']
       : ['Searches for the other client', 'Nothing found'];
@@ -162,7 +172,7 @@ document.getElementById('runDeid').onclick = async () => {
   try {
     const r = await (await fetch('/deidentify', { method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ text, practice: 'immigration', matter_id: 'o1-achterberg' }) })).json();
-    const label = k => ({ NAME: 'name', ORG: 'company', A_NUMBER: 'ID number', RECEIPT: 'case number', PASSPORT: 'passport number', AMOUNT: 'amount', DATE: 'date', QUASI_IDENTIFIER: 'clue', EMAIL: 'email', PHONE: 'phone' })[k.replace(/_\d+$/, '')] || 'hidden';
+    const label = k => { const b = k.replace(/_\d+$/, ''); return ({ NAME: 'name', PERSON: 'name', ORG: 'company', A_NUMBER: 'ID number', RECEIPT: 'case number', PASSPORT: 'passport number', AMOUNT: 'amount', DATE: 'date', QUASI_IDENTIFIER: 'clue', EMAIL: 'email', PHONE: 'phone' })[b] || b.toLowerCase().replace(/_/g, ' '); };
     doc.innerHTML = esc(r.text).replace(/\[([A-Z_0-9]+)\]/g, (m, k) => `<span class="ph">${label(k)}</span>`);
     [...doc.querySelectorAll('.ph')].forEach((el, k) => later(() => el.classList.add('lit'), 120 + k * 300));
     const res = r.residual;
