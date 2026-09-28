@@ -53,7 +53,7 @@
     <section class="host" aria-labelledby="h-gbrain">
       <div><span class="host-num">1</span><div class="host-name" id="h-gbrain">GBrain</div></div>
       <dl>
-        <div><dt>Job</dt><dd>The wall. Each matter is one isolated GBrain source with its own scoped, read-only OAuth client; agents never run as local trusted callers.</dd></div>
+        <div><dt>Job</dt><dd>Keeps each client's files in their own locked box. Each client's AI helper can open only its own box.</dd></div>
         <div><dt>Use case</dt><dd>A paralegal's assistant working on the Chen visa can't search, list, or open Delmarva's files, even when asked to.</dd></div>
         <div class="facts" id="gbrain-facts"></div>
       </dl>
@@ -159,10 +159,25 @@
   }).catch(function () {});
 
   function wallView(d) {
+    // Same plain words as the presenter: what the helper tried, and what the wall answered.
+    function say(c) {
+      if (/control/i.test(c.name)) return ["The other client's AI opens its own files", "Allowed"];
+      if (/own/i.test(c.name)) return ["Looks at its own client's files", "Allowed"];
+      if (/permission|denied/i.test(c.result)) return ["Opens the other client's file directly", "Blocked"];
+      if (/all|every/i.test(c.name + " " + (c.call || ""))) return ["Asks for every client's files", "Nothing found"];
+      return ["Searches for the other client", "Nothing found"];
+    }
     var all = d.passed === d.total;
-    return '<div class="big ' + (all ? "ok" : "bad") + '">' + d.passed + "/" + d.total + " held</div>" +
-      (d.checks || []).map(function (c) { return (c.passed ? "✓ " : "✗ ") + esc(c.name); }).join("<br>") + "<br>" + when(d.at || new Date().toISOString(), d.replayed);
+    var rows = (d.checks || []).map(function (c) {
+      var r = say(c), ok = r[1] === "Allowed";
+      return '<div style="display:flex;justify-content:space-between;gap:16px;padding:6px 0;border-bottom:1px solid var(--line, #D5DAE1)">' +
+        "<span>" + esc(r[0]) + '</span><b style="color:' + (ok ? "var(--ok, #1E7B4F)" : "var(--risk, #C2410C)") + '">' + r[1] + "</b></div>";
+    }).join("");
+    var stamp = d.replayed ? when(d.at, true) : "Checked live just now, at " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return '<div class="big ' + (all ? "ok" : "bad") + '">' + (all ? "The wall held: " : "The wall failed: ") + d.passed + " of " + d.total + "</div>" + rows +
+      '<div style="margin-top:8px">' + esc(stamp) + "</div>";
   }
+
   $("run-wall").addEventListener("click", function () { run(this, $("out-wall"), "/demo/api/wall?matter=chen&target=delmarva", wallView); });
   $("run-wall-o1").addEventListener("click", function () { run(this, $("out-wall"), "/demo/api/wall?matter=o1-almeida&target=o1-brandt", wallView); });
   $("run-judge").addEventListener("click", function () {
