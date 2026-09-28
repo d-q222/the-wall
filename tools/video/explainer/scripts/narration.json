@@ -1,15 +1,43 @@
 {
   "voice": "Samantha",
   "rate": 175,
-  "tempo": 0.94,
+  "tempo": 1.03,
   "scenes": [
-    {"id": "s1", "text": "Meet Okafor & Lind, a small immigration firm. They've won a lot of O-1 visa cases. Each win is a great example to learn from. But each one is also one person's private file. Today: how we take out private details, catch the sneaky ones, and lock each client's files away."},
-    {"id": "s2", "text": "First, we find the details that point to a real person: the name, the ID numbers, the employer, the salary. Some are easy to spot. Some are not. The rule is simple. Keep how the case was won. Remove who it was about."},
-    {"id": "s3", "text": "Take a support letter. We could black out each detail, but then you can't tell what was there. Instead, The Wall swaps each one for a label, like name, company, or amount. The letter still reads clearly."},
-    {"id": "s4", "text": "Some details are sneaky. This sentence has no name and no number, but it still points to one person. Simple search rules missed all 102 of these in our hardest test. So an AI reviewer reads what's left, and flags them."},
-    {"id": "s5", "text": "Each client's files sit behind their own wall. When one client's assistant asks for another client's file, the answer is always the same: access denied. It's a real lock, not a polite request."},
-    {"id": "s6", "text": "Here's the app. A firm sets up in four quick steps: the firm, its rules, its cases, and a first petition. Then open a case and click one button. Every private detail turns into a label, and the AI reviewer checks what's left."},
-    {"id": "s7", "text": "Here are our honest results. On our hardest test, our AI reviewer caught all 102 hidden leaks. On new tests written by others, it caught all 100, but it also raised 12 false alarms on 100 clean letters. That's what we're fixing next."},
-    {"id": "s8", "text": "Learn from every case. Keep every client private. That's The Wall."}
+    {
+      "id": "s1",
+      "text": "Okafor & Lind is a small immigration firm. Every O-1 case they win teaches them something. But every win is also one person's life story. And under ABA Opinion 512, a firm needs consent before one client's facts show up in another client's work. So their AI has the memory of a goldfish. On purpose."
+    },
+    {
+      "id": "s2",
+      "text": "First, The Wall finds everything that points to a real person. Some of it is direct: a name, an A-number, a salary. Some is indirect. The rule is simple. Keep how the case was won. Remove who it was about."
+    },
+    {
+      "id": "s3",
+      "text": "Take a support letter. Black out the details, and nobody can read it. So The Wall swaps each one for a label: name, company, amount. The argument survives. The person enters witness protection."
+    },
+    {
+      "id": "s4",
+      "text": "Then there are the sneaky ones. The founder of the delivery startup that raised its Series A last year. No name. No number. And you already thought of someone. Simple search rules missed all 102 of these in our hardest test. So an AI reviewer reads what's left, and flags them."
+    },
+    {
+      "id": "s5",
+      "text": "Every client's file sits behind its own wall. If one client's agent asks for another client's file, it doesn't get a polite no. It gets access denied."
+    },
+    {
+      "id": "s6",
+      "text": "Setup takes four steps: your firm, your rules, your cases, and your first petition. Open a case, click once, and every private detail becomes a label."
+    },
+    {
+      "id": "s7",
+      "text": "Does it work? On our hardest test, our reviewer caught all 102 leaks. On tests written by outsiders, it caught 100 of 100, and flagged 12 innocent letters. It's a little paranoid. For privacy, we'll take it. And we're fixing it next."
+    },
+    {
+      "id": "s9",
+      "text": "We built it on four sponsor tools. GBrain holds the walls: each client gets its own locked source. River trains our reviewer, so the firm owns its own model. Memorable remembers the lessons, never the names. And QM gives every case its own room."
+    },
+    {
+      "id": "s8",
+      "text": "Learn from every case. Keep every client private. That's The Wall."
+    }
   ]
 }

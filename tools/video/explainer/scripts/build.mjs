@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 const root = new URL("..", import.meta.url).pathname;
 const { scenes } = JSON.parse(readFileSync(root + "scripts/narration.json", "utf8"));
 const dur = JSON.parse(readFileSync(root + "audio/durations.json", "utf8"));
-const LEAD = 0.4, PAD = 1.2, END = 4.0;
+const LEAD = 0.4, PAD = 0.9, END = 3.5;
 
 let t = 0;
 const S = {};
@@ -60,10 +60,10 @@ sc.s1 = `<div class="center col">
   <div id="s1-shelf" class="shelf">${Array.from({ length: 7 }, (_, i) => `<div class="binder" id="s1-b${i}"><span>O-1</span></div>`).join("")}</div>
 </div>
 <div id="s1-agenda" class="agenda">
-  <div class="ag-head">${mark(84)}<span>Today</span></div>
-  <div class="ag" id="s1-a0"><b>1</b>Take out private details</div>
-  <div class="ag" id="s1-a1"><b>2</b>Catch the sneaky ones</div>
-  <div class="ag" id="s1-a2"><b>3</b>Lock each client’s files</div>
+  <div class="ag-head"><span>ABA Formal Opinion 512</span></div>
+  <div class="ag" id="s1-a0"><b>1</b>An AI learns from one client’s case</div>
+  <div class="ag" id="s1-a1"><b>2</b>Their facts can’t reach another client’s work</div>
+  <div class="ag" id="s1-a2"><b>3</b>…without that client’s informed consent</div>
 </div>`;
 
 sc.s2 = `<div class="label" id="s2-l1">Find the private details</div>
@@ -78,10 +78,10 @@ sc.s2 = `<div class="label" id="s2-l1">Find the private details</div>
    <div class="row"><span class="k">Classification</span><span class="v keep">O-1A, extraordinary ability in business</span></div>
   </div></div><div class="base"></div></div>
 <div id="s2-factors" class="factors">
-  <div class="fcard" id="s2-f1"><h3>Some are easy to spot</h3>
-    <div class="chip"><span>A134-902-661</span><i>easy</i></div>
-    <div class="chip"><span>$260,000</span><i>easy</i></div>
-    <div class="chip"><span>“named to a founders list two years running”</span><i>hard</i></div></div>
+  <div class="fcard" id="s2-f1"><h3>Direct and indirect</h3>
+    <div class="chip"><span>A134-902-661</span><i>direct</i></div>
+    <div class="chip"><span>$260,000</span><i>direct</i></div>
+    <div class="chip"><span>“named to a founders list two years running”</span><i>indirect</i></div></div>
   <div class="fcard" id="s2-f2"><h3>The rule</h3>
     <div class="pp ok" id="s2-p1"><b>Keep</b>how the case was won: the criteria, the structure, the reasoning</div>
     <div class="pp wall" id="s2-p2"><b>Remove</b>who it was about: name, employer, salary, ID numbers</div></div>
@@ -98,7 +98,7 @@ sc.s3 = `<div class="label" id="s3-l1">Blacking out</div><div class="label" id="
 sc.s4 = `<div class="label" id="s4-l1">The sneaky ones</div>
 <div class="stage" id="s4-a"><div class="sheet wide" id="s4-sheet"><div class="sheet-in serif big">
 <p>The beneficiary is <span id="s4-q" class="q">the founder of the delivery startup that raised its Series A last year</span>.</p>
-<p class="dim">No name. No number. Still one person.</p></div><div class="tear"></div></div></div>
+<p class="dim">No name. No number. You already thought of someone.</p></div><div class="tear"></div></div></div>
 <div id="s4-stat" class="stat"><div class="sn">0<span>/102</span></div><div class="sl">sneaky leaks caught by simple search rules</div>
 <div class="note">Hard held-out set: synthetic legal drafts, not O-1 petitions. n = 102 leaks.</div></div>
 <div id="s4-judge" class="judge"><div class="jh">AI reviewer</div><div class="jv">Flagged</div>
@@ -144,7 +144,7 @@ pts.forEach(([n, x, y], i) => {
 let ticks = "";
 for (const v of [0, 10, 20, 30, 40]) ticks += `<text x="${px(v)}" y="${Y0 + 40}" class="tk" text-anchor="middle">${v}%</text>`;
 for (const v of [0, 40, 80, 123]) ticks += `<text x="${X0 - 18}" y="${py(v) + 8}" class="tk" text-anchor="end">${v}</text>`;
-const APP = [["welcome", 0], ["onb1", 2.4], ["onb2", 4.0], ["onb3", 5.4], ["onb4", 6.8], ["review", 8.3], ["review-after", 10.2]];
+const APP = [["welcome", 0], ["onb1", 2.0], ["onb2", 2.7], ["onb3", 3.5], ["onb4", 4.5], ["review", 5.9], ["review-after", 7.3]];
 sc.s6 = `<div class="label">The app</div>
 <div class="app-frame"><div class="app-bar"><i></i><i></i><i></i><span>the-wall · Okafor &amp; Lind Immigration</span></div>
 <div class="app-view">${APP.map(([n]) => `<img class="app-shot" id="s6-${n}" src="assets/app/${n}.png"/>`).join("")}</div></div>`;
@@ -156,6 +156,8 @@ sc.s7 = `<div class="label">The honest scoreboard</div>
 <tr id="s7-r2"><td>Our trained AI reviewer (River)</td><td><span class="bx" id="s7-h">102/102 caught, 0/98 false alarms</span></td><td><span class="bx" id="s7-i">100/100 caught, <em id="s7-fa">12/100 false alarms</em></span></td></tr></table>
 <div class="src-note" id="s7-n">The hardest test was built the same way as our reviewer’s training data. The new tests came from 5 writers who never saw it. Source: evals/independent/README.md.</div>`;
 
+sc.s9 = `<div class="label">Built on four sponsor tools</div><div class="spgrid"><div class="sp" id="s9-c0"><div class="spn">GBrain</div><div class="spj">The walls</div><div class="spd">Each client’s files live in their own locked source. An agent from another case gets access denied.</div></div><div class="sp" id="s9-c1"><div class="spn">River</div><div class="spj">The reviewer</div><div class="spd">We trained our leak-catching model on River, so the firm owns its own model.</div></div><div class="sp" id="s9-c2"><div class="spn">Memorable</div><div class="spj">The lessons</div><div class="spd">Remembers how a case was won, after the names are scrubbed out.</div></div><div class="sp" id="s9-c3"><div class="spn">QM</div><div class="spj">The rooms</div><div class="spd">Every case gets its own room, and sharing between rooms needs an admin’s OK.</div></div></div>`;
+
 sc.s8 = `<div class="center col">${mark(170)}<div class="close" id="s8-c1">Learn from every case.</div><div class="close" id="s8-c2">Keep every client private.</div></div>`;
 
 sc.end = `<div class="center col"><div class="et">The Wall</div><div class="eu">github.com/d-q222/the-wall</div>
@@ -166,10 +168,9 @@ for (const id of [...scenes.map((s) => s.id), "end"]) {
   body += clip(`${id}`, S[id].start, S[id].dur, 1, sc[id], "scene") + "\n";
 }
 // narrator cards: full-frame spoken key phrases, keeping a cut every 5-8 s
-body += card("nc1", "s1", 7.0, 12.6, "A great example. And one person’s private file.") + "\n";
-body += card("nc3", "s3", 11.0, 13.7, "The letter still reads clearly.") + "\n";
-body += card("nc5", "s5", 10.6, 13.3, "A real lock, not a polite request.") + "\n";
-body += card("nc7", "s7", 14.4, 17.2, "Catches every leak. Fewer false alarms is next.") + "\n";
+body += card("nc1", "s1", 6.2, 8.7, "Every win is one person’s life story.") + "\n" + card("nc0", "s1", 16.9, 19.1, "The memory of a goldfish. On purpose.") + "\n";
+body += card("nc3", "s3", 10.9, 12.7, "The person enters witness protection.") + "\n";
+body += card("nc7", "s7", 11.0, 16.2, "A little paranoid. For privacy, we’ll take it.") + "\n";
 let audio = "";
 for (const s of scenes) audio += `<audio id="vo-${s.id}" src="audio/${s.id}.wav" data-start="${(S[s.id].start + LEAD).toFixed(2)}" data-duration="${dur[s.id]}" data-track-index="10"></audio>\n`;
 
@@ -186,50 +187,54 @@ const hl = (sel, sid, x) => m.push(`tl.fromTo("${sel}",{"--hl":0},{"--hl":1,dura
 m.push(`tl.fromTo("#s1-mark",{scale:0.6,opacity:0},{scale:1,opacity:1,duration:0.6,ease:"back.out(1.6)"},${at("s1", 0.1)});`);
 pop("#s1-name", "s1", 0.6);
 for (let i = 0; i < 7; i++) pop(`#s1-b${i}`, "s1", 2.6 + i * 0.07);
-out("#s1-mark,#s1-name,#s1-shelf", "s1", 7.0, 0.01);
-fade("#s1-agenda .ag-head", "s1", 12.8);
-pop("#s1-a0", "s1", 13.6); pop("#s1-a1", "s1", 15.2); pop("#s1-a2", "s1", 16.5);
+out("#s1-mark,#s1-name,#s1-shelf", "s1", 6.2, 0.01);
+fade("#s1-agenda .ag-head", "s1", 8.8);
+pop("#s1-a0", "s1", 9.3); pop("#s1-a1", "s1", 11.3); pop("#s1-a2", "s1", 13.6);
+out("#s1-agenda", "s1", 16.9, 0.01);
 // s2
 fade("#s2-l1", "s2", 0.1); pop("#s2-laptop", "s2", 0.1);
-[3.4, 4.1, 4.8, 5.6, 6.3].forEach((x, i) => hl(`#s2-v${i}`, "s2", x));
-out("#s2-l1,#s2-laptop", "s2", 7.4, 0.01);
-fade("#s2-l2", "s2", 7.4); pop("#s2-f1", "s2", 7.5); m.push(`tl.fromTo("#s2-f1 .chip",{opacity:0,x:-20},{opacity:1,x:0,duration:0.4,stagger:0.5},${at("s2", 8.1)});`);
-pop("#s2-f2", "s2", 10.0); pop("#s2-p1", "s2", 11.0); pop("#s2-p2", "s2", 12.5);
+[1.6, 2.3, 3.0, 3.7, 4.4].forEach((x, i) => hl(`#s2-v${i}`, "s2", x));
+out("#s2-l1,#s2-laptop", "s2", 5.4, 0.01);
+fade("#s2-l2", "s2", 5.4); pop("#s2-f1", "s2", 5.45); m.push(`tl.fromTo("#s2-f1 .chip",{opacity:0,x:-20},{opacity:1,x:0,duration:0.4,stagger:0.5},${at("s2", 5.6)});`);
+pop("#s2-f2", "s2", 8.5); pop("#s2-p1", "s2", 9.7); pop("#s2-p2", "s2", 11.4);
 // s3: masking, then the SAME sheet gets replacement
 fade("#s3-l1", "s3", 0.1); pop("#s3-sheet", "s3", 0.1);
-for (const k of ["n", "o", "m", "s"]) swap(`s3-${k}`, "s3", 3.0);
-m.push(`tl.set("#s3-l1",{opacity:0},${at("s3", 6.6)});`); fade("#s3-l2", "s3", 6.6, 0.2);
-m.push(`tl.set("#s3 .sw .b",{opacity:0},${at("s3", 6.6)});`);
-m.push(`tl.set("#s3 .sw .a",{opacity:1},${at("s3", 6.6)});`);
-for (const k of ["n", "o", "m", "s"]) { m.push(`tl.to("#s3-${k} .a",{opacity:0,duration:0.3},${at("s3", 7.6)});`); m.push(`tl.fromTo("#s3-${k} .c",{opacity:0},{opacity:1,duration:0.3},${at("s3", 7.75)});`); }
-m.push(`tl.fromTo("#s3 .c",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},${at("s3", 9.4)});`);
+for (const k of ["n", "o", "m", "s"]) swap(`s3-${k}`, "s3", 1.8);
+m.push(`tl.set("#s3-l1",{opacity:0},${at("s3", 4.7)});`); fade("#s3-l2", "s3", 4.7, 0.2);
+m.push(`tl.set("#s3 .sw .b",{opacity:0},${at("s3", 4.7)});`);
+m.push(`tl.set("#s3 .sw .a",{opacity:1},${at("s3", 4.7)});`);
+for (const k of ["n", "o", "m", "s"]) { m.push(`tl.to("#s3-${k} .a",{opacity:0,duration:0.3},${at("s3", 6.4)});`); m.push(`tl.fromTo("#s3-${k} .c",{opacity:0},{opacity:1,duration:0.3},${at("s3", 6.55)});`); }
+m.push(`tl.fromTo("#s3 .c",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},${at("s3", 8.5)});`);
 // s4
 fade("#s4-l1", "s4", 0.1); pop("#s4-sheet", "s4", 0.1);
-m.push(`tl.fromTo("#s4-q",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},${at("s4", 1.4)});`);
-fade("#s4-sheet .dim", "s4", 4.2);
-out("#s4-a", "s4", 6.8, 0.01); pop("#s4-stat", "s4", 6.8);
-out("#s4-stat", "s4", 11.0, 0.01); pop("#s4-judge", "s4", 11.0);
+m.push(`tl.fromTo("#s4-q",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},${at("s4", 2.4)});`);
+fade("#s4-sheet .dim", "s4", 6.4);
+out("#s4-a", "s4", 9.6, 0.01); pop("#s4-stat", "s4", 9.6);
+out("#s4-stat", "s4", 13.4, 0.01); pop("#s4-judge", "s4", 13.4);
 // s5
 pop("#s5-a", "s5", 0.2); pop("#s5-b", "s5", 0.5); m.push(`tl.fromTo("#s5-w",{scaleY:0},{scaleY:1,duration:0.6,ease:"power2.out"},${at("s5", 1.0)});`);
-pop("#s5-t", "s5", 3.0); pop("#s5-r0", "s5", 3.3); pop("#s5-r1", "s5", 5.2);
-m.push(`tl.fromTo("#s5-deny",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},${at("s5", 9.2)});`);
+pop("#s5-t", "s5", 3.0); pop("#s5-r0", "s5", 3.3); pop("#s5-r1", "s5", 5.0);
+m.push(`tl.fromTo("#s5-deny",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},${at("s5", 8.5)});`);
 // s6: real app screens, one after another
 pop(".app-frame", "s6", 0.05);
 APP.forEach(([n, x]) => fade(`#s6-${n}`, "s6", x, 0.35));
 // s7
 pop("#s7-t", "s7", 0.2); pop("#s7-r0", "s7", 0.6); pop("#s7-r1", "s7", 1.0); pop("#s7-r2", "s7", 1.4);
-m.push(`tl.fromTo("#s7-h",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},${at("s7", 5.4)});`);
-m.push(`tl.fromTo("#s7-i",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},${at("s7", 9.4)});`);
-m.push(`tl.fromTo("#s7-fa",{color:"#14213D"},{color:"#C2410C",duration:0.3},${at("s7", 12.2)});`);
+m.push(`tl.fromTo("#s7-h",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},${at("s7", 4.0)});`);
+m.push(`tl.fromTo("#s7-i",{outlineColor:"rgba(194,65,12,0)"},{outlineColor:"rgba(194,65,12,1)",duration:0.3},${at("s7", 7.7)});`);
+m.push(`tl.fromTo("#s7-fa",{color:"#14213D"},{color:"#C2410C",duration:0.3},${at("s7", 9.3)});`);
 fade("#s7-n", "s7", 2.0);
+// s9: sponsors, each lands as it is named
+fade("#s9 .label", "s9", 0.1);
+[2.4, 6.2, 9.6, 12.8].forEach((x, i) => pop(`#s9-c${i}`, "s9", x));
 // s8 + end
 m.push(`tl.fromTo("#s8 .mark",{scale:0.7,opacity:0},{scale:1,opacity:1,duration:0.5,ease:"back.out(1.6)"},${at("s8", 0.1)});`);
 pop("#s8-c1", "s8", 0.3); pop("#s8-c2", "s8", 1.7);
 pop("#end .et", "end", 0.1); pop("#end .eu", "end", 0.5); fade("#end .ef", "end", 0.9);
 m.push(`tl.to("#end .center",{opacity:0,duration:0.5},${(TOTAL - 0.6).toFixed(2)});`);
 // narrator cards
-out("#s3 .stage,#s3-l2", "s3", 11.0, 0.01); out("#s7-t,#s7-n", "s7", 14.4, 0.01); out("#s5 .wallstage,#s5-t", "s5", 10.6, 0.01);
-for (const id of ["nc1", "nc3", "nc5", "nc7"]) m.push(`tl.fromTo("#${id} p",{opacity:0,y:18},{opacity:1,y:0,duration:0.45,ease:"power2.out"},document.getElementById("${id}").dataset.start*1+0.05);`);
+out("#s3 .stage,#s3-l2", "s3", 10.9, 0.01); out("#s7-t,#s7-n", "s7", 11.0, 0.01);
+for (const id of ["nc1", "nc0", "nc3", "nc7"]) m.push(`tl.fromTo("#${id} p",{opacity:0,y:18},{opacity:1,y:0,duration:0.45,ease:"power2.out"},document.getElementById("${id}").dataset.start*1+0.05);`);
 
 const ff = (fam, file, w, style = "normal") => `@font-face{font-family:"${fam}";src:url("assets/fonts/${file}") format("woff2");font-weight:${w};font-style:${style};}`;
 const html = `<!doctype html>
@@ -315,6 +320,9 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#FFFFFF}
 .capline{stroke:#C2410C;stroke-width:3;stroke-dasharray:10 8;opacity:0}.capl{fill:#C2410C;font-size:24px;font-weight:600;opacity:0}
 .src-note{position:absolute;left:96px;right:96px;top:860px;font-size:22px;color:#4A5876;text-align:center;opacity:0}
 #s7-n{top:640px}
+.spgrid{position:absolute;left:0;right:0;top:170px;display:grid;grid-template-columns:720px 720px;gap:36px;justify-content:center}
+.sp{background:#FBFBF9;border:2px solid #D5DBE4;border-radius:8px;padding:30px 36px;display:flex;flex-direction:column;gap:8px;opacity:0}
+.spn{font-size:44px;font-weight:700}.spj{font-size:28px;font-weight:600;color:#1F4E9E}.spd{font-size:26px;color:#4A5876;line-height:1.4}
 .close{font-family:"Source Serif 4",serif;font-size:84px;font-weight:600}
 .et{font-size:120px;font-weight:700;letter-spacing:-0.02em}.eu{font-size:44px;color:#1F4E9E;font-weight:600}.ef{font-size:26px;color:#4A5876;margin-top:24px}
 .ncard{position:absolute;inset:0;background:#F4EEE2}

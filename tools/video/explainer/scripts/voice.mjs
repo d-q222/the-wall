@@ -13,7 +13,7 @@ const speak = (t) =>
     .replace(/O-1/g, "O one")
     .replace(/A-number/g, "A number")
     .replace(/USCIS/g, "U.S.C.I.S.")
-    .replace(/GBrain/g, "G Brain")
+    .replace(/GBrain/g, "G Brain").replace(/ABA/g, "A.B.A.")
     .replace(/de-identifier/g, "dee-identifier");
 
 const only = process.argv.slice(2);
